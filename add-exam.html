@@ -3,312 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS - Admin Panel</title>
+    <title>ATLAS | Advanced Exam Creator</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
+        .input-box { width: 100%; padding: 14px; background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; font-weight: bold; font-size: 13px; outline: none; transition: 0.3s; }
+        .input-box:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,0.1); }
+        .btn-active { background-color: #1e40af !important; color: white !important; }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-6">
-        <h1 class="text-3xl font-bold mb-6 text-center">📋 ATLAS Smart Exam System - Admin Panel</h1>
-        
-        <!-- Exam Form -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <h2 class="text-2xl font-bold mb-4">➕ Add New Exam</h2>
+<body class="pb-20">
+    <nav class="bg-white p-5 shadow-sm flex items-center space-x-3 sticky top-0 z-50">
+        <button onclick="window.location.href='admin.html'" class="bg-gray-100 px-4 py-2 rounded-xl text-blue-800 font-bold">❮</button>
+        <span class="font-black text-blue-900 uppercase italic text-lg">Smart Exam Creator</span>
+    </nav>
+
+    <div class="p-6 max-w-2xl mx-auto">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-xl">
+            <h2 class="text-xl font-black text-blue-900 mb-6 uppercase italic">⚙️ Exam Settings</h2>
             
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block font-semibold mb-2">Subject <span class="text-red-500">*</span></label>
-                    <input type="text" id="subject" class="w-full border p-2 rounded subject-suggest" placeholder="e.g., Mathematics">
+            <div class="space-y-3 mb-5">
+                <input list="subList" id="exSubject" placeholder="Subject (যেমন: Biology)" class="input-box">
+                <datalist id="subList"></datalist>
+                <div class="grid grid-cols-2 gap-3">
+                    <input list="papList" id="exPaper" placeholder="Paper (e.g. 1st Paper)" class="input-box">
+                    <datalist id="papList"></datalist>
+                    <input list="chapList" id="exChapter" placeholder="Chapter (যেমন: কোষ ও এর গঠন)" class="input-box">
+                    <datalist id="chapList"></datalist>
                 </div>
-                <div>
-                    <label class="block font-semibold mb-2">Paper <span class="text-red-500">*</span></label>
-                    <input type="text" id="paper" class="w-full border p-2 rounded paper-suggest" placeholder="e.g., Algebra">
-                </div>
-                <div>
-                    <label class="block font-semibold mb-2">Chapter <span class="text-red-500">*</span></label>
-                    <input type="text" id="chapter" class="w-full border p-2 rounded chapter-suggest" placeholder="e.g., Quadratic Equations">
-                </div>
-                <div>
-                    <label class="block font-semibold mb-2">Exam Title</label>
-                    <input type="text" id="title" class="w-full border p-2 rounded" placeholder="Custom exam title">
+                <textarea id="exDesc" placeholder="Exam Description..." class="input-box h-20 resize-none"></textarea>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-[1.5rem] border mb-5">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-[9px] font-bold text-blue-800">START DATE & TIME</label><input type="datetime-local" id="exStart" class="input-box text-xs mt-1"></div>
+                    <div><label class="text-[9px] font-bold text-blue-800">END DATE & TIME</label><input type="datetime-local" id="exEnd" class="input-box text-xs mt-1"></div>
                 </div>
             </div>
-            
-            <div class="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                    <label class="block font-semibold mb-2">Duration (minutes)</label>
-                    <input type="number" id="duration" class="w-full border p-2 rounded" value="60" placeholder="60">
+
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="border p-3 rounded-[1.5rem] bg-gray-50 flex flex-col justify-center">
+                    <label class="flex items-center justify-between text-[10px] font-black text-red-600 uppercase">Neg Mark <input type="checkbox" id="negToggle" onchange="document.getElementById('negVal').classList.toggle('hidden', !this.checked)"></label>
+                    <input type="number" id="negVal" value="0.25" step="0.01" class="w-full mt-2 border-b bg-transparent text-center font-bold text-red-600 hidden outline-none">
                 </div>
-                <div>
-                    <label class="block font-semibold mb-2">End Date & Time (Optional)</label>
-                    <input type="datetime-local" id="endTime" class="w-full border p-2 rounded">
-                </div>
+                <input type="number" id="exDur" placeholder="Duration (Min)" class="input-box text-center text-lg">
             </div>
-            
-            <div class="mb-4">
-                <label class="block font-semibold mb-2">Negative Marking</label>
-                <div class="flex gap-4 items-center">
-                    <label><input type="radio" name="negativeMarking" value="on" class="mr-1"> ON</label>
-                    <label><input type="radio" name="negativeMarking" value="off" checked class="mr-1"> OFF</label>
-                    <input type="number" id="negativeValue" class="border p-2 rounded w-24" placeholder="Value" value="0.25" step="0.25">
-                </div>
+
+            <div class="flex space-x-2 mb-5">
+                <button onclick="setMode('csv', this)" id="csvBtn" class="mode-btn btn-active flex-1 py-3 rounded-2xl font-black text-xs border">CSV Upload</button>
+                <button onclick="setMode('link', this)" id="linkBtn" class="mode-btn bg-white text-gray-400 flex-1 py-3 rounded-2xl font-black text-xs border">External Link</button>
             </div>
-            
-            <div class="mb-4">
-                <label class="block font-semibold mb-2">Input Method</label>
-                <div class="flex gap-4 mb-3">
-                    <button onclick="showCSVUpload()" class="bg-blue-500 text-white px-4 py-2 rounded">📁 CSV Upload</button>
-                    <button onclick="showExternalLink()" class="bg-green-500 text-white px-4 py-2 rounded">🔗 External Link</button>
-                </div>
-                
-                <div id="csvUploadDiv" style="display:none;">
-                    <input type="file" id="csvFile" accept=".csv" class="border p-2 rounded w-full mb-2">
-                    <div class="text-sm text-gray-600 mb-2">
-                        CSV Format: questions, option1, option2, option3, option4, option5, answer, explanation, type, section<br>
-                        answer column: only 1,2,3,4,5 (option number)
-                    </div>
-                    <button onclick="uploadCSV()" class="bg-purple-500 text-white px-4 py-2 rounded">Process CSV</button>
-                </div>
-                
-                <div id="externalLinkDiv" style="display:none;">
-                    <input type="url" id="externalUrl" class="w-full border p-2 rounded" placeholder="https://...">
-                    <button onclick="processExternalLink()" class="bg-purple-500 text-white px-4 py-2 rounded mt-2">Fetch Questions</button>
-                </div>
+
+            <div id="csvArea" class="border-2 border-dashed border-blue-200 p-8 rounded-[2rem] text-center bg-blue-50/50 relative mb-6">
+                <input type="file" id="csvFile" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <p id="fileName" class="text-xs font-black text-blue-900">Upload CSV (question, opt1-4, opt5, answer, exp, type, sec)</p>
             </div>
-            
-            <div id="questionsContainer" class="mb-4" style="display:none;">
-                <h3 class="font-bold mb-2">📝 Questions Preview (Auto-filled type & section = 1)</h3>
-                <div id="questionsPreview" class="max-h-96 overflow-y-auto border p-4 rounded bg-gray-50"></div>
-                <button onclick="saveExamToDB()" class="bg-red-500 text-white px-6 py-2 rounded mt-4">💾 Save Exam to Database</button>
-            </div>
+            <div id="linkArea" class="hidden mb-6"><input type="url" id="exLink" placeholder="Paste External Link" class="input-box"></div>
+
+            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl tracking-widest active:scale-95 transition">Publish & Copy Link</button>
         </div>
-        
-        <!-- Manage Exams -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-2xl font-bold mb-4">📋 Manage Exams</h2>
-            <div id="examsList" class="overflow-x-auto"></div>
+
+        <div class="mt-10" id="savedExamsArea">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-4">Manage Exams</h3>
+            <div id="examList" class="space-y-3"></div>
         </div>
     </div>
-    
+
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
-        let currentQuestions = [];
-        
-        // Initialize Select2 for suggestions
-        $(document).ready(function() {
-            loadExistingData();
-        });
-        
-        async function loadExistingData() {
-            const { data: exams } = await supabase.from('exams').select('subject, paper, chapter');
-            if(exams && exams.length > 0) {
-                const subjects = [...new Set(exams.map(e => e.subject).filter(Boolean))];
-                const papers = [...new Set(exams.map(e => e.paper).filter(Boolean))];
-                const chapters = [...new Set(exams.map(e => e.chapter).filter(Boolean))];
-                
-                $('.subject-suggest').select2({ tags: true, data: subjects.map(s => ({id: s, text: s})) });
-                $('.paper-suggest').select2({ tags: true, data: papers.map(p => ({id: p, text: p})) });
-                $('.chapter-suggest').select2({ tags: true, data: chapters.map(c => ({id: c, text: c})) });
-            } else {
-                $('.subject-suggest, .paper-suggest, .chapter-suggest').select2({ tags: true });
-            }
-            loadExamsList();
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let mode = 'csv';
+
+        window.onload = loadData;
+
+        function setMode(m, btn) {
+            mode = m;
+            document.querySelectorAll('.mode-btn').forEach(b => { b.classList.remove('btn-active'); b.classList.add('bg-white', 'text-gray-400'); });
+            btn.classList.add('btn-active'); btn.classList.remove('bg-white', 'text-gray-400');
+            document.getElementById('csvArea').classList.toggle('hidden', m !== 'csv');
+            document.getElementById('linkArea').classList.toggle('hidden', m !== 'link');
         }
-        
-        function showCSVUpload() {
-            document.getElementById('csvUploadDiv').style.display = 'block';
-            document.getElementById('externalLinkDiv').style.display = 'none';
-            document.getElementById('questionsContainer').style.display = 'none';
-        }
-        
-        function showExternalLink() {
-            document.getElementById('csvUploadDiv').style.display = 'none';
-            document.getElementById('externalLinkDiv').style.display = 'block';
-            document.getElementById('questionsContainer').style.display = 'none';
-        }
-        
-        function uploadCSV() {
-            const file = document.getElementById('csvFile').files[0];
-            if(!file) return alert('Select CSV file');
+
+        document.getElementById('csvFile').addEventListener('change', e => { if(e.target.files[0]) document.getElementById('fileName').innerText = e.target.files[0].name; });
+
+        async function publishExam() {
+            const btn = document.getElementById('pubBtn');
+            const subject = document.getElementById('exSubject').value;
+            const chapter = document.getElementById('exChapter').value;
             
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
+            if(!subject || !chapter) return alert("Subject এবং Chapter অবশ্যই দিতে হবে!");
+
+            btn.innerText = "UPLOADING..."; btn.disabled = true;
+            let questions = [];
+
+            if(mode === 'csv') {
+                const file = document.getElementById('csvFile').files[0];
+                if(!file) { alert("CSV ফাইল সিলেক্ট করো!"); btn.innerText = "Publish Exam"; btn.disabled = false; return; }
                 
-                currentQuestions = [];
-                for(let i=1; i<rows.length; i++) {
-                    const row = rows[i];
-                    if(row.length >= 9 && row[0]) {
-                        currentQuestions.push({
-                            questions: row[0] || '',
-                            option1: row[1] || '',
-                            option2: row[2] || '',
-                            option3: row[3] || '',
-                            option4: row[4] || '',
-                            option5: row[5] || '',
-                            answer: row[6] ? parseInt(row[6]) : 1,
-                            explanation: row[7] || '',
-                            type: '1',
-                            section: '1'
-                        });
-                    }
-                }
-                displayQuestionsPreview();
-            };
-            reader.readAsArrayBuffer(file);
-        }
-        
-        async function processExternalLink() {
-            const url = document.getElementById('externalUrl').value;
-            if(!url) return alert('Enter URL');
-            
-            try {
-                const response = await fetch(url);
-                const text = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(text, 'text/html');
-                const questions = [];
-                
-                doc.querySelectorAll('.question-item, .mcq, .question').forEach((el, idx) => {
-                    const qText = el.querySelector('.question-text, .qtext')?.innerText || el.innerText;
-                    const options = el.querySelectorAll('.option, .answer');
-                    if(qText && options.length >= 4) {
-                        questions.push({
-                            questions: qText.substring(0, 500),
-                            option1: options[0]?.innerText || '',
-                            option2: options[1]?.innerText || '',
-                            option3: options[2]?.innerText || '',
-                            option4: options[3]?.innerText || '',
-                            option5: options[4]?.innerText || '',
-                            answer: 1,
-                            explanation: '',
-                            type: '1',
-                            section: '1'
-                        });
-                    }
+                const text = await file.text();
+                const rows = text.split('\n').slice(1).filter(r => r.trim());
+                questions = rows.map(line => {
+                    const c = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
+                    return { 
+                        questions: c[0], option1: c[1], option2: c[2], option3: c[3], option4: c[4], 
+                        option5: c[5] || "", answer: c[6], explanation: c[7], type: "1", section: "1" 
+                    };
                 });
+                alert("✅ Upload Successfully!");
+            }
+
+            const examId = Date.now().toString(); // ইউনিক আইডি
+            const { data, error } = await atlas.from('exams').insert([{
+                exam_id: examId,
+                subject: subject, 
+                paper: document.getElementById('exPaper').value, 
+                chapter: chapter,
+                description: document.getElementById('exDesc').value, 
+                start_time: document.getElementById('exStart').value, 
+                end_time: document.getElementById('exEnd').value,
+                duration: document.getElementById('exDur').value, 
+                neg_mark: document.getElementById('negToggle').checked ? parseFloat(document.getElementById('negVal').value) : 0,
+                negative_marking: document.getElementById('negToggle').checked,
+                negative_value: parseFloat(document.getElementById('negVal').value),
+                questions: questions, 
+                type: mode, 
+                external_link: document.getElementById('exLink').value
+            }]).select();
+
+            if(!error && data) {
+                // সরাসরি exam-hall.html এ নিয়ে যাওয়ার লিঙ্ক
+                const finalLink = window.location.origin + "/exam-hall.html?id=" + examId;
                 
-                if(questions.length === 0) throw new Error('No questions found');
-                currentQuestions = questions;
-                displayQuestionsPreview();
-            } catch(err) {
-                alert('Failed to fetch: ' + err.message);
+                navigator.clipboard.writeText(finalLink).then(() => {
+                    alert("🚀 Exam Link Created & Copied to Clipboard:\n" + finalLink);
+                    location.reload();
+                }).catch(() => {
+                    prompt("Exam Published! Copy this link:", finalLink);
+                    location.reload();
+                });
+            } else { 
+                alert("Error: " + error.message); 
+                btn.innerText = "Publish Exam"; btn.disabled = false; 
             }
         }
-        
-        function displayQuestionsPreview() {
-            const preview = document.getElementById('questionsPreview');
-            preview.innerHTML = `<div class="font-bold text-green-600">✓ Total Questions: ${currentQuestions.length}</div>
-                                 <div class="text-green-600">✓ Type & Section auto-set to '1'</div>
-                                 <div class="mt-2 space-y-2 max-h-80 overflow-y-auto">` +
-                currentQuestions.map((q, i) => `<div class="border-b pb-2">${i+1}. ${q.questions.substring(0,100)}... (Answer: Option ${q.answer})</div>`).join('') +
-                `</div>`;
-            document.getElementById('questionsContainer').style.display = 'block';
-        }
-        
-        async function saveExamToDB() {
-            const subject = $('#subject').val();
-            const paper = $('#paper').val();
-            const chapter = $('#chapter').val();
-            const title = document.getElementById('title').value || `${subject} - ${paper} Exam`;
-            const duration = parseInt(document.getElementById('duration').value) || 60;
-            const endTime = document.getElementById('endTime').value;
-            const negativeMarking = document.querySelector('input[name="negativeMarking"]:checked').value;
-            const negativeValue = parseFloat(document.getElementById('negativeValue').value);
-            
-            if(!subject || !paper || !chapter || currentQuestions.length === 0) {
-                return alert('⚠️ Fill all required fields and add questions!');
-            }
-            
-            const examId = Date.now().toString();
-            const examLink = `${window.location.origin}/exam-hall.html?id=${examId}`;
-            
-            const { data, error } = await supabase
-                .from('exams')
-                .insert([{
-                    exam_id: examId,
-                    subject, 
-                    paper, 
-                    chapter,
-                    title,
-                    questions: currentQuestions,
-                    end_time: endTime || null,
-                    negative_marking: negativeMarking === 'on',
-                    negative_value: negativeValue,
-                    exam_link: examLink,
-                    duration: duration,
-                    created_at: new Date()
-                }]);
-            
-            if(error) {
-                alert('❌ Error: ' + error.message);
-                console.error(error);
-            } else {
-                await navigator.clipboard.writeText(examLink);
-                alert('✅ Upload Successfully!\n\nExam Link copied to clipboard!\n📋 Link: ' + examLink);
-                currentQuestions = [];
-                document.getElementById('questionsContainer').style.display = 'none';
-                document.getElementById('csvFile').value = '';
-                document.getElementById('externalUrl').value = '';
-                loadExamsList();
+
+        async function loadData() {
+            const { data } = await atlas.from('exams').select('*').order('created_at', {ascending: false});
+            if(data) {
+                // ড্রপডাউন সাজেশন লোড
+                const subs = [...new Set(data.map(d => d.subject).filter(Boolean))];
+                document.getElementById('subList').innerHTML = subs.map(s => `<option value="${s}">`).join('');
+
+                // লিস্ট রেন্ডার
+                document.getElementById('examList').innerHTML = data.map(ex => `
+                    <div class="bg-white p-5 rounded-[2rem] shadow-sm flex justify-between items-center border border-gray-50">
+                        <div><p class="font-black text-blue-900 text-sm">${ex.subject}: ${ex.chapter}</p><p class="text-[9px] text-gray-400 font-bold uppercase">${ex.type}</p></div>
+                        <button onclick="copyL('${ex.exam_id}')" class="bg-blue-900 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase">Link</button>
+                    </div>
+                `).join('');
             }
         }
-        
-        async function loadExamsList() {
-            const { data: exams, error } = await supabase.from('exams').select('*').order('created_at', {ascending: false});
-            const container = document.getElementById('examsList');
-            
-            if(error) {
-                container.innerHTML = '<div class="text-red-500">Error loading exams</div>';
-                return;
-            }
-            
-            if(!exams || exams.length === 0) {
-                container.innerHTML = '<div class="text-gray-500 text-center py-4">📭 No exams found. Create your first exam!</div>';
-                return;
-            }
-            
-            container.innerHTML = `<table class="w-full border">
-                <thead class="bg-gray-200">
-                    <tr><th class="p-2 border">Title</th><th class="p-2 border">Subject</th><th class="p-2 border">Questions</th><th class="p-2 border">Duration</th><th class="p-2 border">Link</th><th class="p-2 border">Action</th></tr>
-                </thead>
-                <tbody>` +
-                exams.map(exam => `<tr>
-                    <td class="p-2 border">${exam.title || exam.subject}</td>
-                    <td class="p-2 border">${exam.subject}</td>
-                    <td class="p-2 border">${exam.questions?.length || 0}</td>
-                    <td class="p-2 border">${exam.duration || 60} min</td>
-                    <td class="p-2 border"><button onclick="copyLink('${exam.exam_link}')" class="bg-blue-500 text-white px-2 py-1 rounded text-sm">📋 Copy</button></td>
-                    <td class="p-2 border"><button onclick="deleteExam('${exam.exam_id}')" class="bg-red-500 text-white px-2 py-1 rounded text-sm">🗑️ Delete</button></td>
-                </tr>`).join('') +
-                `</tbody>有些人`;
+
+        function copyL(id) {
+            const link = window.location.origin + "/exam-hall.html?id=" + id;
+            navigator.clipboard.writeText(link).then(() => alert("Link Copied!"));
         }
-        
-        window.copyLink = (link) => {
-            navigator.clipboard.writeText(link);
-            alert('✅ Link copied!\n' + link);
-        };
-        
-        window.deleteExam = async (examId) => {
-            if(confirm('⚠️ Delete this exam? All results will be lost!')) {
-                const { error } = await supabase.from('exams').delete().eq('exam_id', examId);
-                if(error) alert('Error: ' + error.message);
-                else {
-                    alert('✅ Exam deleted');
-                    loadExamsList();
-                }
-            }
-        };
     </script>
 </body>
 </html>
