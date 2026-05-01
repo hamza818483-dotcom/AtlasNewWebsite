@@ -3,89 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Home</title>
+    <title>ATLAS | Medical & Varsity and  Admission Care</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f4f6; }
+        .active-tab { border-bottom: 3px solid #1d4ed8; color: #1d4ed8; font-weight: 700; }
+        .course-card { transition: all 0.3s ease; }
+        .course-card:hover { transform: translateY(-10px); }
+        .glass-nav { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); }
     </style>
 </head>
-<body class="pb-10">
+<body class="pb-20 md:pb-0">
 
-    <nav class="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
-        <div class="flex items-center space-x-2">
-            <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="Logo" class="w-10 h-10">
-            <span class="text-2xl font-black text-blue-800 tracking-tighter italic">ATLAS</span>
-        </div>
-        <div class="text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
-            Varsity Area
+    <nav class="sticky top-0 z-50 glass-nav border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-700 text-white w-10 h-10 flex items-center justify-center rounded-xl font-bold text-2xl shadow-lg">A</div>
+                <span class="text-2xl font-black text-gray-800 tracking-tighter">ATLAS</span>
+            </div>
+            
+            <div class="hidden md:flex flex-1 mx-10">
+                <div class="relative w-full max-w-md">
+                    <input type="text" placeholder="কোর্স খুজুন" class="w-full bg-gray-100 border-none rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    <i class="fas fa-search absolute left-4 top-3 text-gray-400 text-xs"></i>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button class="relative text-gray-600">
+                    <i class="far fa-bell text-xl"></i>
+                    <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] w-4 h-4 flex items-center justify-center rounded-full">3</span>
+                </button>
+                <a href="login.html" class="flex items-center gap-2 border border-blue-600 px-4 py-1.5 rounded-full text-blue-700 font-bold text-sm hover:bg-blue-50 transition">
+                    লগইন
+                </a>
+            </div>
         </div>
     </nav>
 
-    <header class="p-6 bg-gradient-to-r from-blue-700 to-indigo-800 text-white rounded-b-[2.5rem] shadow-lg mb-8">
-        <h1 class="text-2xl font-bold">আসসালামু আলাইকুম! 👋</h1>
-        <p class="text-blue-100 text-sm mt-1">মেডিকেল ও ভার্সিটি এডমিশন কেয়ার-এ স্বাগতম।</p>
-    </header>
-
-    <main class="px-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-        
-        <div onclick="handleRedirect('classes.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-red-50 p-4 rounded-2xl text-2xl">📺</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Free Class</h3>
-                <p class="text-gray-500 text-xs">ইউটিউব ক্লাসগুলো এখান থেকে করো</p>
+    <section class="max-w-7xl mx-auto px-4 mt-6">
+        <div class="bg-white rounded-3xl p-6 md:p-10 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex-1 text-center md:text-left">
+                <h1 class="text-2xl md:text-4xl font-bold text-gray-900 mb-2">সাফল্যের পথে আপনার যাত্রা শুরু হোক এখানে!</h1>
+                <p class="text-gray-500 text-sm md:text-lg">সেরা মেন্টরদের সাথে মেডিকেল ও ভার্সিটি অ্যাডমিশন জয় করো।</p>
+                <div class="mt-6 flex flex-wrap justify-center md:justify-start gap-3">
+                    <button class="bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold shadow-blue-200 shadow-xl">আজকের ক্লাস</button>
+                    <button class="bg-red-50 text-red-600 px-6 py-3 rounded-2xl font-bold border border-red-100">লাইভ এক্সাম</button>
+                </div>
+            </div>
+            <div class="w-full md:w-1/3">
+                <img src="https://img.freepik.com/free-vector/online-certification-concept_23-2148575662.jpg" alt="Study" class="rounded-2xl shadow-lg">
             </div>
         </div>
+    </section>
 
-        <div onclick="handleRedirect('exams.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-green-50 p-4 rounded-2xl text-2xl">📝</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Free Exam</h3>
-                <p class="text-gray-500 text-xs">ফ্রি এক্সাম দিয়ে নিজেকে যাচাই করো</p>
-            </div>
+    <section class="max-w-7xl mx-auto px-4 mt-10">
+        <div class="flex gap-8 border-b border-gray-200 overflow-x-auto no-scrollbar">
+            <button class="pb-3 active-tab whitespace-nowrap">সকল কোর্স</button>
+            <button class="pb-3 text-gray-500 font-medium whitespace-nowrap hover:text-blue-600">মেডিকেল</button>
+            <button class="pb-3 text-gray-500 font-medium whitespace-nowrap hover:text-blue-600">ভার্সিটি ক</button>
+            <button class="pb-3 text-gray-500 font-medium whitespace-nowrap hover:text-blue-600">ফ্রি কন্টেন্ট</button>
+            <button class="pb-3 text-gray-500 font-medium whitespace-nowrap hover:text-blue-600">বইসমূহ</button>
         </div>
+    </section>
 
-        <div onclick="handleRedirect('courses.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-blue-50 p-4 rounded-2xl text-2xl">🔥</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Running Courses</h3>
-                <p class="text-gray-500 text-xs">আমাদের প্রিমিয়াম ব্যাচগুলো দেখে নাও</p>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            
+            <div class="course-card bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group">
+                <div class="relative overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1532187875605-2fe359543341?auto=format&fit=crop&w=600&q=80" alt="Biology" class="w-full h-48 object-cover group-hover:scale-110 transition duration-500">
+                    <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-black text-blue-700 shadow-sm uppercase">Medical Prep</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center gap-2 mb-3">
+                        <img src="https://ui-avatars.com/api/?name=Amir+Hamza&background=0D8ABC&color=fff" class="w-6 h-6 rounded-full">
+                        <span class="text-xs text-gray-500 font-medium">Amir Hamza Rafi</span>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 leading-tight">মেডিকেল বায়োলজি মাস্টারক্লাস - ২০২৬</h3>
+                    <div class="flex items-center justify-between text-sm text-gray-500 mb-5">
+                        <span><i class="fas fa-video text-blue-500 mr-1"></i> ৪০+ ক্লাস</span>
+                        <span><i class="fas fa-clock text-orange-500 mr-1"></i> ১ বছর এক্সেস</span>
+                    </div>
+                    <div class="flex items-center justify-between border-t pt-4">
+                        <div>
+                            <span class="text-sm text-gray-400 line-through block">৳ ৩০০০</span>
+                            <span class="text-2xl font-black text-blue-700">৳ ২৪৫০</span>
+                        </div>
+                        <button class="bg-gray-900 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-black transition">বিস্তারিত</button>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div onclick="handleRedirect('reviews.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-yellow-50 p-4 rounded-2xl text-2xl">⭐</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Review</h3>
-                <p class="text-gray-500 text-xs">সফল স্টুডেন্টদের মতামত জানো</p>
             </div>
-        </div>
-
-        <div onclick="handleRedirect('founder.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95 col-span-1 md:col-span-2">
-            <div class="bg-indigo-50 p-4 rounded-2xl text-2xl">👨‍🏫</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">Founder Introduction</h3>
-                <p class="text-gray-500 text-xs">ATLAS এবং ফাউন্ডার সম্পর্কে বিস্তারিত</p>
-            </div>
-        </div>
-
     </main>
 
-    <script>
-        // ইউজার রেজিস্ট্রেশন করা আছে কি না চেক করার ফাংশন
-        function handleRedirect(targetUrl) {
-            const user = localStorage.getItem('atlas_user');
-            
-            if (!user) {
-                // রেজিস্ট্রেশন করা না থাকলে রেজিস্ট্রেশন পেজে পাঠিয়ে দিবে
-                alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পন্ন করো!");
-                window.location.href = 'register.html';
-            } else {
-                // রেজিস্ট্রেশন থাকলে টার্গেট পেজে যাবে
-                window.location.href = targetUrl;
-            }
-        }
-    </script>
+    <section class="max-w-7xl mx-auto px-4 py-10">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 bg-blue-900 rounded-3xl p-8 text-white">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-yellow-400"></i> আজকের রুটিন
+                </h2>
+                <div class="space-y-4">
+                    <div class="bg-white/10 p-4 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <p class="font-bold">রসায়ন: জৈব রসায়ন (পর্ব-১)</p>
+                            <p class="text-xs text-blue-200">রাত ০৮:৩০ মিনিটে শুরু হবে</p>
+                        </div>
+                        <span class="bg-yellow-500 text-blue-900 px-3 py-1 rounded-lg text-xs font-bold uppercase">Live</span>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                <h2 class="text-xl font-bold mb-6">আপনার প্রগ্রেস</h2>
+                <div class="flex flex-col items-center justify-center text-center">
+                    <div class="relative w-32 h-32 flex items-center justify-center mb-4">
+                        <svg class="w-full h-full -rotate-90">
+                            <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" class="text-gray-100" />
+                            <circle cx="64" cy="64" r="58" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="364.4" stroke-dashoffset="91.1" class="text-blue-600" />
+                        </svg>
+                        <span class="absolute text-2xl font-black">৭৫%</span>
+                    </div>
+                    <p class="text-sm text-gray-500 font-medium">মেডিকেল বায়োলজি ব্যাচে আপনার অগ্রগতি</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-gray-200 py-3 px-6 flex justify-between items-center z-[100] shadow-2xl">
+        <button class="flex flex-col items-center text-blue-700">
+            <i class="fas fa-home text-xl"></i>
+            <span class="text-[10px] mt-1 font-bold">হোম</span>
+        </button>
+        <button class="flex flex-col items-center text-gray-400">
+            <i class="fas fa-book text-xl"></i>
+            <span class="text-[10px] mt-1 font-bold">কোর্স</span>
+        </button>
+        <button class="flex flex-col items-center text-gray-400">
+            <i class="fas fa-edit text-xl"></i>
+            <span class="text-[10px] mt-1 font-bold">এক্সাম</span>
+        </button>
+        <button class="flex flex-col items-center text-gray-400">
+            <i class="fas fa-user text-xl"></i>
+            <span class="text-[10px] mt-1 font-bold">প্রোফাইল</span>
+        </button>
+    </div>
+
+    <footer class="bg-gray-50 border-t border-gray-200 pt-16 pb-10">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <div class="bg-blue-700 text-white w-8 h-8 flex items-center justify-center rounded-lg font-bold text-lg">A</div>
+                <span class="text-xl font-black text-gray-800">ATLAS</span>
+            </div>
+            <p class="text-gray-400 text-xs mb-8 italic">শিক্ষা হোক আনন্দময়, জয় হোক সবার।</p>
+            <div class="flex justify-center gap-6 mb-8 text-gray-400">
+                <a href="#"><i class="fab fa-facebook-f hover:text-blue-600 transition"></i></a>
+                <a href="#"><i class="fab fa-youtube hover:text-red-600 transition"></i></a>
+                <a href="#"><i class="fab fa-telegram-plane hover:text-blue-400 transition"></i></a>
+            </div>#ea6565
+            <p class="text-[10px] text-gray-300 uppercase tracking-widest">&copy; 2026 ATLAS COURSESAllNotOk| Developed by Amir Hamza Rafi</p>
+        </div>
+    </footer>
+
 </body>
 </html>
