@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Advanced Exam Creator</title>
+    <title>ATLAS | Exam Creator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -25,12 +25,12 @@
             <h2 class="text-xl font-black text-blue-900 mb-6 uppercase italic">⚙️ Exam Settings</h2>
             
             <div class="space-y-3 mb-5">
-                <input list="subList" id="exSubject" placeholder="Subject (যেমন: Biology)" class="input-box">
+                <input list="subList" id="exSubject" placeholder="Subject (e.g. Biology)" class="input-box">
                 <datalist id="subList"></datalist>
                 <div class="grid grid-cols-2 gap-3">
                     <input list="papList" id="exPaper" placeholder="Paper (e.g. 1st Paper)" class="input-box">
                     <datalist id="papList"></datalist>
-                    <input list="chapList" id="exChapter" placeholder="Chapter (যেমন: কোষ ও এর গঠন)" class="input-box">
+                    <input list="chapList" id="exChapter" placeholder="Chapter (e.g. কোষ ও এর গঠন)" class="input-box">
                     <datalist id="chapList"></datalist>
                 </div>
                 <textarea id="exDesc" placeholder="Exam Description..." class="input-box h-20 resize-none"></textarea>
@@ -44,11 +44,11 @@
             </div>
 
             <div class="grid grid-cols-2 gap-3 mb-6">
-                <div class="border p-3 rounded-[1.5rem] bg-gray-50">
+                <div class="border p-3 rounded-[1.5rem] bg-gray-50 flex flex-col justify-center">
                     <label class="flex items-center justify-between text-[10px] font-black text-red-600 uppercase">Neg Mark <input type="checkbox" id="negToggle" onchange="document.getElementById('negVal').classList.toggle('hidden', !this.checked)"></label>
-                    <input type="number" id="negVal" value="0.25" step="0.01" class="w-full mt-1 border-b bg-transparent text-center font-bold hidden outline-none">
+                    <input type="number" id="negVal" value="0.25" step="0.01" class="w-full mt-2 border-b bg-transparent text-center font-bold text-red-600 hidden outline-none">
                 </div>
-                <input type="number" id="exDur" placeholder="Duration (Min)" class="input-box text-center text-lg">
+                <input type="number" id="exDur" placeholder="Duration (Min)" class="input-box text-center text-lg h-full">
             </div>
 
             <div class="flex space-x-2 mb-5">
@@ -58,14 +58,16 @@
 
             <div id="csvArea" class="border-2 border-dashed border-blue-200 p-8 rounded-[2rem] text-center bg-blue-50/50 relative mb-6">
                 <input type="file" id="csvFile" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                <p id="fileName" class="text-xs font-black text-blue-900">Upload CSV (question, opt1-4, opt5, answer, exp, type, sec)</p>
+                <p id="fileName" class="text-xs font-black text-blue-900">Upload CSV (10 Columns, Ans: 1-5)</p>
             </div>
+            <div id="linkArea" class="hidden mb-6"><input type="url" id="exLink" placeholder="Paste External Link" class="input-box"></div>
 
-            <div id="linkArea" class="hidden mb-6 animate-pulse">
-                <input type="url" id="exLink" placeholder="Paste External Exam/Form Link Here" class="input-box">
-            </div>
+            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl tracking-widest active:scale-95 transition">Publish Exam</button>
+        </div>
 
-            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl tracking-widest active:scale-95 transition">Publish & Copy Link</button>
+        <div class="mt-10" id="savedExamsArea">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-4">Manage Exams</h3>
+            <div id="examList" class="space-y-3"></div>
         </div>
     </div>
 
@@ -73,26 +75,26 @@
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
         let mode = 'csv';
 
-        // Load Categories from Database for Suggestions
         window.onload = async () => {
-            const { data } = await atlas.from('exams').select('subject, paper, chapter');
+            const { data } = await atlas.from('exams').select('*').order('created_at', {ascending: false});
             if(data) {
                 const subs = [...new Set(data.map(d => d.subject).filter(Boolean))];
-                const papers = [...new Set(data.map(d => d.paper).filter(Boolean))];
-                const chaps = [...new Set(data.map(d => d.chapter).filter(Boolean))];
-                
                 document.getElementById('subList').innerHTML = subs.map(s => `<option value="${s}">`).join('');
-                document.getElementById('papList').innerHTML = papers.map(p => `<option value="${p}">`).join('');
-                document.getElementById('chapList').innerHTML = chaps.map(c => `<option value="${c}">`).join('');
+                document.getElementById('papList').innerHTML = [...new Set(data.map(d => d.paper).filter(Boolean))].map(p => `<option value="${p}">`).join('');
+                document.getElementById('chapList').innerHTML = [...new Set(data.map(d => d.chapter).filter(Boolean))].map(c => `<option value="${c}">`).join('');
+                
+                document.getElementById('examList').innerHTML = data.map(ex => `
+                    <div class="bg-white p-5 rounded-[2rem] shadow-sm flex justify-between items-center border border-gray-50">
+                        <div><p class="font-black text-blue-900 text-sm">${ex.subject}: ${ex.chapter}</p><p class="text-[9px] text-gray-400 font-bold uppercase">${ex.type}</p></div>
+                        <button onclick="copyLink('${ex.id}')" class="bg-blue-900 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase">Copy Link</button>
+                    </div>
+                `).join('');
             }
         };
 
-        document.getElementById('csvFile').addEventListener('change', e => {
-            if(e.target.files[0]) document.getElementById('fileName').innerText = "Selected: " + e.target.files[0].name;
-        });
+        document.getElementById('csvFile').addEventListener('change', e => { if(e.target.files[0]) document.getElementById('fileName').innerText = e.target.files[0].name; });
 
         function setMode(m, btn) {
             mode = m;
@@ -104,24 +106,21 @@
 
         async function publishExam() {
             const btn = document.getElementById('pubBtn');
-            btn.innerText = "UPLOADING..."; btn.disabled = true;
-
+            btn.innerText = "PROCESSING..."; btn.disabled = true;
             let questions = [];
 
             if(mode === 'csv') {
                 const file = document.getElementById('csvFile').files[0];
-                if(!file) { alert("CSV ফাইল দাও!"); btn.innerText = "Publish"; btn.disabled = false; return; }
-                
+                if(!file) { alert("CSV ফাইল সিলেক্ট করো!"); btn.innerText = "Publish Exam"; btn.disabled = false; return; }
                 const text = await file.text();
                 const rows = text.split('\n').slice(1).filter(r => r.trim());
                 questions = rows.map(line => {
                     const c = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
                     return { 
                         question: c[0], option1: c[1], option2: c[2], option3: c[3], option4: c[4], 
-                        option5: c[5], answer: c[6], explanation: c[7], type: "1", section: "1" 
+                        option5: c[5] || "", answer: c[6], explanation: c[7], type: "1", section: "1" 
                     };
                 });
-                alert("Upload Successfully!");
             }
 
             const { data, error } = await atlas.from('exams').insert([{
@@ -132,14 +131,15 @@
             }]).select();
 
             if(!error && data) {
-                const examLink = window.location.origin + "/exam-hall.html?id=" + data[0].id;
-                navigator.clipboard.writeText(examLink);
-                alert("Exam Published Successfully!\n\nUnique Link Copied: " + examLink);
+                alert("Upload Successfully!");
+                copyLink(data[0].id);
                 location.reload();
-            } else {
-                alert("Error: " + error.message);
-                btn.innerText = "Publish & Copy Link"; btn.disabled = false;
-            }
+            } else { alert("Error: " + error.message); btn.innerText = "Publish Exam"; btn.disabled = false; }
+        }
+
+        function copyLink(id) {
+            const link = window.location.origin + "/exam-hall.html?id=" + id;
+            navigator.clipboard.writeText(link).then(() => alert("Exam Link Copied:\n" + link));
         }
     </script>
 </body>
