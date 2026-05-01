@@ -34,7 +34,7 @@
             <div class="bg-gray-50 p-8 rounded-[2.5rem] border mb-8 w-full max-w-sm">
                 <div class="grid grid-cols-3 gap-4 mb-6">
                     <div><p class="text-[9px] text-gray-400 font-black uppercase">Time</p><p id="sTime" class="font-black text-blue-800 text-lg">0 M</p></div>
-                    <div><p class="text-[9px] text-gray-400 font-black uppercase">s</p><p id="sQs" class="font-black text-blue-800 text-lg">0</p></div>
+                    <div><p class="text-[9px] text-gray-400 font-black uppercase">Questions</p><p id="sQs" class="font-black text-blue-800 text-lg">0</p></div>
                     <div><p class="text-[9px] text-gray-400 font-black uppercase">Neg</p><p id="sNeg" class="font-black text-red-600 text-lg">0.0</p></div>
                 </div>
                 <input type="text" id="stuName" class="w-full bg-white border p-4 rounded-2xl font-bold text-center outline-none focus:border-blue-500" placeholder="আপনার নাম লিখুন">
@@ -100,10 +100,10 @@
             const { data } = await atlas.from('exams').select('*').eq('exam_id', examId).single();
             if(data) {
                 examData = data;
-                examData.s = typeof data.s === 'string' ? JSON.parse(data.s) : (data.s || []);
+                examData.questions = typeof data.questions === 'string' ? JSON.parse(data.questions) : (data.questions || []);
                 document.getElementById('sChap').innerText = (examData.subject || "") + " | " + (examData.chapter || "");
                 document.getElementById('sTime').innerText = (examData.duration || 20) + " M";
-                document.getElementById('sQs').innerText = examData.s.length;
+                document.getElementById('sQs').innerText = examData.questions.length;
                 document.getElementById('sNeg').innerText = examData.negative_marking ? examData.negative_value : "0.0";
                 document.getElementById('startScreen').classList.remove('hidden');
             }
@@ -113,7 +113,7 @@
             if(!document.getElementById('stuName').value) return alert("নাম লিখুন!");
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('liveArea').classList.remove('hidden');
-            renders();
+            renderQuestions();
             let timeLeft = (examData.duration || 20) * 60;
             timerIv = setInterval(() => {
                 if(timeLeft <= 0) { clearInterval(timerIv); submitExam(); }
@@ -123,11 +123,11 @@
             }, 1000);
         }
 
-        function renders() {
-            document.getElementById('nav').innerHTML = examData.s.map((_, i) => `<div id="nav-${i}" onclick="document.getElementById('q-${i}').scrollIntoView({behavior:'smooth'})" class="nav-dot">${i+1}</div>`).join('');
-            document.getElementById('qs').innerHTML = examData.s.map((q, i) => {
+        function renderQuestions() {
+            document.getElementById('nav').innerHTML = examData.questions.map((_, i) => `<div id="nav-${i}" onclick="document.getElementById('q-${i}').scrollIntoView({behavior:'smooth'})" class="nav-dot">${i+1}</div>`).join('');
+            document.getElementById('qs').innerHTML = examData.questions.map((q, i) => {
                 const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
-                return `<div id="q-${i}" class="bg-white p-8 rounded-[2.5rem] border shadow-sm"><p class="font-bold text-gray-800 text-lg mb-8 leading-relaxed"><span class="text-blue-700 mr-2 font-black">${i+1}.</span> ${q.s || q.}</p><div class="space-y-3">${opts.map((o, oi) => `<div onclick="selectOpt(${i}, ${oi+1}, this)" class="opt-btn ob-${i}"><div class="opt-letter">${L[oi]}</div><span class="font-semibold">${o}</span></div>`).join('')}</div></div>`;
+                return `<div id="q-${i}" class="bg-white p-8 rounded-[2.5rem] border shadow-sm"><p class="font-bold text-gray-800 text-lg mb-8 leading-relaxed"><span class="text-blue-700 mr-2 font-black">${i+1}.</span> ${q.questions || q.question}</p><div class="space-y-3">${opts.map((o, oi) => `<div onclick="selectOpt(${i}, ${oi+1}, this)" class="opt-btn ob-${i}"><div class="opt-letter">${L[oi]}</div><span class="font-semibold">${o}</span></div>`).join('')}</div></div>`;
             }).join('');
         }
 
@@ -141,7 +141,7 @@
         function submitExam() {
             clearInterval(timerIv);
             let c = 0, w = 0, s = 0;
-            examData.s.forEach((q, i) => {
+            examData.questions.forEach((q, i) => {
                 if(!userAns[i]) s++;
                 else if(parseInt(userAns[i]) === parseInt(q.answer)) c++;
                 else w++;
@@ -161,12 +161,12 @@
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('f-active'));
             document.getElementById(`f-${f}`).classList.add('f-active');
             let html = '';
-            examData.s.forEach((q, i) => {
+            examData.questions.forEach((q, i) => {
                 const u = userAns[i], c = parseInt(q.answer), st = !u ? 'skipped' : (u === c ? 'correct' : 'wrong');
                 if(f !== 'all' && st !== f) return;
                 const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
                 let bCls = st === 'correct' ? 'bg-green-100 text-green-600' : (st === 'wrong' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500');
-                html += `<div class="bg-white p-8 rounded-[2.5rem] border shadow-sm mb-6"><div class="flex items-start gap-4 mb-6"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${bCls}">${i+1}</div><p class="font-bold text-gray-800 pt-1">${q.s || q.}</p></div><div class="pl-14 space-y-3">${opts.map((o, oi) => { let icon = `<div class="opt-letter border">${L[oi]}</div>`; if(oi+1 === c) icon = `✓`; else if(oi+1 === u && st === 'wrong') icon = `✕`; return `<div class="flex items-center text-sm font-semibold">${icon}<span>${o}</span></div>`; }).join('')}</div>${q.explanation ? `<div class="pl-14 mt-6"><div class="bg-blue-50/50 p-5 rounded-3xl border-l-4 border-blue-500 text-xs"><span class="font-black text-blue-900 block mb-2 uppercase text-[9px]">Explanation</span>${q.explanation}</div></div>` : ''}</div>`;
+                html += `<div class="bg-white p-8 rounded-[2.5rem] border shadow-sm mb-6"><div class="flex items-start gap-4 mb-6"><div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${bCls}">${i+1}</div><p class="font-bold text-gray-800 pt-1">${q.questions || q.question}</p></div><div class="pl-14 space-y-3">${opts.map((o, oi) => { let icon = `<div class="opt-letter border">${L[oi]}</div>`; if(oi+1 === c) icon = `✓`; else if(oi+1 === u && st === 'wrong') icon = `✕`; return `<div class="flex items-center text-sm font-semibold">${icon}<span>${o}</span></div>`; }).join('')}</div>${q.explanation ? `<div class="pl-14 mt-6"><div class="bg-blue-50/50 p-5 rounded-3xl border-l-4 border-blue-500 text-xs"><span class="font-black text-blue-900 block mb-2 uppercase text-[9px]">Explanation</span>${q.explanation}</div></div>` : ''}</div>`;
             });
             document.getElementById('solve').innerHTML = html;
         }
