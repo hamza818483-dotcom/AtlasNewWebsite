@@ -72,20 +72,26 @@
 
     </main>
 
-    <script>
-        // ইউজার রেজিস্ট্রেশন করা আছে কি না চেক করার ফাংশন
-        function handleRedirect(targetUrl) {
-            const user = localStorage.getItem('atlas_user');
-            
-            if (!user) {
-                // রেজিস্ট্রেশন করা না থাকলে রেজিস্ট্রেশন পেজে পাঠিয়ে দিবে
-                alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পন্ন করো!");
-                window.location.href = 'register.html';
-            } else {
-                // রেজিস্ট্রেশন থাকলে টার্গেট পেজে যাবে
-                window.location.href = targetUrl;
-            }
+   <script>
+    // ১. পেজ লোড হবার সাথে সাথে অটো-চেক (Security)
+    window.onload = function() {
+        const user = localStorage.getItem('atlas_user');
+        if (!user) {
+            // যদি ইউজার ডাটা না থাকে, সরাসরি রেজিস্ট্রেশন পেজে পাঠাবে
+            window.location.href = 'register.html';
         }
-    </script>
+    };
+
+    // ২. বাটনে ক্লিক করলেও যেন কাজ করে (Backup Function)
+    function handleRedirect(targetUrl) {
+        const user = localStorage.getItem('atlas_user');
+        if (!user) {
+            window.location.href = 'register.html';
+        } else {
+            window.location.href = targetUrl;
+        }
+    }
+</script>
+
 </body>
 </html>
