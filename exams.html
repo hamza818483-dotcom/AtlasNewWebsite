@@ -3,32 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Exams | ATLAS</title>
+    <title>ATLAS | Exams</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
+    </style>
 </head>
-<body>
+<body class="pb-10">
     <nav class="bg-white p-4 shadow-sm font-black text-blue-800 sticky top-0 z-50 flex items-center">
-        <button onclick="history.back()" class="mr-4 text-xl">←</button> ATLAS EXAMS
+        <button onclick="goBack()" class="mr-4 text-2xl">←</button> 
+        <span id="navTitle" class="italic uppercase">Select Subject</span>
     </nav>
-    <div id="examList" class="p-6 space-y-4"></div>
+
+    <div id="displayArea" class="p-6 space-y-4"></div>
+
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allExams = [];
+        let state = { view: 'subject', sub: null, pap: null };
+
         async function load() {
-            const { data } = await atlas.from('exams').select('*');
-            document.getElementById('examList').innerHTML = data.map(e => {
-                const link = e.type === 'csv' ? `exam-hall.html?id=${e.id}` : e.ext_link;
-                return `
-                <div class="bg-white p-5 rounded-[2.5rem] shadow-sm border font-bold">
-                    <p class="text-xs text-green-600 mb-1 uppercase tracking-tighter">${e.type} Exam</p>
-                    <h3 class="text-blue-900">${e.subject} | ${e.chapter}</h3>
-                    <a href="${link}" class="block bg-blue-700 text-white text-center py-3 rounded-2xl mt-4 text-sm">Start Exam</a>
-                </div>`;
-            }).join('');
-        } load();
+            const { data } = await atlas.from('exams').select('*').order('created_at', { ascending: false });
+            allExams = data || [];
+            renderSubjects();
+        }
+
+        function renderSubjects() {
+            state.view = 'subject';
+            document.getElementById('navTitle').innerText = "Select Subject";
+            const subs = [...new Set(allExams.map(e => e.subject))];
+            document.getElementById('displayArea').innerHTML = subs.map(s => `
+                <div onclick="renderPapers('${s}')" class="bg-white p-6 rounded-[2rem] shadow-sm border font-bold flex justify-between items-center active:scale-95 transition-all">
+                    <span>${s}</span> <span class="text-blue-500">→</span>
+                </div>
+            `).join('');
+        }
+
+        function renderPapers(sub) {
+            state.view = 'paper'; state.sub = sub;
+            document.getElementById('navTitle').innerText = sub;
+            const paps = [...new Set(allExams.filter(e => e.subject === sub).map(e => e.paper))];
+            document.getElementById('displayArea').innerHTML = paps.map(p => `
+                <div onclick="renderChapters('${p}')" class="bg-white p-6 rounded-[2rem] shadow-sm border font-bold flex justify-between items-center active:scale-95 transition-all">
+                    <span>${p || 'General'}</span> <span class="text-blue-500">→</span>
+                </div>
+            `).join('');
+        }
+
+        function renderChapters(pap) {
+            state.view = 'chapter'; state.pap = pap;
+            document.getElementById('navTitle').innerText = pap || "Chapters";
+            const exams = allExams.filter(e => e.subject === state.sub && e.paper === pap);
+            document.getElementById('displayArea').innerHTML = exams.map(e => `
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border font-bold">
+                    <p class="text-blue-900">${e.chapter}</p>
+                    <p class="text-[10px] text-gray-400 font-normal uppercase mt-1">Duration: ${e.duration} Min | Date: ${e.exam_date}</p>
+                    <button onclick="goToExam('${e.id}', '${e.type}', '${e.ext_link}')" class="w-full mt-4 bg-blue-700 text-white py-3 rounded-2xl text-xs shadow-lg">Start Exam</button>
+                </div>
+            `).join('');
+        }
+
+        function goToExam(id, type, link) {
+            if(type === 'link') window.location.href = link;
+            else window.location.href = `exam-hall.html?id=${id}`;
+        }
+
+        function goBack() {
+            if(state.view === 'chapter') renderPapers(state.sub);
+            else if(state.view === 'paper') renderSubjects();
+            else window.location.href = 'index.html';
+        }
+        load();
     </script>
 </body>
 </html>
