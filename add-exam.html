@@ -1,198 +1,167 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - Add Exam | ATLAS</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS - Premium Admin Panel</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f8fafc; }
+        .select2-container--default .select2-selection--single { height: 45px; border-radius: 12px; border: 1px solid #e2e8f0; padding-top: 8px; font-weight: 600; }
+        .input-style { width: 100%; padding: 12px; background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; font-weight: 600; outline: none; }
+    </style>
 </head>
-<body class="bg-gray-50">
-  <div class="max-w-4xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">নতুন পরীক্ষা যোগ করুন</h1>
+<body class="pb-20">
+    <div class="container mx-auto p-4 md:p-8">
+        <h1 class="text-3xl font-black mb-8 text-center text-blue-900 italic uppercase">📋 ATLAS Admin Dashboard</h1>
+        
+        <div class="bg-white rounded-[2.5rem] shadow-xl p-6 md:p-10 border border-gray-100 mb-10">
+            <h2 class="text-xl font-black mb-8 flex items-center text-gray-800">
+                <span class="bg-blue-100 p-2 rounded-xl mr-4 text-blue-600">➕</span> Create New Exam
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+                <div><label class="text-[10px] font-black text-gray-400 uppercase mb-2 block ml-2">Subject *</label><select id="subject" class="subject-suggest w-full"></select></div>
+                <div><label class="text-[10px] font-black text-gray-400 uppercase mb-2 block ml-2">Paper *</label><select id="paper" class="paper-suggest w-full"></select></div>
+                <div><label class="text-[10px] font-black text-gray-400 uppercase mb-2 block ml-2">Chapter *</label><select id="chapter" class="chapter-suggest w-full"></select></div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+                <div><label class="text-[10px] font-black text-gray-400 uppercase mb-2 block ml-2">Exam Title</label><input type="text" id="title" class="input-style" placeholder="Exam Name"></div>
+                <div class="grid grid-cols-2 gap-2 col-span-1 md:col-span-2">
+                    <div><label class="text-[10px] font-black text-blue-800 uppercase mb-2 block ml-2">Start Time</label><input type="datetime-local" id="startTime" class="input-style text-xs"></div>
+                    <div><label class="text-[10px] font-black text-blue-800 uppercase mb-2 block ml-2">End Time</label><input type="datetime-local" id="endTime" class="input-style text-xs"></div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
+                <div class="bg-red-50 p-5 rounded-2xl border border-red-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-red-600 uppercase mb-1">Negative Marking</p>
+                        <div class="flex gap-4">
+                            <label class="font-bold text-sm"><input type="radio" name="neg" value="on" class="mr-1"> ON</label>
+                            <label class="font-bold text-sm"><input type="radio" name="neg" value="off" checked class="mr-1"> OFF</label>
+                        </div>
+                    </div>
+                    <input type="number" id="negVal" class="w-20 bg-white border rounded-xl p-2 text-center font-bold text-red-600" value="0.25" step="0.25">
+                </div>
+                <div class="bg-gray-50 p-5 rounded-2xl border flex items-center justify-between">
+                    <span class="text-[10px] font-black text-gray-500 uppercase">Duration (Min)</span>
+                    <input type="number" id="duration" class="w-20 bg-white border rounded-xl p-2 text-center font-bold" value="20">
+                </div>
+            </div>
 
-    <div class="bg-white p-6 rounded-xl shadow">
-      <input type="file" id="csvInput" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-      
-      <div class="mt-6">
-        <button onclick="processCSV()" 
-                class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium">
-          CSV আপলোড ও প্রসেস করুন
-        </button>
-      </div>
+            <div class="flex gap-3 mb-6">
+                <button onclick="setMode('csv')" id="btnCsv" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-black text-xs uppercase tracking-widest">📁 CSV Upload</button>
+                <button onclick="setMode('link')" id="btnLink" class="flex-1 bg-white border text-gray-400 py-3 rounded-xl font-black text-xs uppercase tracking-widest">🔗 External Link</button>
+            </div>
 
-      <div id="status" class="mt-4 text-sm"></div>
-      <div id="preview" class="mt-6"></div>
+            <div id="csvBox" class="border-4 border-dashed border-blue-100 p-10 rounded-[2.5rem] text-center bg-blue-50/30 relative mb-10">
+                <input type="file" id="csvFile" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="updateFileName(this)">
+                <p id="fileName" class="font-black text-blue-900">Upload Exam CSV (10 Columns)</p>
+            </div>
+            
+            <div id="linkBox" class="hidden mb-10"><input type="url" id="extUrl" class="input-style p-4" placeholder="Paste URL here"></div>
+            
+            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-6 rounded-[2rem] font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all">Publish & Copy Link</button>
+        </div>
+
+        <div class="bg-white rounded-[2.5rem] shadow-lg p-8 border border-gray-100">
+            <h2 class="text-xl font-black mb-8 flex items-center text-gray-800"><span class="bg-green-100 p-2 rounded-xl mr-4 text-green-600">📋</span> Manage Exams</h2>
+            <div id="examsList" class="space-y-4"></div>
+        </div>
     </div>
-  </div>
-
-  <script>
-    // ==================== CSV Parser + Validator ====================
-    async function processCSV() {
-      const fileInput = document.getElementById('csvInput');
-      const status = document.getElementById('status');
-      const preview = document.getElementById('preview');
-
-      if (!fileInput.files.length) {
-        status.innerHTML = `<span class="text-red-600">❌ CSV ফাইল সিলেক্ট করুন</span>`;
-        return;
-      }
-
-      const file = fileInput.files[0];
-      status.innerHTML = `<span class="text-blue-600">📤 প্রসেসিং চলছে...</span>`;
-
-      const reader = new FileReader();
-      
-      reader.onload = function(e) {
-        const csvText = e.target.result;
-        const result = parseAndValidateCSV(csvText);
+    
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         
-        if (result.errors.length > 0) {
-          showErrors(result.errors);
-        } else {
-          saveExam(result.questions);
-          showSuccess(result.questions);
-        }
-      };
-      
-      reader.readAsText(file);
-    }
+        let currentMode = 'csv';
 
-    // ==================== মূল পার্সিং + ভ্যালিডেশন ফাংশন ====================
-    function parseAndValidateCSV(csvText) {
-      const lines = csvText.trim().split('\n');
-      const questions = [];
-      const errors = [];
+        $(document).ready(() => loadMetaData());
 
-      // Header চেক
-      const header = lines[0].toLowerCase().replace(/\s+/g, '');
-      const expectedHeaders = ['questions', 'option1', 'option2', 'option3', 'option4', 'option5', 'answer', 'explanation', 'type', 'section'];
-
-      if (!expectedHeaders.every(h => header.includes(h))) {
-        errors.push("❌ CSV হেডার সঠিক নয়। সঠিক ফরম্যাট: questions,option1,option2,option3,option4,option5,answer,explanation,type,section");
-      }
-
-      for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
-
-        const row = parseCSVLine(lines[i]); // স্মার্ট CSV লাইন পার্সার
-        const qNum = i;
-
-        // Required field validation
-        if (!row[0] || row[0].trim() === '') {
-          errors.push(`Row ${qNum}: প্রশ্ন খালি`);
-          continue;
+        function setMode(m) {
+            currentMode = m;
+            $('#csvBox').toggleClass('hidden', m !== 'csv'); $('#linkBox').toggleClass('hidden', m !== 'link');
+            $('#btnCsv').toggleClass('bg-blue-900 text-white', m === 'csv').toggleClass('bg-white text-gray-400', m !== 'csv');
+            $('#btnLink').toggleClass('bg-green-600 text-white', m === 'link').toggleClass('bg-white text-gray-400', m !== 'link');
         }
 
-        const answer = parseInt(row[6]);
-        if (isNaN(answer) || answer < 1 || answer > 5) {
-          errors.push(`Row ${qNum}: Answer সঠিক নয় (শুধু 1-5 এর মধ্যে নম্বর দিন)`);
+        function updateFileName(input) { if(input.files[0]) $('#fileName').text("Selected: " + input.files[0].name); }
+
+        async function loadMetaData() {
+            const { data } = await atlas.from('exams').select('subject, paper, chapter');
+            const getU = (k) => [...new Set((data||[]).map(e=>e[k]).filter(Boolean))];
+            $('.subject-suggest').select2({tags:true, placeholder: "Subject", data:getU('subject').map(v=>({id:v, text:v}))});
+            $('.paper-suggest').select2({tags:true, placeholder: "Paper", data:getU('paper').map(v=>({id:v, text:v}))});
+            $('.chapter-suggest').select2({tags:true, placeholder: "Chapter", data:getU('chapter').map(v=>({id:v, text:v}))});
+            renderExams();
         }
 
-        // Option validation
-        const options = [];
-        for (let j = 1; j <= 5; j++) {
-          if (row[j] && row[j].trim() !== '') {
-            options.push(row[j].trim());
-          }
+        async function publishExam() {
+            const btn = $('#pubBtn');
+            const sub = $('#subject').val(), chap = $('#chapter').val();
+            if(!sub || !chap) return alert('Subject & Chapter are mandatory!');
+            
+            btn.text("PUBLISHING...").prop('disabled', true);
+            let questions = [];
+
+            if(currentMode === 'csv') {
+                const file = $('#csvFile')[0].files[0];
+                if(!file) { btn.text("Publish").prop('disabled', false); return alert('Upload CSV!'); }
+                const text = await file.text();
+                const rows = text.split('\n').slice(1).filter(r => r.trim());
+                questions = rows.map(r => {
+                    const c = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
+                    return { 
+                        questions: c[0], option1: c[1], option2: c[2], option3: c[3], option4: c[4], 
+                        option5: c[5]||"", answer: c[6], explanation: c[7], type: "1", section: "1" 
+                    };
+                });
+                alert("✅ Upload Successfully!");
+            }
+
+            const exId = Date.now().toString();
+            const exLink = `${window.location.origin}/exam-hall.html?id=${exId}`;
+            
+            const { error } = await atlas.from('exams').insert([{
+                exam_id: exId, subject: sub, paper: $('#paper').val(), chapter: chap,
+                title: $('#title').val() || `${sub} - ${chap}`, questions: questions,
+                start_time: $('#startTime').val() || null, end_time: $('#endTime').val() || null,
+                negative_marking: $('input[name="neg"]:checked').val() === 'on',
+                negative_value: parseFloat($('#negVal').val()), duration: $('#duration').val(),
+                exam_link: exLink, type: currentMode, external_link: $('#extUrl').val() || ""
+            }]).select();
+
+            if(!error) {
+                navigator.clipboard.writeText(exLink).then(() => {
+                    alert("🚀 Exam Live!\nLink Copied: " + exLink);
+                    location.reload();
+                });
+            } else { alert("Error: " + error.message); btn.text("Publish").prop('disabled', false); }
         }
 
-        if (options.length < 2) {
-          errors.push(`Row ${qNum}: কমপক্ষে ২টি অপশন থাকতে হবে`);
+        async function renderExams() {
+            const { data } = await atlas.from('exams').select('*').order('created_at', {ascending: false});
+            if(data) {
+                $('#examsList').html(data.map(ex => `
+                    <div class="bg-gray-50 p-5 rounded-[2rem] flex justify-between items-center border border-gray-100 shadow-sm">
+                        <div><p class="font-black text-blue-900 text-sm">${ex.subject}: ${ex.chapter}</p><p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest">${ex.type}</p></div>
+                        <div class="flex gap-2">
+                            <button onclick="copyL('${ex.exam_link}')" class="bg-blue-900 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase">Copy Link</button>
+                            <button onclick="delEx('${ex.exam_id}')" class="text-red-500 font-bold text-xs hover:underline px-2">Delete</button>
+                        </div>
+                    </div>`).join(''));
+            }
         }
-
-        if (answer > options.length) {
-          errors.push(`Row \( {qNum}: Answer ( \){answer}) অপশনের সংখ্যার চেয়ে বড়`);
-        }
-
-        questions.push({
-          id: Date.now() + i,
-          question: row[0].trim(),
-          options: options,
-          answer: answer,
-          explanation: row[7] ? row[7].trim() : "",
-          type: row[8] ? parseInt(row[8]) : 1,
-          section: row[9] ? row[9].trim() : "General"
-        });
-      }
-
-      return { questions, errors };
-    }
-
-    // ==================== স্মার্ট CSV লাইন পার্সার (কমা হ্যান্ডেল করে) ====================
-    function parseCSVLine(line) {
-      const result = [];
-      let current = '';
-      let inQuotes = false;
-
-      for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        
-        if (char === '"' ) {
-          inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
-          result.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      result.push(current.trim());
-      return result;
-    }
-
-    // ==================== সেভ + সাকসেস মেসেজ ====================
-    function saveExam(questions) {
-      let allExams = JSON.parse(localStorage.getItem('atlas_exams') || '[]');
-      
-      const newExam = {
-        examId: 'exam_' + Date.now(),
-        title: "New Exam " + new Date().toLocaleDateString('bn-BD'),
-        questions: questions,
-        createdAt: new Date().toISOString(),
-        startTime: null,
-        endTime: null,
-        negativeMarking: false,
-        negativeValue: 0
-      };
-
-      allExams.push(newExam);
-      localStorage.setItem('atlas_exams', JSON.stringify(allExams));
-    }
-
-    function showSuccess(questions) {
-      const status = document.getElementById('status');
-      const preview = document.getElementById('preview');
-
-      const link = `\( {window.location.origin}/exam/exam-hall.html?examId= \){Date.now()}`;
-
-      status.innerHTML = `
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-          ✅ <strong>সফলভাবে আপলোড হয়েছে!</strong> ${questions.length} টি প্রশ্ন
-        </div>
-      `;
-
-      preview.innerHTML = `
-        <p class="font-medium">ইউনিক এক্সাম লিংক:</p>
-        <div class="flex gap-2 mt-2">
-          <input type="text" value="${link}" readonly class="flex-1 bg-gray-100 p-3 rounded border">
-          <button onclick="copyLink('${link}')" class="bg-blue-600 text-white px-6 rounded">কপি</button>
-        </div>
-      `;
-    }
-
-    function copyLink(link) {
-      navigator.clipboard.writeText(link);
-      alert("✅ লিংক কপি হয়েছে!");
-    }
-
-    function showErrors(errors) {
-      let html = `<div class="bg-red-100 border border-red-400 text-red-700 p-4 rounded">`;
-      html += `<strong>${errors.length} টি সমস্যা পাওয়া গেছে:</strong><ul class="list-disc pl-5 mt-2">`;
-      errors.forEach(err => html += `<li>${err}</li>`);
-      html += `</ul></div>`;
-      
-      document.getElementById('status').innerHTML = html;
-    }
-  </script>
+        window.copyL = (l) => { navigator.clipboard.writeText(l); alert('Link Copied!'); }
+        window.delEx = async (id) => { if(confirm('Delete this exam?')) { await atlas.from('exams').delete().eq('exam_id', id); renderExams(); } }
+    </script>
 </body>
 </html>
