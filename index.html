@@ -1,9 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="bn">
 <head>
-  <title>My First Site</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS - Medical & Varsity Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; }
+    </style>
 </head>
-<body>
-  <h1>Hello World 🚀</h1>
+<body class="bg-gray-50 text-gray-800">
+
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-700">ATLAS</h1>
+            <div class="space-x-4">
+                <a href="#classes" class="hover:text-blue-600">ক্লাস</a>
+                <a href="#exams" class="hover:text-blue-600">এক্সাম</a>
+                <a href="#" class="bg-blue-600 text-white px-4 py-2 rounded-lg">লগইন</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="bg-blue-700 text-white py-16 px-4 text-center">
+        <h2 class="text-3xl md:text-5xl font-bold mb-4">আপনার মেডিকেল ও ভার্সিটি প্রস্তুতির সঠিক গন্তব্য</h2>
+        <p class="text-lg opacity-90 mb-8">সেরা মেন্টরদের সাথে ঘরে বসেই নিন পূর্ণাঙ্গ প্রস্তুতি।</p>
+        <button class="bg-white text-blue-700 px-8 py-3 rounded-full font-semibold shadow-lg">কোর্স শুরু করুন</button>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        
+        <section id="classes" class="mb-16">
+            <h3 class="text-2xl font-bold mb-6 border-l-4 border-blue-600 pl-3">রিসেন্ট ক্লাসসমূহ</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="bg-gray-200 h-40 flex items-center justify-center text-gray-500">Video Thumbnail</div>
+                    <div class="p-4">
+                        <h4 class="font-bold mb-2">Biology: কোষ ও কোষের গঠন</h4>
+                        <button class="w-full mt-4 bg-gray-100 py-2 rounded-lg text-blue-700 font-medium">ভিডিও দেখুন</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="exams">
+            <h3 class="text-2xl font-bold mb-6 border-l-4 border-red-600 pl-3">চলমান পরীক্ষা</h3>
+            <div class="bg-white p-6 rounded-xl shadow-md flex justify-between items-center border border-red-100">
+                <div>
+                    <h4 class="font-bold text-lg">Daily Exam - 01</h4>
+                    <p class="text-sm text-gray-500">সময়: ২০ মিনিট | পূর্ণমান: ২৫</p>
+                </div>
+                <button class="bg-red-600 text-white px-6 py-2 rounded-lg">পরীক্ষা দিন</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-900 text-gray-400 py-8 text-center mt-20">
+        <p>© 2026 ATLAS - All Rights Reserved</p>
+        <p class="text-sm mt-2 font-mono italic">Developed for ATLAS by Amir Hamza Rafi</p>
+    </footer>
+
 </body>
 </html>
