@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS | Home</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
@@ -72,22 +73,40 @@
     </main>
 
     <script>
-        // রেজিস্ট্রেশন চেক করার লজিক
-        function handleRedirect(targetUrl) {
-            const user = localStorage.getItem('atlas_user');
-            
-            // যদি রেজিস্ট্রেশন ডাটা না থাকে, তবে রেজিস্ট্রেশন পেজে পাঠিয়ে দিবে
-            if (!user) {
-                alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পন্ন করো!");
-                window.location.href = 'register.html';
-            } else {
-                // রেজিস্ট্রেশন থাকলে কাঙ্ক্ষিত পেজে যাবে
-                window.location.href = targetUrl;
-            }
-        }
+        // Supabase Connection
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // পেজ লোড হওয়ার সময় চেক (যদি অটোমেটিক পাঠাতে চান)
-        // window.onload = () => { if(!localStorage.getItem('atlas_user')) window.location.href = 'register.html'; };
+        async function handleRedirect(targetUrl) {
+            const user = localStorage.getItem('atlas_user');
+
+            // ১. অ্যাডমিন প্যানেল থেকে রেজিস্ট্রেশন মোড চেক করা
+            try {
+                const { data: settings } = await atlas.from('settings').select('reg_required').single();
+                const isRegRequired = settings ? settings.reg_required : true;
+
+                // যদি রেজিস্ট্রেশন বাধ্যতামূলক হয় এবং ইউজার ডাটা না থাকে
+                if (isRegRequired && !user) {
+                    alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পন্ন করো!");
+                    window.location.href = 'register.html';
+                    return;
+                }
+            } catch (e) {
+                console.log("Settings not found, using default.");
+            }
+
+            // ২. ফাইল আছে কি না চেক করে রিডাইরেক্ট করা
+            fetch(targetUrl).then(response => {
+                if (response.ok) {
+                    window.location.href = targetUrl;
+                } else {
+                    alert("দুঃখিত! এই সেকশনটি এখনো তৈরি করা হচ্ছে। খুব দ্রুতই আসবে ইনশাআল্লাহ।");
+                }
+            }).catch(() => {
+                alert("ফাইলটি খুঁজে পাওয়া যায়নি।");
+            });
+        }
     </script>
 </body>
 </html>
