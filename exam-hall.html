@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Hall | ATLAS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
+        .sticky-timer { position: sticky; top: 0; z-index: 100; background: white; border-bottom: 2px solid #edf2f7; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <div id="infoArea" class="min-h-screen flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-md p-8 rounded-[3rem] shadow-2xl text-center border-t-8 border-blue-700">
+            <h1 id="hSub" class="text-3xl font-black text-blue-800 italic uppercase mb-2">Loading...</h1>
+            <p id="hPap" class="text-gray-400 font-bold mb-6 italic"></p>
+            <div class="bg-blue-50 p-6 rounded-3xl text-left space-y-3 mb-8">
+                <p class="text-sm font-bold">Chapter: <span id="hChap" class="text-blue-700"></span></p>
+                <p class="text-sm font-bold">Duration: <span id="hDur" class="text-blue-700"></span> Min</p>
+                <p class="text-[11px] text-gray-500 italic" id="hDesc"></p>
+            </div>
+            <button onclick="startExam()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black text-lg shadow-xl active:scale-95 transition-all uppercase tracking-widest">Start The Exam</button>
+        </div>
+    </div>
+
+    <div id="hallArea" class="hidden">
+        <div class="sticky-timer p-4 flex justify-between items-center px-6">
+            <span class="font-black text-blue-800 italic tracking-tighter">ATLAS MCQ HALL</span>
+            <div id="timerDisplay" class="bg-red-50 text-red-600 px-5 py-2 rounded-2xl font-black border border-red-100">00:00</div>
+        </div>
+        <div id="qBox" class="p-6 max-w-2xl mx-auto space-y-6"></div>
+        <div class="p-6 max-w-2xl mx-auto">
+            <button onclick="submitExam()" class="w-full bg-green-600 text-white py-5 rounded-3xl font-black shadow-xl">SUBMIT NOW</button>
+        </div>
+    </div>
+
+    <div id="resultArea" class="hidden p-6 max-w-2xl mx-auto space-y-6">
+        <div class="bg-white p-8 rounded-[3rem] shadow-2xl text-center border-b-8 border-blue-800">
+            <h2 class="text-2xl font-black text-blue-900 uppercase italic">Your Final Score</h2>
+            <div class="text-6xl font-black text-blue-700 my-4" id="resScore">0</div>
+            
+            <div class="w-48 h-48 mx-auto mb-8"><canvas id="resChart"></canvas></div>
+
+            <div class="grid grid-cols-3 gap-3 mb-8 text-center font-bold">
+                <div class="bg-green-50 p-4 rounded-3xl text-green-700"><p class="text-[10px] uppercase">Right</p><p id="rCount" class="text-lg">0</p></div>
+                <div class="bg-red-50 p-4 rounded-3xl text-red-700"><p class="text-[10px] uppercase">Wrong</p><p id="wCount" class="text-lg">0</p></div>
+                <div class="bg-gray-100 p-4 rounded-3xl text-gray-400"><p class="text-[10px] uppercase">Skip</p><p id="sCount" class="text-lg">0</p></div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="location.reload()" class="flex-1 bg-gray-100 py-4 rounded-2xl font-bold">Retake</button>
+                <button onclick="window.print()" class="flex-1 bg-blue-800 text-white py-4 rounded-2xl font-bold">PDF Solve Sheet</button>
+            </div>
+        </div>
+        <div id="solveSheet" class="space-y-4"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let exam = null;
+        let timeLeft = 0;
+        let interval = null;
+
+        async function init() {
+            const id = new URLSearchParams(window.location.search).get('id');
+            const { data } = await atlas.from('exams').select('*').eq('id', id).single();
+            if(data) {
+                exam = data;
+                document.getElementById('hSub').innerText = data.subject;
+                document.getElementById('hPap').innerText = data.paper;
+                document.getElementById('hChap').innerText = data.chapter;
+                document.getElementById('hDur').innerText = data.duration;
+                document.getElementById('hDesc').innerText = data.description || "প্রস্তুত তো? শুরু করো!";
+                timeLeft = data.duration * 60;
+            }
+        }
+
+        function startExam() {
+            document.getElementById('infoArea').classList.add('hidden');
+            document.getElementById('hallArea').classList.remove('hidden');
+            renderQuestions();
+            startTimer();
+        }
+
+        function renderQuestions() {
+            document.getElementById('qBox').innerHTML = exam.questions.map((q, i) => `
+                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border font-bold">
+                    <p class="text-gray-800 leading-relaxed mb-4">${i+1}. ${q.questions}</p>
+                    <div class="space-y-2">
+                        ${[1,2,3,4].map(n => `
+                            <label class="block p-4 bg-gray-50 rounded-2xl border border-gray-100 cursor-pointer active:bg-blue-50 transition-all">
+                                <input type="radio" name="q${i}" value="${n}" class="hidden">
+                                <span>${q['option'+n]}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            // Radio style change logic
+            document.querySelectorAll('label').forEach(lbl => {
+                lbl.onclick = function() {
+                    const name = this.querySelector('input').name;
+                    document.querySelectorAll(`input[name="${name}"]`).forEach(i => i.parentElement.classList.remove('bg-blue-100', 'border-blue-300'));
+                    this.classList.add('bg-blue-100', 'border-blue-300');
+                }
+            });
+        }
+
+        function startTimer() {
+            interval = setInterval(() => {
+                let m = Math.floor(timeLeft / 60);
+                let s = timeLeft % 60;
+                document.getElementById('timerDisplay').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                if(timeLeft <= 0) { clearInterval(interval); submitExam(); }
+                timeLeft--;
+            }, 1000);
+        }
+
+        async function submitExam() {
+            clearInterval(interval);
+            let r=0, w=0, s=0;
+            exam.questions.forEach((q, i) => {
+                const sel = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+                if(!sel) s++;
+                else if(sel == q.answer) r++;
+                else w++;
+            });
+            const finalScore = r - (w * 0.25);
+            showResult(r, w, s, finalScore);
+            
+            // Save History (Personal Profile এর জন্য)
+            const user = JSON.parse(localStorage.getItem('atlas_user'));
+            await atlas.from('exam_results').insert([{
+                student_id: user.whatsapp, exam_id: exam.id, score: finalScore, right_ans: r, wrong_ans: w, skip_ans: s, total_q: exam.questions.length
+            }]);
+        }
+
+        function showResult(r, w, s, score) {
+            document.getElementById('hallArea').classList.add('hidden');
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('resScore').innerText = `${score} / ${exam.questions.length}`;
+            document.getElementById('rCount').innerText = r;
+            document.getElementById('wCount').innerText = w;
+            document.getElementById('sCount').innerText = s;
+
+            new Chart(document.getElementById('resChart'), {
+                type: 'doughnut',
+                data: { datasets: [{ data: [r, w, s], backgroundColor: ['#22c55e', '#ef4444', '#e5e7eb'], borderWidth: 0 }] },
+                options: { cutout: '85%' }
+            });
+
+            document.getElementById('solveSheet').innerHTML = exam.questions.map((q, i) => {
+                const sel = document.querySelector(`input[name="q${i}"]:checked`)?.value;
+                return `
+                <div class="bg-white p-6 rounded-[2.5rem] border-l-8 ${sel==q.answer ? 'border-green-500' : (sel ? 'border-red-500' : 'border-gray-300')} shadow-sm font-bold">
+                    <p class="text-blue-900">${i+1}. ${q.questions}</p>
+                    <p class="text-xs text-green-600 mt-2">✅ Correct: ${q['option'+q.answer]}</p>
+                    ${sel && sel != q.answer ? `<p class="text-xs text-red-500">❌ Your Ans: ${q['option'+sel]}</p>` : ''}
+                    <div class="mt-4 p-4 bg-gray-50 rounded-2xl text-[10px] text-gray-500 leading-relaxed font-normal">
+                        <b class="text-blue-800">Explanation:</b> ${q.explanation || 'No explanation found.'}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        init();
+    </script>
+</body>
+</html>
