@@ -5,270 +5,584 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ATLAS - Exam Hall</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background: #f8fafc; scroll-behavior: smooth; }
-        
-        /* Exam Options */
-        .opt-label { cursor: pointer; border: 2px solid #f1f5f9; border-radius: 1rem; padding: 14px; font-weight: 600; background: #fff; margin-bottom: 10px; transition: 0.2s; display: flex; align-items: center; }
-        .opt-letter { width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 12px; shrink-0; }
-        .selected-opt { border-color: #1e40af; background: #eff6ff; }
-        .selected-opt .opt-letter { background: #1e40af; color: white; }
-        .locked { cursor: not-allowed; opacity: 0.7; }
-
-        /* Navigation */
-        .nav-box { position: fixed; right: 20px; top: 100px; width: 160px; max-height: 55vh; overflow-y: auto; background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 40; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border: 1px solid #e2e8f0; }
-        .nav-btn { width: 100%; aspect-ratio: 1; border-radius: 10px; font-size: 11px; font-weight: bold; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .nav-btn.answered { background: #1e40af; color: white; }
-        
-        /* Fixed Submit */
-        .fixed-submit { position: fixed; bottom: 30px; right: 30px; z-index: 50; padding: 16px 35px; border-radius: 30px; font-weight: 900; background: #1e40af; color: white; text-transform: uppercase; box-shadow: 0 10px 20px rgba(30,64,175,0.3); border: none; cursor: pointer; }
-        
-        /* Filters */
-        .filter-btn { padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; border: 1px solid #e2e8f0; background: white; color: #64748b; }
-        .filter-active { background: #16a34a; color: white; border-color: #16a34a; }
-
-        @media (max-width: 1024px) { .nav-box { display: none; } .fixed-submit { right: 5%; width: 90%; bottom: 20px; } }
-        @media print { .no-print { display: none !important; } }
+        .fixed-bottom {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        .nav-box {
+            position: fixed;
+            right: 20px;
+            top: 20px;
+            width: 280px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            padding: 16px;
+            z-index: 99;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .question-container {
+            margin-right: 320px;
+            padding-bottom: 100px;
+        }
+        @media (max-width: 768px) {
+            .nav-box {
+                display: none;
+            }
+            .question-container {
+                margin-right: 0;
+            }
+        }
+        .nav-btn-answered {
+            background-color: #22c55e;
+            color: white;
+        }
+        .nav-btn-unanswered {
+            background-color: #9ca3af;
+            color: white;
+        }
+        .nav-btn-current {
+            background-color: #3b82f6;
+            color: white;
+            transform: scale(1.1);
+        }
+        .submit-btn-fixed {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 100;
+            background-color: #ef4444;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .submit-btn-fixed:hover {
+            background-color: #dc2626;
+            transform: scale(1.05);
+        }
+        .timer-display {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
-<body class="pb-32">
-
-    <div id="examContainer" class="container mx-auto p-4 md:p-6"></div>
+<body class="bg-gray-100">
+    <div id="examContainer"></div>
     
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        let examData = null, userAnswers = [], lockedAnswers = [], timer = null, timeLeft = 0;
+        let examData = null;
+        let userAnswers = [];
+        let lockedAnswers = [];
+        let timer = null;
+        let timeLeft = 0;
+        let currentQuestionIndex = 0;
+        
         const urlParams = new URLSearchParams(window.location.search);
         const examId = urlParams.get('id');
-        const letters = ['A', 'B', 'C', 'D', 'E'];
-
+        
         async function loadExam() {
-            if(!examId) return;
-            const { data, error } = await supabase.from('exams').select('*').eq('exam_id', examId).single();
-            if(data) {
-                examData = data;
-                userAnswers = new Array(examData.questions.length).fill(null);
-                lockedAnswers = new Array(examData.questions.length).fill(false);
-                showPreExamInfo();
+            if(!examId) {
+                document.getElementById('examContainer').innerHTML = '<div class="text-center text-red-500 text-2xl mt-20">❌ No Exam ID provided</div>';
+                return;
             }
+            
+            const { data, error } = await supabase.from('exams').select('*').eq('exam_id', examId).single();
+            if(error || !data) {
+                document.getElementById('examContainer').innerHTML = '<div class="text-center text-red-500 text-2xl mt-20">❌ Exam not found</div>';
+                return;
+            }
+            
+            if(data.end_time && new Date(data.end_time) < new Date()) {
+                document.getElementById('examContainer').innerHTML = '<div class="text-center text-red-500 text-2xl mt-20">⏰ This exam has expired!</div>';
+                return;
+            }
+            
+            examData = data;
+            userAnswers = new Array(examData.questions.length).fill(null);
+            lockedAnswers = new Array(examData.questions.length).fill(false);
+            
+            showPreExamInfo();
         }
-
+        
         function showPreExamInfo() {
-            document.getElementById('examContainer').innerHTML = `
-                <div class="bg-white rounded-[2.5rem] shadow-xl p-8 max-w-xl mx-auto border border-gray-100 text-center">
-                    <h1 class="text-3xl font-black text-blue-900 mb-2 italic uppercase">ATLAS Exam Hall</h1>
-                    <p class="text-sm font-bold text-blue-600 mb-8 uppercase tracking-widest">${examData.chapter}</p>
-                    <div class="grid grid-cols-3 gap-3 mb-8">
-                        <div class="bg-gray-50 p-4 rounded-2xl border">
-                            <p class="text-[9px] font-black text-gray-400 uppercase">Time</p>
-                            <p class="font-black text-blue-800">${examData.duration || 60} M</p>
+            const container = document.getElementById('examContainer');
+            container.innerHTML = `
+                <div class="min-h-screen flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full">
+                        <h1 class="text-3xl font-bold mb-4 text-center">${examData.title || examData.subject + ' Exam'}</h1>
+                        <div class="space-y-3 mb-6">
+                            <p><strong>📚 Subject:</strong> ${examData.subject}</p>
+                            <p><strong>📖 Paper:</strong> ${examData.paper}</p>
+                            <p><strong>📑 Chapter:</strong> ${examData.chapter}</p>
+                            <p><strong>❓ Total Questions:</strong> ${examData.questions.length}</p>
+                            <p><strong>⏱️ Time Limit:</strong> ${examData.duration || 60} minutes</p>
+                            ${examData.end_time ? `<p><strong>📅 Valid Until:</strong> ${new Date(examData.end_time).toLocaleString()}</p>` : ''}
+                            ${examData.negative_marking ? `<p class="text-red-600"><strong>⚠️ Negative Marking:</strong> ${examData.negative_value} marks per wrong answer</p>` : '<p class="text-green-600">✅ No negative marking</p>'}
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-2xl border">
-                            <p class="text-[9px] font-black text-gray-400 uppercase">Questions</p>
-                            <p class="font-black text-blue-800">${examData.questions.length}</p>
+                        <div class="mb-6">
+                            <label class="block font-semibold mb-2">Enter Your Name:</label>
+                            <input type="text" id="studentName" class="w-full border p-3 rounded-lg" placeholder="Your full name">
                         </div>
-                        <div class="bg-gray-50 p-4 rounded-2xl border">
-                            <p class="text-[9px] font-black text-gray-400 uppercase">Negative</p>
-                            <p class="font-black text-red-600">${examData.negative_value || 0.25}</p>
-                        </div>
+                        <button onclick="startExam()" class="bg-green-600 text-white px-6 py-3 rounded-lg w-full font-bold hover:bg-green-700 transition">🚀 Start Exam</button>
                     </div>
-                    <div class="mb-8">
-                        <input type="text" id="studentName" class="w-full bg-gray-50 border p-4 rounded-2xl font-bold text-center outline-none focus:border-blue-500" placeholder="Enter Your Full Name">
-                    </div>
-                    <button onclick="startExam()" class="w-full bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl">Start Exam Now</button>
                 </div>
             `;
         }
-
+        
         function startExam() {
-            const name = document.getElementById('studentName').value;
-            if(!name) return alert('Name is required!');
-            sessionStorage.setItem(`exam_${examId}_name`, name);
-            renderExam();
+            const studentName = document.getElementById('studentName').value;
+            if(!studentName) return alert('Please enter your name');
+            
+            sessionStorage.setItem(`exam_${examId}_answers`, JSON.stringify(userAnswers));
+            sessionStorage.setItem(`exam_${examId}_locked`, JSON.stringify(lockedAnswers));
+            sessionStorage.setItem(`exam_${examId}_name`, studentName);
+            
+            renderFullExam();
             startTimer();
         }
-
-        function renderExam() {
+        
+        function renderFullExam() {
             const container = document.getElementById('examContainer');
-            container.innerHTML = `
-                <nav class="bg-white/80 backdrop-blur-md p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center px-6 no-print rounded-2xl mb-6">
-                    <span class="font-black text-blue-900 italic uppercase">ATLAS Live</span>
-                    <div id="timerDisplay" class="font-black text-red-600 bg-red-50 px-5 py-2 rounded-full border border-red-100 text-lg">00:00</div>
-                </nav>
-                <div id="navBox" class="nav-box no-print"></div>
-                <div id="qList" class="max-w-3xl lg:ml-12 space-y-6"></div>
-                <button onclick="submitExam()" class="fixed-submit no-print">Submit Exam</button>
+            const questions = examData.questions;
+            
+            // Navigation Box HTML
+            let navHtml = `
+                <div class="nav-box">
+                    <h3 class="font-bold mb-3 text-lg">📌 Question Navigator</h3>
+                    <div class="grid grid-cols-5 gap-2" id="navButtons">
             `;
             
-            document.getElementById('navBox').innerHTML = examData.questions.map((_, i) => `<button onclick="scrollToQ(${i})" id="nav-${i}" class="nav-btn ${userAnswers[i] !== null ? 'answered' : ''}">${i+1}</button>`).join('');
+            for(let i=0; i<questions.length; i++) {
+                const status = userAnswers[i] !== null ? 'answered' : 'unanswered';
+                navHtml += `<button onclick="scrollToQuestion(${i})" id="navBtn${i}" class="nav-btn-${status} w-10 h-10 rounded-full font-bold transition-all hover:scale-110">${i+1}</button>`;
+            }
+            navHtml += `</div></div>`;
             
-            document.getElementById('qList').innerHTML = examData.questions.map((q, i) => {
-                const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
-                return `
-                    <div id="q-${i}" class="bg-white rounded-[2rem] shadow-sm p-6 md:p-8 border border-gray-100">
-                        <p class="font-black text-gray-800 text-lg mb-6 leading-relaxed"><span class="text-blue-700 mr-2">${i+1}.</span> ${q.questions}</p>
-                        <div class="space-y-2">
-                            ${options.map((opt, oIdx) => `
-                                <div onclick="selectAnswer(${i}, ${oIdx+1}, this)" class="opt-label opt-btn-${i} ${userAnswers[i] === (oIdx+1) ? 'selected-opt' : ''} ${lockedAnswers[i] ? 'locked' : ''}">
-                                    <div class="opt-letter">${letters[oIdx]}</div>
+            // Questions HTML
+            let questionsHtml = `<div class="question-container p-6">`;
+            questions.forEach((q, idx) => {
+                const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(opt => opt && opt.trim());
+                questionsHtml += `
+                    <div id="q-${idx}" class="bg-white rounded-lg shadow-md p-6 mb-4" data-qid="${idx}">
+                        <div class="font-bold text-lg mb-3">${idx+1}. ${q.questions}</div>
+                        <div class="space-y-3 ml-4">
+                            ${options.map((opt, optIdx) => `
+                                <label class="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer ${lockedAnswers[idx] ? 'opacity-60' : ''}">
+                                    <input type="radio" name="q${idx}" value="${optIdx+1}" ${userAnswers[idx] === (optIdx+1) ? 'checked' : ''} ${lockedAnswers[idx] ? 'disabled' : ''} onchange="selectAnswer(${idx}, ${optIdx+1})">
+                                    <span class="font-medium">${String.fromCharCode(65+optIdx)}.</span>
                                     <span>${opt}</span>
-                                </div>
+                                </label>
                             `).join('')}
                         </div>
+                        ${lockedAnswers[idx] ? '<div class="text-orange-500 text-sm mt-3 ml-4">🔒 Locked (Answer cannot be changed)</div>' : ''}
                     </div>
                 `;
-            }).join('');
+            });
+            questionsHtml += `</div>`;
+            
+            // Submit Button
+            const submitBtn = `<button onclick="confirmSubmit()" class="submit-btn-fixed">📝 Submit Exam</button>`;
+            
+            // Timer Display
+            const timerDisplay = `<div class="timer-display" id="timerDisplay">⏱️ Loading...</div>`;
+            
+            container.innerHTML = navHtml + questionsHtml + submitBtn + timerDisplay;
+            
+            // Highlight current question on scroll
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if(entry.isIntersecting) {
+                        const qid = entry.target.getAttribute('data-qid');
+                        updateNavHighlight(parseInt(qid));
+                    }
+                });
+            }, { threshold: 0.5 });
+            
+            document.querySelectorAll('[data-qid]').forEach(el => observer.observe(el));
         }
-
-        window.selectAnswer = (qIdx, ansIdx, el) => {
-            if(lockedAnswers[qIdx]) return;
-            userAnswers[qIdx] = ansIdx;
-            lockedAnswers[qIdx] = true; // Lock immediately
-            el.classList.add('selected-opt');
-            document.getElementById(`nav-${qIdx}`).classList.add('answered');
-            document.querySelectorAll(`.opt-btn-${qIdx}`).forEach(b => b.classList.add('locked'));
+        
+        function updateNavHighlight(currentIndex) {
+            for(let i=0; i<examData.questions.length; i++) {
+                const btn = document.getElementById(`navBtn${i}`);
+                if(btn) {
+                    btn.classList.remove('nav-btn-current');
+                    if(i === currentIndex) {
+                        btn.classList.add('nav-btn-current');
+                    }
+                }
+            }
+        }
+        
+        function updateNavButtonStyle(qIndex) {
+            const btn = document.getElementById(`navBtn${qIndex}`);
+            if(btn) {
+                btn.classList.remove('nav-btn-answered', 'nav-btn-unanswered');
+                btn.classList.add(userAnswers[qIndex] !== null ? 'nav-btn-answered' : 'nav-btn-unanswered');
+            }
+        }
+        
+        window.selectAnswer = (qIndex, answer) => {
+            if(lockedAnswers[qIndex]) {
+                alert('⚠️ This answer is locked! You cannot change it.');
+                return;
+            }
+            
+            userAnswers[qIndex] = answer;
+            lockedAnswers[qIndex] = true; // Lock immediately
+            
+            sessionStorage.setItem(`exam_${examId}_answers`, JSON.stringify(userAnswers));
+            sessionStorage.setItem(`exam_${examId}_locked`, JSON.stringify(lockedAnswers));
+            
+            // Update navigation button
+            updateNavButtonStyle(qIndex);
+            
+            // Re-render just this question to show lock status
+            const qDiv = document.getElementById(`q-${qIndex}`);
+            if(qDiv) {
+                const options = [examData.questions[qIndex].option1, examData.questions[qIndex].option2, 
+                               examData.questions[qIndex].option3, examData.questions[qIndex].option4, 
+                               examData.questions[qIndex].option5].filter(opt => opt && opt.trim());
+                
+                qDiv.innerHTML = `
+                    <div class="font-bold text-lg mb-3">${qIndex+1}. ${examData.questions[qIndex].questions}</div>
+                    <div class="space-y-3 ml-4">
+                        ${options.map((opt, optIdx) => `
+                            <label class="flex items-center gap-3 p-2 rounded ${lockedAnswers[qIndex] ? 'opacity-60 bg-gray-100' : 'hover:bg-gray-50'}">
+                                <input type="radio" name="q${qIndex}" value="${optIdx+1}" ${userAnswers[qIndex] === (optIdx+1) ? 'checked' : ''} disabled>
+                                <span class="font-medium">${String.fromCharCode(65+optIdx)}.</span>
+                                <span>${opt}</span>
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div class="text-orange-500 text-sm mt-3 ml-4">🔒 Locked (Answer cannot be changed)</div>
+                `;
+            }
         };
-
-        window.scrollToQ = (i) => document.getElementById(`q-${i}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-
+        
+        window.scrollToQuestion = (index) => {
+            const element = document.getElementById(`q-${index}`);
+            if(element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                currentQuestionIndex = index;
+            }
+        };
+        
         function startTimer() {
             timeLeft = (examData.duration || 60) * 60;
+            const timerDisplay = document.getElementById('timerDisplay');
+            
             timer = setInterval(() => {
-                if(timeLeft <= 0) { clearInterval(timer); submitExam(); }
-                let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-                document.getElementById('timerDisplay').innerText = `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
+                if(timeLeft <= 0) {
+                    clearInterval(timer);
+                    confirmSubmit();
+                }
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                if(timerDisplay) {
+                    timerDisplay.innerHTML = `⏱️ ${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+                    if(timeLeft <= 60) {
+                        timerDisplay.style.backgroundColor = '#dc2626';
+                        timerDisplay.style.animation = 'pulse 1s infinite';
+                    }
+                }
                 timeLeft--;
             }, 1000);
         }
-
+        
+        window.confirmSubmit = () => {
+            const unanswered = userAnswers.filter(a => a === null).length;
+            if(unanswered > 0) {
+                if(!confirm(`⚠️ You have ${unanswered} unanswered questions.\n\nDo you still want to submit?`)) {
+                    return;
+                }
+            }
+            submitExam();
+        };
+        
         async function submitExam() {
             if(timer) clearInterval(timer);
+            
+            const studentName = sessionStorage.getItem(`exam_${examId}_name`);
             const questions = examData.questions;
             let correct = 0, wrong = 0, skipped = 0;
-            const detailed = [];
+            const detailedResults = [];
             
-            questions.forEach((q, i) => {
-                const uAns = userAnswers[i], cAns = parseInt(q.answer);
-                if(uAns === null) skipped++;
-                else if(uAns === cAns) correct++;
-                else wrong++;
-                detailed.push({ correct: uAns === cAns, skipped: uAns === null, user: uAns, actual: cAns });
-            });
-
-            const negVal = examData.negative_marking ? (wrong * examData.negative_value) : 0;
-            const finalScore = Math.max(0, correct - negVal);
-
+            for(let i=0; i<questions.length; i++) {
+                const userAns = userAnswers[i];
+                const correctAns = parseInt(questions[i].answer);
+                const isCorrect = (userAns === correctAns);
+                
+                if(userAns === null) {
+                    skipped++;
+                    detailedResults.push({ 
+                        correct: false, 
+                        skipped: true, 
+                        userAnswer: null, 
+                        correctAnswer: correctAns,
+                        explanation: questions[i].explanation
+                    });
+                } else if(isCorrect) {
+                    correct++;
+                    detailedResults.push({ 
+                        correct: true, 
+                        skipped: false, 
+                        userAnswer: userAns, 
+                        correctAnswer: correctAns,
+                        explanation: questions[i].explanation
+                    });
+                } else {
+                    wrong++;
+                    detailedResults.push({ 
+                        correct: false, 
+                        skipped: false, 
+                        userAnswer: userAns, 
+                        correctAnswer: correctAns,
+                        explanation: questions[i].explanation
+                    });
+                }
+            }
+            
+            let totalMarks = correct;
+            let negativeMarksApplied = 0;
+            
+            if(examData.negative_marking) {
+                negativeMarksApplied = wrong * examData.negative_value;
+                totalMarks = correct - negativeMarksApplied;
+                totalMarks = Math.max(0, totalMarks);
+            }
+            
             const result = {
-                student_name: sessionStorage.getItem(`exam_${examId}_name`),
-                exam_id: examId,
-                correct, wrong, skipped,
-                final_score: finalScore.toFixed(2),
-                neg_applied: negVal.toFixed(2),
+                student_name: studentName,
+                exam_id: examData.exam_id,
+                exam_title: examData.title || examData.subject,
+                total: questions.length,
+                correct: correct,
+                wrong: wrong,
+                skipped: skipped,
+                total_marks: totalMarks.toFixed(2),
+                negative_applied: examData.negative_marking,
+                negative_value: examData.negative_value,
+                negative_marks_deducted: negativeMarksApplied.toFixed(2),
+                detailed_results: detailedResults,
                 questions: examData.questions,
-                detailed_results: detailed,
+                user_answers: userAnswers,
                 timestamp: new Date()
             };
             
             await supabase.from('results').insert([result]);
-            showResult(result);
+            showResultWithSolveSheet(result);
         }
-
-        function showResult(r) {
-            document.getElementById('examContainer').innerHTML = `
-                <div class="max-w-3xl mx-auto py-10">
-                    <div class="flex justify-between items-center mb-6 no-print">
-                        <button onclick="location.reload()" class="bg-white border px-4 py-2 rounded-xl text-sm font-bold">❮ Retake</button>
-                        <button onclick="window.print()" class="bg-blue-900 text-white px-5 py-2 rounded-xl font-bold text-sm shadow-lg">Download PDF</button>
+        
+        function showResultWithSolveSheet(result) {
+            const container = document.getElementById('examContainer');
+            const percentage = ((result.correct - (result.negative_applied ? result.wrong * result.negative_value : 0)) / result.total * 100).toFixed(1);
+            
+            let negativeInfo = '';
+            if(result.negative_applied) {
+                negativeInfo = `
+                    <div class="bg-yellow-100 p-3 rounded-lg text-center">
+                        <div class="text-sm text-gray-600">Negative Marks Deducted</div>
+                        <div class="text-xl font-bold text-red-600">-${result.negative_marks_deducted}</div>
+                        <div class="text-xs text-gray-500">${result.wrong} wrong × ${result.negative_value} marks</div>
                     </div>
-
-                    <div class="bg-white rounded-[2.5rem] shadow-sm p-8 border mb-8">
-                        <h3 class="font-black text-gray-800 mb-6 flex items-center">📊 Score Breakdown</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                            <div class="w-48 h-48 mx-auto"><canvas id="resChart"></canvas></div>
-                            <div class="space-y-3">
-                                <div class="bg-green-50 p-4 rounded-2xl flex justify-between border border-green-100">
-                                    <span class="text-[10px] font-black text-green-700 uppercase">Correct Score</span>
-                                    <span class="font-black text-green-600">+${r.correct}.0</span>
-                                </div>
-                                <div class="bg-red-50 p-4 rounded-2xl flex justify-between border border-red-100">
-                                    <span class="text-[10px] font-black text-red-700 uppercase">Negative Mark</span>
-                                    <span class="font-black text-red-600">-${r.neg_applied}</span>
-                                </div>
-                                <div class="bg-blue-900 p-5 rounded-2xl flex justify-between items-center">
-                                    <span class="text-xs font-black text-blue-100 uppercase">Final Score</span>
-                                    <span class="text-3xl font-black text-white">${r.final_score}</span>
-                                </div>
+                `;
+            }
+            
+            container.innerHTML = `
+                <div class="bg-white min-h-screen p-6">
+                    <div class="max-w-6xl mx-auto">
+                        <h1 class="text-3xl font-bold mb-4 text-center">📊 Exam Result Analysis</h1>
+                        <div class="text-center mb-6">
+                            <p class="text-xl"><strong>${result.student_name}</strong> - ${result.exam_title}</p>
+                            <p class="text-gray-600">${new Date().toLocaleString()}</p>
+                        </div>
+                        
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-8">
+                            <div class="bg-blue-100 p-3 rounded-lg text-center">
+                                <div class="text-2xl font-bold">${result.total}</div>
+                                <div class="text-xs">Total</div>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-green-600">${result.correct}</div>
+                                <div class="text-xs">Correct</div>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-red-600">${result.wrong}</div>
+                                <div class="text-xs">Wrong</div>
+                            </div>
+                            <div class="bg-gray-100 p-3 rounded-lg text-center">
+                                <div class="text-2xl font-bold">${result.skipped}</div>
+                                <div class="text-xs">Skipped</div>
+                            </div>
+                            ${negativeInfo}
+                            <div class="bg-purple-100 p-3 rounded-lg text-center">
+                                <div class="text-2xl font-bold text-purple-600">${result.total_marks}</div>
+                                <div class="text-xs">Final Score</div>
                             </div>
                         </div>
+                        
+                        <!-- Performance Chart -->
+                        <div class="mb-8">
+                            <canvas id="performanceChart" width="400" height="400" style="max-width: 400px; margin: 0 auto;"></canvas>
+                            <div class="text-center mt-4">
+                                <p class="text-lg font-bold">Performance: ${percentage}%</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Filter Buttons -->
+                        <div class="mb-4 flex gap-2 flex-wrap sticky top-0 bg-white py-2 z-10">
+                            <button onclick="filterQuestions('all')" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">📋 All Questions</button>
+                            <button onclick="filterQuestions('correct')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">✅ Correct (${result.correct})</button>
+                            <button onclick="filterQuestions('incorrect')" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition">❌ Incorrect (${result.wrong})</button>
+                            <button onclick="filterQuestions('skipped')" class="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition">⏭️ Skipped (${result.skipped})</button>
+                            <button onclick="downloadFullPDF()" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition ml-auto">📄 Download PDF</button>
+                        </div>
+                        
+                        <!-- Scrollable Solve Sheet -->
+                        <div id="solveSheet" class="space-y-4 max-h-[600px] overflow-y-auto border rounded-lg p-4 bg-gray-50"></div>
+                        
+                        <!-- Retry Button -->
+                        <div class="mt-6 text-center">
+                            <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition">🔄 Take Another Exam</button>
+                        </div>
                     </div>
-
-                    <div class="flex gap-2 mb-6 no-print overflow-x-auto pb-2">
-                        <button onclick="filter('all')" id="f-all" class="filter-btn filter-active">All (${r.questions.length})</button>
-                        <button onclick="filter('correct')" id="f-correct" class="filter-btn">Correct (${r.correct})</button>
-                        <button onclick="filter('wrong')" id="f-wrong" class="filter-btn">Incorrect (${r.wrong})</button>
-                        <button onclick="filter('skipped')" id="f-skipped" class="filter-btn">Skipped (${r.skipped})</button>
-                    </div>
-                    
-                    <div id="solveSheet" class="space-y-4"></div>
                 </div>
             `;
             
-            new Chart(document.getElementById('resChart'), {
+            // Draw chart
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(ctx, {
                 type: 'doughnut',
-                data: { datasets: [{ data: [r.correct, r.wrong, r.skipped], backgroundColor: ['#22c55e', '#ef4444', '#e2e8f0'] }] },
-                options: { cutout: '80%', plugins: { legend: { display: false } } }
+                data: { 
+                    labels: ['Correct', 'Wrong', 'Skipped'], 
+                    datasets: [{ 
+                        data: [result.correct, result.wrong, result.skipped], 
+                        backgroundColor: ['#22c55e', '#ef4444', '#6b7280'],
+                        borderWidth: 0
+                    }] 
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
             });
-
-            window.currentR = r;
-            filter('all');
-        }
-
-        window.filter = (f) => {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('filter-active'));
-            document.getElementById(`f-${f}`).classList.add('filter-active');
             
-            const r = window.currentR;
-            let list = r.detailed_results.map((res, i) => ({...res, q: r.questions[i], idx: i}));
-            if(f === 'correct') list = list.filter(x => x.correct);
-            else if(f === 'wrong') list = list.filter(x => !x.correct && !x.skipped);
-            else if(f === 'skipped') list = list.filter(x => x.skipped);
-
-            document.getElementById('solveSheet').innerHTML = list.map(item => {
-                const q = item.q;
-                const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
-                const correctText = opts[item.actual-1];
-                const userText = item.skipped ? 'Skipped' : opts[item.user-1];
+            window.currentResult = result;
+            renderSolveSheet('all');
+        }
+        
+        window.filterQuestions = (filter) => {
+            renderSolveSheet(filter);
+        };
+        
+        function renderSolveSheet(filter) {
+            const result = window.currentResult;
+            const sheetDiv = document.getElementById('solveSheet');
+            if(!sheetDiv) return;
+            
+            let filtered = result.detailed_results.map((r, i) => ({...r, index: i, question: result.questions[i]}));
+            
+            if(filter === 'correct') filtered = filtered.filter(r => r.correct === true);
+            else if(filter === 'incorrect') filtered = filtered.filter(r => r.correct === false && !r.skipped);
+            else if(filter === 'skipped') filtered = filtered.filter(r => r.skipped);
+            
+            if(filtered.length === 0) {
+                sheetDiv.innerHTML = '<div class="text-center text-gray-500 py-8">No questions to display</div>';
+                return;
+            }
+            
+            sheetDiv.innerHTML = filtered.map(r => {
+                const options = [r.question.option1, r.question.option2, r.question.option3, r.question.option4, r.question.option5].filter(opt => opt && opt.trim());
+                const statusIcon = r.correct ? '✅' : (r.skipped ? '⏭️' : '❌');
+                const statusText = r.correct ? 'Correct' : (r.skipped ? 'Skipped' : 'Wrong');
                 
-                let badge = `<div class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center font-black text-sm">${item.idx+1}</div>`;
-                if(item.correct) badge = `<div class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-black text-sm">${item.idx+1}</div>`;
-                else if(!item.skipped) badge = `<div class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-black text-sm">${item.idx+1}</div>`;
-
                 return `
-                    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-                        <div class="flex items-start gap-4 mb-6">
-                            ${badge} <p class="font-bold text-gray-800 pt-1">${q.questions}</p>
+                    <div class="border rounded-lg p-5 ${r.correct ? 'border-green-300 bg-green-50' : r.skipped ? 'border-gray-300 bg-gray-50' : 'border-red-300 bg-red-50'}">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="font-bold text-lg">Q${r.index+1}. ${r.question.questions}</div>
+                            <div class="px-3 py-1 rounded-full text-sm font-bold ${r.correct ? 'bg-green-200 text-green-800' : r.skipped ? 'bg-gray-200 text-gray-800' : 'bg-red-200 text-red-800'}">
+                                ${statusIcon} ${statusText}
+                            </div>
                         </div>
-                        <div class="pl-12 space-y-3">
-                            ${opts.map((o, oi) => {
-                                let icon = `<div class="opt-letter border">${letters[oi]}</div>`;
-                                if(oi+1 === item.actual) icon = `<div class="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-3 shrink-0">✓</div>`;
-                                else if(oi+1 === item.user && !item.correct) icon = `<div class="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center font-bold mr-3 shrink-0">✕</div>`;
-                                return `<div class="flex items-center text-sm font-semibold text-gray-700">${icon}<span>${o}</span></div>`;
-                            }).join('')}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+                            <div class="p-2 rounded ${r.userAnswer && !r.skipped ? (r.correct ? 'bg-green-100' : 'bg-red-100') : 'bg-gray-100'}">
+                                <div class="text-xs text-gray-600">Your Answer</div>
+                                <div class="font-semibold">${r.userAnswer ? String.fromCharCode(64+r.userAnswer) + '. ' + (options[r.userAnswer-1] || 'N/A') : 'Not answered'}</div>
+                            </div>
+                            <div class="p-2 rounded bg-green-100">
+                                <div class="text-xs text-gray-600">Correct Answer</div>
+                                <div class="font-semibold text-green-800">${String.fromCharCode(64+r.correctAnswer)}. ${options[r.correctAnswer-1] || 'N/A'}</div>
+                            </div>
                         </div>
-                        ${q.explanation ? `<div class="pl-12 mt-6"><div class="bg-blue-50 p-4 rounded-2xl border-l-4 border-blue-500 text-xs text-gray-600"><span class="font-black text-blue-900 uppercase block mb-1">Explanation</span>${q.explanation}</div></div>` : ''}
+                        ${r.explanation ? `<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="text-xs text-blue-600 font-bold">📖 Explanation</div>
+                            <div class="text-sm">${r.explanation}</div>
+                        </div>` : ''}
                     </div>
                 `;
             }).join('');
+        }
+        
+        window.downloadFullPDF = () => {
+            const element = document.getElementById('solveSheet');
+            const result = window.currentResult;
+            
+            const opt = {
+                margin: [0.5, 0.5, 0.5, 0.5],
+                filename: `Exam_Result_${result.student_name}_${result.exam_title}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, backgroundColor: '#ffffff' },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            
+            // Add title to PDF
+            const titleElement = document.createElement('div');
+            titleElement.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="font-size: 24px; font-weight: bold;">${result.exam_title} - Result Analysis</h1>
+                    <p><strong>Student:</strong> ${result.student_name}</p>
+                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>Score:</strong> ${result.total_marks} / ${result.total} (${((result.correct - (result.negative_applied ? result.wrong * result.negative_value : 0)) / result.total * 100).toFixed(1)}%)</p>
+                    <hr style="margin: 10px 0;">
+                </div>
+            `;
+            
+            const originalContent = element.innerHTML;
+            element.insertBefore(titleElement, element.firstChild);
+            
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.removeChild(titleElement);
+            });
         };
-
+        
         loadExam();
     </script>
 </body>
