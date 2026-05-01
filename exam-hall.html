@@ -82,12 +82,12 @@
             const { data } = await atlas.from('exams').select('*').eq('id', examId).single();
             if(data) {
                 exam = data;
-                document.getElementById('vSubject').innerText = exam.subject;
-                document.getElementById('vChap').innerText = exam.paper + " | " + exam.chapter;
+                document.getElementById('vSubject').innerText = exam.subject || "No Subject";
+                document.getElementById('vChap').innerText = (exam.paper || "") + " | " + (exam.chapter || "");
                 document.getElementById('vDesc').innerText = exam.description || "সকল প্রশ্নের মান সমান।";
-                document.getElementById('vTime').innerText = exam.duration;
-                document.getElementById('vCount').innerText = exam.questions.length;
-                document.getElementById('vNeg').innerText = exam.neg_mark;
+                document.getElementById('vTime').innerText = exam.duration || "0";
+                document.getElementById('vCount').innerText = exam.questions ? exam.questions.length : "0";
+                document.getElementById('vNeg').innerText = exam.neg_mark || "0";
             }
         };
 
@@ -99,9 +99,9 @@
         function renderQ() {
             document.getElementById('qContainer').innerHTML = exam.questions.map((q, i) => `
                 <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100" id="qBox-${i}">
-                    <p class="font-black text-gray-800 text-[15px] mb-4 leading-relaxed"><span class="text-blue-700">${i+1}.</span> ${q.q}</p>
+                    <p class="font-black text-gray-800 text-[15px] mb-4 leading-relaxed"><span class="text-blue-700">${i+1}.</span> ${q.question}</p>
                     <div class="space-y-1">
-                        ${[q.o1, q.o2, q.o3, q.o4].map(o => `
+                        ${[q.option1, q.option2, q.option3, q.option4].map(o => `
                             <div onclick="selectOpt(${i}, '${o}', this)" class="opt opt-btn-${i}">${o}</div>
                         `).join('')}
                     </div>
@@ -111,7 +111,7 @@
 
         function setupNav() {
             document.getElementById('navBox').innerHTML = exam.questions.map((_, i) => `
-                <button id="nav-${i}" onclick="document.getElementById('qBox-${i}').scrollIntoView({behavior:'smooth'})" class="nav-btn">${i+1}</button>
+                <button id="nav-${i}" onclick="document.getElementById('qBox-${i}').scrollIntoView({behavior:'smooth', block:'center'})" class="nav-btn">${i+1}</button>
             `).join('');
         }
 
@@ -138,13 +138,14 @@
             
             exam.questions.forEach((q, i) => {
                 if(userAns[i]) {
-                    if(userAns[i].trim() === q.ans.trim()) score++;
+                    const correctAns = q.answer ? q.answer.trim() : "";
+                    if(userAns[i].trim() === correctAns) score++;
                     else wrongCount++;
                 }
             });
 
             const skipped = total - (score + wrongCount);
-            const finalMark = score - (wrongCount * exam.neg_mark);
+            const finalMark = score - (wrongCount * (exam.neg_mark || 0));
 
             document.getElementById('rFinalScore').innerText = finalMark.toFixed(2);
             document.getElementById('rTotal').innerText = total;
@@ -152,7 +153,6 @@
             document.getElementById('rWrong').innerText = wrongCount;
             document.getElementById('rSkip').innerText = skipped;
 
-            // Draw Chart
             new Chart(document.getElementById('resChart'), {
                 type: 'doughnut',
                 data: {
@@ -172,14 +172,15 @@
             area.innerHTML = `<h3 class="font-black text-xl text-center mb-6 underline">SOLVE SHEET</h3>` + 
             exam.questions.map((q, i) => {
                 const uAns = userAns[i] || "Skipped";
-                const isRight = uAns.trim() === q.ans.trim();
+                const correctAns = q.answer ? q.answer.trim() : "";
+                const isRight = uAns.trim() === correctAns;
                 return `
                 <div class="mb-6 p-4 rounded-xl border ${isRight ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}">
-                    <p class="font-bold text-sm mb-2">${i+1}. ${q.q}</p>
+                    <p class="font-bold text-sm mb-2">${i+1}. ${q.question}</p>
                     <p class="text-xs"><b>Your Answer:</b> ${uAns}</p>
-                    <p class="text-xs text-green-700 mt-1"><b>Correct Answer: ✅ ${q.ans}</b></p>
+                    <p class="text-xs text-green-700 mt-1"><b>Correct Answer: ✅ ${q.answer}</b></p>
                     <div class="mt-3 p-3 bg-white rounded-lg text-xs border-l-4 border-blue-500">
-                        <b>Explanation:</b><br>${q.exp || 'No explanation provided.'}
+                        <b>Explanation:</b><br>${q.explanation || 'No explanation provided.'}
                     </div>
                 </div>`;
             }).join('');
