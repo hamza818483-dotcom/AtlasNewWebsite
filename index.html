@@ -8,7 +8,6 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
     </style>
 </head>
 <body class="pb-10">
@@ -72,26 +71,23 @@
 
     </main>
 
-   <script>
-    // ১. পেজ লোড হবার সাথে সাথে অটো-চেক (Security)
-    window.onload = function() {
-        const user = localStorage.getItem('atlas_user');
-        if (!user) {
-            // যদি ইউজার ডাটা না থাকে, সরাসরি রেজিস্ট্রেশন পেজে পাঠাবে
-            window.location.href = 'register.html';
+    <script>
+        // রেজিস্ট্রেশন চেক করার লজিক
+        function handleRedirect(targetUrl) {
+            const user = localStorage.getItem('atlas_user');
+            
+            // যদি রেজিস্ট্রেশন ডাটা না থাকে, তবে রেজিস্ট্রেশন পেজে পাঠিয়ে দিবে
+            if (!user) {
+                alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পন্ন করো!");
+                window.location.href = 'register.html';
+            } else {
+                // রেজিস্ট্রেশন থাকলে কাঙ্ক্ষিত পেজে যাবে
+                window.location.href = targetUrl;
+            }
         }
-    };
 
-    // ২. বাটনে ক্লিক করলেও যেন কাজ করে (Backup Function)
-    function handleRedirect(targetUrl) {
-        const user = localStorage.getItem('atlas_user');
-        if (!user) {
-            window.location.href = 'register.html';
-        } else {
-            window.location.href = targetUrl;
-        }
-    }
-</script>
-
+        // পেজ লোড হওয়ার সময় চেক (যদি অটোমেটিক পাঠাতে চান)
+        // window.onload = () => { if(!localStorage.getItem('atlas_user')) window.location.href = 'register.html'; };
+    </script>
 </body>
 </html>
