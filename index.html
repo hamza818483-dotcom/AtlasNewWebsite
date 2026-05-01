@@ -3,109 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Home</title>
+    <title>ATLAS | Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
+        .tab-content { display: none; }
+        .active { display: block; }
     </style>
 </head>
-<body class="pb-10">
-
-    <nav class="bg-white px-6 py-4 flex items-center justify-between shadow-sm sticky top-0 z-50">
-        <div class="flex items-center space-x-2">
-            <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="Logo" class="w-10 h-10">
-            <span class="text-2xl font-black text-blue-800 tracking-tighter italic">ATLAS</span>
+<body>
+    <div id="loginArea" class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border font-bold">
+            <h2 class="text-3xl text-blue-800 text-center mb-6">ADMIN LOGIN</h2>
+            <input type="tel" id="adminPhone" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 border" placeholder="ফোন নম্বর">
+            <input type="password" id="adminPass" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 border" placeholder="পাসওয়ার্ড">
+            <button onclick="login()" class="w-full bg-blue-700 text-white py-4 rounded-3xl shadow-lg">লগইন</button>
         </div>
-        <div class="text-blue-600 bg-blue-50 px-3 py-1 rounded-full text-xs font-bold border border-blue-100">
-            Varsity Area
-        </div>
-    </nav>
+    </div>
 
-    <header class="p-6 bg-gradient-to-r from-blue-700 to-indigo-800 text-white rounded-b-[2.5rem] shadow-lg mb-8">
-        <h1 class="text-2xl font-bold">আসসালামু আলাইকুম! 👋</h1>
-        <p class="text-blue-100 text-sm mt-1">মেডিকেল ও ভার্সিটি এডমিশন কেয়ার-এ স্বাগতম।</p>
-    </header>
+    <div id="dashboard" class="hidden">
+        <nav class="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-50">
+            <h1 class="font-black text-blue-800">ATLAS PANEL</h1>
+            <button onclick="location.reload()" class="text-red-500 font-bold text-xs">Logout</button>
+        </nav>
+        <div class="p-5 max-w-4xl mx-auto space-y-6">
+            <div class="flex space-x-2 overflow-x-auto pb-2 font-bold">
+                <button onclick="show('classes')" class="bg-blue-700 text-white px-6 py-3 rounded-2xl text-sm shadow-md">📺 ক্লাস</button>
+                <button onclick="show('exams')" class="bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm shadow-sm">📝 এক্সাম</button>
+                <button onclick="show('students')" class="bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm shadow-sm">👥 স্টুডেন্ট</button>
+            </div>
 
-    <main class="px-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-        
-        <div onclick="handleRedirect('classes.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-red-50 p-4 rounded-2xl text-2xl">📺</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Free Class</h3>
-                <p class="text-gray-500 text-xs">ইউটিউব ক্লাসগুলো এখান থেকে করো</p>
+            <div id="classesTab" class="tab-content active bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4 font-bold">
+                <h3 class="text-blue-700 underline">Add YouTube Class</h3>
+                <input type="text" id="cSub" placeholder="Subject" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="cPaper" placeholder="Paper" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="cChap" placeholder="Chapter" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="cLink" placeholder="YouTube Link" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <button onclick="saveClass()" class="w-full bg-blue-600 text-white py-3 rounded-xl">Save Class</button>
+            </div>
+
+            <div id="examsTab" class="tab-content bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4 font-bold">
+                <h3 class="text-green-700 underline">New Exam</h3>
+                <input type="text" id="eSub" placeholder="Subject" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="eChap" placeholder="Chapter" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <select id="eType" class="w-full p-3 bg-gray-50 rounded-xl border"><option value="csv">CSV Import</option><option value="link">External Link</option></select>
+                <input type="file" id="csv" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="url" id="ext" placeholder="External URL (Optional)" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <button onclick="saveExam()" class="w-full bg-green-600 text-white py-3 rounded-xl">Create Exam</button>
+            </div>
+            
+            <div id="studentsTab" class="tab-content space-y-3">
+                <div id="list" class="space-y-2"></div>
             </div>
         </div>
-
-        <div onclick="handleRedirect('exams.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-green-50 p-4 rounded-2xl text-2xl">📝</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Free Exam</h3>
-                <p class="text-gray-500 text-xs">ফ্রি এক্সাম দিয়ে নিজেকে যাচাই করো</p>
-            </div>
-        </div>
-
-        <div onclick="handleRedirect('courses.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-blue-50 p-4 rounded-2xl text-2xl">🔥</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Running Courses</h3>
-                <p class="text-gray-500 text-xs">আমাদের প্রিমিয়াম ব্যাচগুলো দেখে নাও</p>
-            </div>
-        </div>
-
-        <div onclick="handleRedirect('reviews.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95">
-            <div class="bg-yellow-50 p-4 rounded-2xl text-2xl">⭐</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">All Review</h3>
-                <p class="text-gray-500 text-xs">সফল স্টুডেন্টদের মতামত জানো</p>
-            </div>
-        </div>
-
-        <div onclick="handleRedirect('founder.html')" class="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer hover:shadow-md transition-all active:scale-95 col-span-1 md:col-span-2">
-            <div class="bg-indigo-50 p-4 rounded-2xl text-2xl">👨‍🏫</div>
-            <div>
-                <h3 class="text-lg font-bold text-gray-800">Founder Introduction</h3>
-                <p class="text-gray-500 text-xs">ATLAS এবং ফাউন্ডার সম্পর্কে বিস্তারিত</p>
-            </div>
-        </div>
-
-    </main>
+    </div>
 
     <script>
-        // Supabase Connection
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function handleRedirect(targetUrl) {
-            const user = localStorage.getItem('atlas_user');
+        function login() {
+            if(document.getElementById('adminPhone').value === "01754364703" && document.getElementById('adminPass').value === "atlas2026") {
+                document.getElementById('loginArea').classList.add('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
+                loadStudents();
+            } else { alert("ভুল তথ্য!"); }
+        }
 
-            // ১. অ্যাডমিন প্যানেল থেকে রেজিস্ট্রেশন মোড চেক করা
-            try {
-                const { data: settings } = await atlas.from('settings').select('reg_required').single();
-                const isRegRequired = settings ? settings.reg_required : true;
+        function show(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(t+'Tab').classList.add('active');
+        }
 
-                // যদি রেজিস্ট্রেশন বাধ্যতামূলক হয় এবং ইউজার ডাটা না থাকে
-                if (isRegRequired && !user) {
-                    alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পন্ন করো!");
-                    window.location.href = 'register.html';
-                    return;
-                }
-            } catch (e) {
-                console.log("Settings not found, using default.");
+        async function saveClass() {
+            const { error } = await atlas.from('classes').insert([{ subject: cSub.value, paper: cPaper.value, chapter: cChap.value, link: cLink.value }]);
+            if(!error) alert("Saved!");
+        }
+
+        async function saveExam() {
+            const file = csv.files[0];
+            if(eType.value === 'link') {
+                await atlas.from('exams').insert([{ subject: eSub.value, chapter: eChap.value, type: 'link', ext_link: ext.value }]);
+                alert("Link Exam Saved!");
+            } else {
+                Papa.parse(file, { header: true, complete: async (r) => {
+                    await atlas.from('exams').insert([{ subject: eSub.value, chapter: eChap.value, type: 'csv', questions: r.data }]);
+                    alert("CSV Exam Saved!");
+                }});
             }
+        }
 
-            // ২. ফাইল আছে কি না চেক করে রিডাইরেক্ট করা
-            fetch(targetUrl).then(response => {
-                if (response.ok) {
-                    window.location.href = targetUrl;
-                } else {
-                    alert("দুঃখিত! এই সেকশনটি এখনো তৈরি করা হচ্ছে। খুব দ্রুতই আসবে ইনশাআল্লাহ।");
-                }
-            }).catch(() => {
-                alert("ফাইলটি খুঁজে পাওয়া যায়নি।");
-            });
+        async function loadStudents() {
+            const { data } = await atlas.from('students').select('*');
+            document.getElementById('list').innerHTML = data.map(s => `<div class="p-4 bg-white rounded-2xl shadow-sm border font-bold text-sm">${s.name} - ${s.hsc_batch}</div>`).join('');
         }
     </script>
 </body>
