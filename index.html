@@ -24,42 +24,42 @@
     </nav>
 
     <header class="p-8 bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white rounded-b-[3rem] shadow-xl mb-10">
-        <h1 class="text-3xl font-bold">আসসালামু আলাইকুম! 👋</h1>
-        <p class="text-blue-100 text-sm mt-2 opacity-90">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্মে তোমাকে স্বাগতম।</p>
+        <h1 class="text-3xl font-bold italic">আসসালামু আলাইকুম! 👋</h1>
+        <p class="text-blue-100 text-sm mt-2 opacity-90 tracking-wide">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্মে তোমাকে স্বাগতম।</p>
     </header>
 
     <main class="px-6 grid grid-cols-1 md:grid-cols-2 gap-5" id="mainGrid">
         <div onclick="handleRedirect('classes.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
             <div class="bg-red-50 p-4 rounded-[1.5rem] text-3xl">📺</div>
-            <div><h3 class="text-lg font-bold text-gray-800">Free Classes</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">ভিডিও ক্লাসগুলো দেখো</p></div>
+            <div><h3 class="text-lg font-bold text-gray-800 italic">Free Classes</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">ভিডিও ক্লাসগুলো দেখো</p></div>
         </div>
 
         <div onclick="handleRedirect('exams.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
             <div class="bg-green-50 p-4 rounded-[1.5rem] text-3xl">📝</div>
-            <div><h3 class="text-lg font-bold text-gray-800">Free Exams</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">নিজেকে যাচাই করো</p></div>
+            <div><h3 class="text-lg font-bold text-gray-800 italic">Free Exams</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">নিজেকে যাচাই করো</p></div>
         </div>
 
         <div onclick="handleRedirect('courses.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
             <div class="bg-orange-50 p-4 rounded-[1.5rem] text-3xl">🔥</div>
-            <div><h3 class="text-lg font-bold text-gray-800">Running Courses</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">ব্যাচগুলো দেখো</p></div>
+            <div><h3 class="text-lg font-bold text-gray-800 italic">Running Courses</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">ব্যাচগুলো দেখো</p></div>
         </div>
 
         <div onclick="handleRedirect('reviews.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
             <div class="bg-yellow-50 p-4 rounded-[1.5rem] text-3xl">⭐</div>
-            <div><h3 class="text-lg font-bold text-gray-800">All Reviews</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">সফলদের মতামত</p></div>
+            <div><h3 class="text-lg font-bold text-gray-800 italic">All Reviews</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">সফলদের মতামত</p></div>
         </div>
 
         <div onclick="handleRedirect('founder.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 transition-all col-span-1 md:col-span-2 dynamic-card">
             <div class="bg-indigo-50 p-4 rounded-[1.5rem] text-3xl">👨‍🏫</div>
-            <div><h3 class="text-lg font-bold text-gray-800">Founder Introduction</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">ATLAS ফাউন্ডার সম্পর্কে জানো</p></div>
+            <div><h3 class="text-lg font-bold text-gray-800 italic">Founder Intro</h3><p class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">আমির হামজা রাফি</p></div>
         </div>
 
         <div id="dynamicButtons" class="contents"></div>
     </main>
 
-    <footer class="mt-12 text-center pb-10">
-        <p class="text-gray-300 text-[10px] font-bold uppercase">© 2026 Powered by ATLAS Team</p>
-        <div class="mt-4"><a href="admin.html" class="text-gray-400 text-[10px] font-bold uppercase border-b">Admin Access</a></div>
+    <footer class="mt-20 text-center pb-10">
+        <p class="text-gray-300 text-[10px] font-bold uppercase tracking-[0.2em]">© 2026 Powered by ATLAS Team</p>
+        <div class="mt-4"><a href="admin.html" class="text-gray-400 text-[10px] font-bold uppercase border-b border-gray-100 pb-1">Admin Access</a></div>
     </footer>
 
     <script>
@@ -75,7 +75,7 @@
                     container.innerHTML += `
                         <div onclick="handleRedirect('${btn.link}')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
                             <div class="bg-blue-50 p-4 rounded-[1.5rem] text-3xl">${btn.icon || '🚀'}</div>
-                            <div><h3 class="text-lg font-bold text-gray-800">${btn.name}</h3><p class="text-gray-400 text-[10px] font-bold uppercase">বিস্তারিত দেখো</p></div>
+                            <div><h3 class="text-lg font-bold text-gray-800 italic">${btn.name}</h3><p class="text-gray-400 text-[10px] font-bold uppercase">বিস্তারিত দেখো</p></div>
                         </div>`;
                 });
             }
