@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | Add Exam</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f3f7fa; }
+        .input-box { width: 100%; padding: 16px; background: #fff; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-weight: bold; font-size: 14px; }
+        .btn-active { background-color: #1e40af !important; color: white !important; }
+    </style>
+</head>
+<body class="pb-10">
+    <nav class="bg-white p-5 shadow-sm flex items-center space-x-3 sticky top-0 z-50">
+        <button onclick="window.location.href='admin.html'" class="bg-gray-100 px-4 py-2 rounded-xl text-blue-800 font-bold">❮</button>
+        <span class="font-black text-blue-900 uppercase italic">Add Exam Portal</span>
+    </nav>
+
+    <div class="p-6 max-w-xl mx-auto">
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+            <h2 class="text-xl font-black text-blue-900 mb-6 flex items-center uppercase italic">
+                <span class="mr-2">📝</span> Create New Exam
+            </h2>
+
+            <input type="text" id="exSubject" placeholder="Subject (যেমন: Biology)" class="input-box">
+            <input type="text" id="exPaper" placeholder="Paper (যেমন: 1st Paper)" class="input-box">
+            <input type="text" id="exChapter" placeholder="Chapter (যেমন: কোষ ও এর গঠন)" class="input-box">
+            <textarea id="exDesc" placeholder="Exam Instructions / Description" class="input-box h-24"></textarea>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Start Time & Date</label>
+                    <input type="datetime-local" id="exTime" class="input-box mt-1">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Duration (Min)</label>
+                    <input type="number" id="exDuration" placeholder="e.g. 20" class="input-box mt-1">
+                </div>
+            </div>
+
+            <div class="flex space-x-2 mb-6">
+                <button onclick="switchMode('csv', this)" id="csvModeBtn" class="flex-1 py-3 rounded-2xl font-bold bg-white border text-gray-500 btn-active">CSV Upload</button>
+                <button onclick="switchMode('link', this)" id="linkModeBtn" class="flex-1 py-3 rounded-2xl font-bold bg-white border text-gray-500">External Link</button>
+            </div>
+
+            <div id="csvArea">
+                <div class="border-2 border-dashed border-blue-100 p-8 rounded-3xl text-center bg-blue-50/30">
+                    <input type="file" id="csvFile" accept=".csv" class="text-xs font-bold text-blue-800">
+                    <p class="text-[10px] text-gray-400 mt-3 font-bold uppercase tracking-wider">Format: question, opt1-4, opt5, answer, exp, type, sec</p>
+                </div>
+            </div>
+
+            <div id="linkArea" class="hidden">
+                <input type="url" id="exLink" placeholder="Paste External Link Here" class="input-box">
+            </div>
+
+            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl mt-8 transition-all active:scale-95">Publish Exam</button>
+        </div>
+
+        <div class="mt-10">
+            <h3 class="font-black text-gray-400 text-[10px] uppercase tracking-[0.2em] mb-4 ml-4">Saved Exams</h3>
+            <div id="examList" class="space-y-3">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let mode = 'csv';
+
+        function switchMode(m, btn) {
+            mode = m;
+            document.querySelectorAll('.flex button').forEach(b => b.classList.remove('btn-active'));
+            btn.classList.add('btn-active');
+            document.getElementById('csvArea').classList.toggle('hidden', m !== 'csv');
+            document.getElementById('linkArea').classList.toggle('hidden', m !== 'link');
+        }
+
+        async function publishExam() {
+            const btn = document.getElementById('pubBtn');
+            btn.innerText = "PROCESSING...";
+            btn.disabled = true;
+
+            let questions = [];
+            if(mode === 'csv') {
+                const file = document.getElementById('csvFile').files[0];
+                if(!file) { alert("Please select CSV!"); btn.innerText = "Publish Exam"; btn.disabled = false; return; }
+                questions = await processCSV(file);
+                alert("Upload Successfully!");
+            }
+
+            const examData = {
+                subject: exSubject.value,
+                paper: exPaper.value,
+                chapter: exChapter.value,
+                description: exDesc.value,
+                start_time: exTime.value,
+                duration: exDuration.value,
+                type: mode,
+                external_link: exLink.value,
+                questions: questions
+            };
+
+            const { data, error } = await atlas.from('exams').insert([examData]).select();
+            if(!error) {
+                alert("Exam Created! Link generated.");
+                location.reload();
+            } else {
+                alert("Error: " + error.message);
+                btn.innerText = "Publish Exam"; btn.disabled = false;
+            }
+        }
+
+        function processCSV(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const rows = e.target.result.split('\n').slice(1);
+                    const list = rows.filter(r => r.trim()).map(r => {
+                        const c = r.split(',');
+                        return { q: c[0], o1: c[1], o2: c[2], o3: c[3], o4: c[4], o5: c[5], ans: c[6], exp: c[7], type: c[8], sec: c[9] };
+                    });
+                    resolve(list);
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        async function loadExams() {
+            const { data } = await atlas.from('exams').select('*').order('created_at', {ascending: false});
+            if(data) {
+                document.getElementById('examList').innerHTML = data.map(ex => `
+                    <div class="bg-white p-5 rounded-3xl shadow-sm flex justify-between items-center border border-gray-50">
+                        <div>
+                            <p class="font-black text-blue-900 text-sm">${ex.subject}: ${ex.chapter}</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">${ex.type === 'csv' ? 'Internal MCQ' : 'External Link'}</p>
+                        </div>
+                        <button onclick="copyExamLink('${ex.id}')" class="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-[10px] font-black uppercase">Copy Link</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function copyExamLink(id) {
+            const link = window.location.origin + "/exam-hall.html?id=" + id;
+            navigator.clipboard.writeText(link);
+            alert("Exam Link Copied!");
+        }
+
+        window.onload = loadExams;
+    </script>
+</body>
+</html>
