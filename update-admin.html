@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
+        .logo-font { font-family: 'Sora', sans-serif; }
+        .grid-card {
+            background: white; padding: 24px 16px; border-radius: 28px; text-align: center;
+            cursor: pointer; transition: all 0.25s cubic-bezier(.4,0,.2,1);
+            border: 2px solid transparent; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        .grid-card:hover { border-color: #bfdbfe; transform: translateY(-4px); box-shadow: 0 12px 30px rgba(30,64,175,0.1); }
+        .grid-card:active { transform: scale(0.97); }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+        .inp { width: 100%; padding: 14px 18px; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 16px; font-family: 'Hind Siliguri'; font-size: 14px; font-weight: 600; outline: none; transition: 0.2s; }
+        .inp:focus { border-color: #3b82f6; background: white; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+        .btn-primary { width: 100%; padding: 16px; background: #1e40af; border: none; border-radius: 16px; color: white; font-family: 'Sora'; font-size: 13px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: 0.2s; }
+        .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; display: block; }
+        .section-title { font-family: 'Sora'; font-size: 16px; font-weight: 900; color: #1e293b; margin-bottom: 20px; display: flex; align-items: center; gap-8px; }
+        .back-btn { background: #f1f5f9; color: #1e40af; border: none; border-radius: 12px; padding: 10px 16px; font-weight: 800; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; }
+        .back-btn:hover { background: #e2e8f0; }
+        /* Student list */
+        .student-row { background: white; border-radius: 16px; padding: 14px 16px; border: 1.5px solid #f1f5f9; display: flex; align-items: center; gap-12px; transition: 0.2s; }
+        .student-row:hover { border-color: #bfdbfe; }
+        .student-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        /* Course list */
+        .course-item { background: white; border-radius: 16px; padding: 14px 16px; border: 1.5px solid #f1f5f9; display: flex; align-items: center; gap-3; transition: 0.2s; }
+        .course-item:hover { border-color: #bfdbfe; }
+        /* Review preview */
+        .review-preview { background: white; border-radius: 16px; padding: 14px; border: 1.5px solid #f1f5f9; }
+    </style>
+</head>
+<body class="pb-20">
+
+    <!-- LOGIN SCREEN -->
+    <div id="loginArea" class="flex items-center justify-center min-h-screen p-6" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)">
+        <div class="w-full max-w-sm">
+            <div class="text-center mb-8">
+                <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-16 h-16 object-contain mx-auto mb-3" onerror="this.style.display='none'">
+                <div class="logo-font text-3xl font-black text-white">ATLAS</div>
+                <div class="text-blue-300 text-sm font-bold mt-1">Admin Dashboard</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.07);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:28px;padding:32px;">
+                <label class="label text-blue-300 mb-2 block">Phone Number</label>
+                <input type="tel" id="admPhone" class="inp mb-4" placeholder="01XXXXXXXXX" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white;">
+                <label class="label text-blue-300 mb-2 block">Password</label>
+                <input type="password" id="admPass" class="inp mb-6" placeholder="••••••••" style="background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.15);color:white;">
+                <button onclick="checkAdmin()" class="btn-primary" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">Login to Dashboard →</button>
+                <div id="loginErr" class="hidden mt-3 text-red-400 text-xs font-bold text-center bg-red-500/10 rounded-xl p-3"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="hidden">
+
+        <!-- Navbar -->
+        <nav class="bg-white px-5 py-4 flex items-center justify-between sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showGrid()">
+                <a href="index.html"><img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'"></a>
+                <div>
+                    <div class="logo-font font-black text-blue-900 text-base">ATLAS Boss</div>
+                    <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Admin Panel</div>
+                </div>
+            </div>
+            <button onclick="logout()" class="text-xs font-black text-red-500 bg-red-50 border border-red-100 px-4 py-2 rounded-xl hover:bg-red-100 transition-colors">Logout</button>
+        </nav>
+
+        <!-- GRID -->
+        <div id="gridView" class="max-w-xl mx-auto px-4 pt-6">
+            <div class="logo-font font-black text-gray-500 text-xs uppercase tracking-widest mb-4">Quick Actions</div>
+            <div class="grid grid-cols-3 gap-3 mb-4">
+                <div onclick="location.href='add-exam.html'" class="grid-card">
+                    <div class="text-3xl mb-2">📝</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Add Exam</p>
+                </div>
+                <div onclick="location.href='add-class.html'" class="grid-card">
+                    <div class="text-3xl mb-2">📺</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Add Class</p>
+                </div>
+                <div onclick="showPanel('reviewPanel')" class="grid-card">
+                    <div class="text-3xl mb-2">⭐</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Reviews</p>
+                </div>
+                <div onclick="showPanel('coursePanel')" class="grid-card">
+                    <div class="text-3xl mb-2">🎓</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Courses</p>
+                </div>
+                <div onclick="showPanel('studentPanel')" class="grid-card">
+                    <div class="text-3xl mb-2">👥</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Students</p>
+                </div>
+                <div onclick="showPanel('buttonPanel')" class="grid-card">
+                    <div class="text-3xl mb-2">➕</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Home Btns</p>
+                </div>
+                <div onclick="showPanel('countdownPanel')" class="grid-card">
+                    <div class="text-3xl mb-2">⏰</div>
+                    <p class="text-xs font-black text-gray-600 uppercase tracking-wide">Countdown</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANELS -->
+        <div class="max-w-xl mx-auto px-4 pb-16">
+
+            <!-- ===== REVIEW PANEL ===== -->
+            <div id="reviewPanel" class="tab-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <button onclick="showGrid()" class="back-btn">← Back</button>
+                    <div class="section-title">⭐ Add Review</div>
+                </div>
+                <div class="bg-white rounded-[2rem] p-6 shadow-sm space-y-4">
+                    <div>
+                        <label class="label">Category</label>
+                        <select id="revCat" class="inp">
+                            <option value="Class">Class Review</option>
+                            <option value="Exam">Exam Review</option>
+                            <option value="Mentoring">Mentoring Review</option>
+                            <option value="Service">Course Service</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Student Name</label>
+                        <input id="revName" class="inp" placeholder="Student এর নাম">
+                    </div>
+                    <div>
+                        <label class="label">Review Text</label>
+                        <textarea id="revText" class="inp h-24 resize-none" placeholder="Review লেখো..."></textarea>
+                    </div>
+                    <div>
+                        <label class="label">Rating (1-5)</label>
+                        <select id="revRating" class="inp">
+                            <option value="5">⭐⭐⭐⭐⭐ (5)</option>
+                            <option value="4">⭐⭐⭐⭐ (4)</option>
+                            <option value="3">⭐⭐⭐ (3)</option>
+                            <option value="2">⭐⭐ (2)</option>
+                            <option value="1">⭐ (1)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Student Photo (Supabase এ Save হবে)</label>
+                        <div class="border-2 border-dashed border-blue-200 rounded-2xl p-6 text-center bg-blue-50/30 cursor-pointer hover:border-blue-400 transition-colors relative">
+                            <input type="file" id="revFile" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <div class="text-2xl mb-1">🖼️</div>
+                            <p id="revFileName" class="text-xs font-bold text-gray-500">ছবি সিলেক্ট করো</p>
+                        </div>
+                        <div id="revPreview" class="hidden mt-2 rounded-xl overflow-hidden"><img id="revPreviewImg" src="" class="w-full max-h-40 object-cover"></div>
+                    </div>
+                    <button onclick="uploadReview()" id="revBtn" class="btn-primary">📤 Review Publish করো</button>
+                    <div id="revStatus" class="hidden text-center font-bold text-sm p-3 rounded-xl"></div>
+                </div>
+
+                <!-- Existing reviews list -->
+                <div class="mt-6">
+                    <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Published Reviews</div>
+                    <div id="reviewListAdmin" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- ===== COURSE PANEL ===== -->
+            <div id="coursePanel" class="tab-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <button onclick="showGrid()" class="back-btn">← Back</button>
+                    <div class="section-title">🎓 Courses</div>
+                </div>
+                <div class="bg-white rounded-[2rem] p-6 shadow-sm space-y-4 mb-6">
+                    <div>
+                        <label class="label">Course Name *</label>
+                        <input id="cName" class="inp" placeholder="যেমন: NEET Special Batch 2026">
+                    </div>
+                    <div>
+                        <label class="label">Course Link *</label>
+                        <input id="cLink" class="inp" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label class="label">Description (ঐচ্ছিক)</label>
+                        <input id="cDesc" class="inp" placeholder="কোর্সের সংক্ষিপ্ত বিবরণ">
+                    </div>
+                    <div>
+                        <label class="label">Features (comma দিয়ে আলাদা করো)</label>
+                        <input id="cFeatures" class="inp" placeholder="Live Class, PDF Notes, Q&A">
+                    </div>
+                    <button onclick="saveCourse()" id="courseBtn" class="btn-primary">🎓 Course Add করো</button>
+                    <div id="courseStatus" class="hidden text-center font-bold text-sm p-3 rounded-xl"></div>
+                </div>
+
+                <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">All Courses — <span id="courseCountAdmin">লোড হচ্ছে...</span></div>
+                <div id="courseListAdmin" class="space-y-3"></div>
+            </div>
+
+            <!-- ===== STUDENT PANEL ===== -->
+            <div id="studentPanel" class="tab-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <button onclick="showGrid()" class="back-btn">← Back</button>
+                    <div class="section-title">👥 Students</div>
+                </div>
+                <div class="flex gap-3 mb-4">
+                    <input id="studentSearch" class="inp flex-1" placeholder="নাম বা নম্বর দিয়ে খোঁজো..." oninput="filterStudents()">
+                </div>
+                <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Registered — <span id="studentCountAdmin" class="text-blue-600">লোড হচ্ছে...</span></div>
+                <div id="studentListAdmin" class="space-y-2"></div>
+            </div>
+
+            <!-- ===== BUTTON PANEL ===== -->
+            <div id="buttonPanel" class="tab-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <button onclick="showGrid()" class="back-btn">← Back</button>
+                    <div class="section-title">➕ Home Buttons</div>
+                </div>
+                <div class="bg-white rounded-[2rem] p-6 shadow-sm space-y-4 mb-6">
+                    <div>
+                        <label class="label">Button Label</label>
+                        <input id="btnName" class="inp" placeholder="বাটনের নাম">
+                    </div>
+                    <div>
+                        <label class="label">Link / URL</label>
+                        <input id="btnLink" class="inp" placeholder="https://...">
+                    </div>
+                    <div>
+                        <label class="label">Emoji Icon</label>
+                        <input id="btnIcon" class="inp" placeholder="🚀">
+                    </div>
+                    <button onclick="saveNewBtn()" class="btn-primary">➕ Home Page এ Add করো</button>
+                    <div id="btnStatus" class="hidden text-center font-bold text-sm p-3 rounded-xl"></div>
+                </div>
+                <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Existing Buttons</div>
+                <div id="btnListAdmin" class="space-y-2"></div>
+            </div>
+
+            <!-- ===== COUNTDOWN PANEL ===== -->
+            <div id="countdownPanel" class="tab-panel">
+                <div class="flex items-center gap-3 mb-5">
+                    <button onclick="showGrid()" class="back-btn">← Back</button>
+                    <div class="section-title">⏰ Countdown Timers</div>
+                </div>
+                <div class="bg-white rounded-[2rem] p-6 shadow-sm space-y-4 mb-6">
+                    <div>
+                        <label class="label">Reminder Title *</label>
+                        <input id="cdTitle" class="inp" placeholder="যেমন: HSC Exam 2026">
+                    </div>
+                    <div>
+                        <label class="label">End Date & Time *</label>
+                        <input type="datetime-local" id="cdEndTime" class="inp">
+                    </div>
+                    <button onclick="saveCountdown()" class="btn-primary">⏰ Countdown Add করো</button>
+                    <div id="cdStatus" class="hidden text-center font-bold text-sm p-3 rounded-xl"></div>
+                </div>
+                <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Active Countdowns</div>
+                <div id="countdownListAdmin" class="space-y-2"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let allStudents = [];
+
+        window.onload = () => {
+            if(localStorage.getItem('atlas_logged') === 'true') loginOk();
+        };
+
+        async function checkAdmin() {
+            const p = document.getElementById('admPhone').value.trim();
+            const s = document.getElementById('admPass').value.trim();
+            if(p === '01754365403' && s === 'atlas2026') {
+                localStorage.setItem('atlas_logged', 'true');
+                loginOk();
+            } else {
+                const err = document.getElementById('loginErr');
+                err.textContent = '❌ Phone বা Password ভুল!';
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 3000);
+            }
+        }
+
+        function loginOk() {
+            document.getElementById('loginArea').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+        }
+
+        function logout() {
+            if(confirm('Logout করতে চাও?')) {
+                localStorage.removeItem('atlas_logged');
+                location.reload();
+            }
+        }
+
+        function showPanel(id) {
+            document.getElementById('gridView').classList.add('hidden');
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            // Load data for panel
+            if(id === 'studentPanel') loadStudents();
+            if(id === 'coursePanel') loadCourses();
+            if(id === 'reviewPanel') loadReviewsAdmin();
+            if(id === 'buttonPanel') loadButtons();
+            if(id === 'countdownPanel') loadCountdowns();
+        }
+
+        function showGrid() {
+            document.getElementById('gridView').classList.remove('hidden');
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        }
+
+        function showStatus(elId, msg, ok) {
+            const el = document.getElementById(elId);
+            el.className = `text-center font-bold text-sm p-3 rounded-xl ${ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        // ===== REVIEWS =====
+        document.getElementById('revFile').addEventListener('change', function() {
+            const file = this.files[0];
+            if(file) {
+                document.getElementById('revFileName').textContent = '✅ ' + file.name;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    document.getElementById('revPreviewImg').src = e.target.result;
+                    document.getElementById('revPreview').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function uploadReview() {
+            const btn = document.getElementById('revBtn');
+            const file = document.getElementById('revFile').files[0];
+            const name = document.getElementById('revName').value.trim();
+            const text = document.getElementById('revText').value.trim();
+
+            if(!file || !name) { showStatus('revStatus', '❌ নাম এবং ছবি দরকার!', false); return; }
+
+            btn.textContent = '⏳ Upload হচ্ছে...'; btn.disabled = true;
+
+            try {
+                const fileName = Date.now() + '_' + file.name.replace(/\s/g, '_');
+                const { error: upErr } = await atlas.storage.from('review-photos').upload(fileName, file);
+                if(upErr) throw upErr;
+
+                const { data: urlData } = atlas.storage.from('review-photos').getPublicUrl(fileName);
+
+                const { error: dbErr } = await atlas.from('reviews').insert([{
+                    category: document.getElementById('revCat').value,
+                    student_name: name,
+                    comment: text,
+                    photo_url: urlData.publicUrl,
+                    rating: parseInt(document.getElementById('revRating').value)
+                }]);
+                if(dbErr) throw dbErr;
+
+                showStatus('revStatus', '✅ Review Published!', true);
+                document.getElementById('revName').value = '';
+                document.getElementById('revText').value = '';
+                document.getElementById('revFile').value = '';
+                document.getElementById('revFileName').textContent = 'ছবি সিলেক্ট করো';
+                document.getElementById('revPreview').classList.add('hidden');
+                loadReviewsAdmin();
+            } catch(err) {
+                showStatus('revStatus', '❌ Error: ' + err.message, false);
+            } finally {
+                btn.textContent = '📤 Review Publish করো'; btn.disabled = false;
+            }
+        }
+
+        async function loadReviewsAdmin() {
+            const { data } = await atlas.from('reviews').select('*').order('created_at', { ascending: false });
+            const container = document.getElementById('reviewListAdmin');
+            if(!data || data.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs font-bold py-4">কোনো review নেই</p>'; return; }
+            container.innerHTML = data.map(r => `
+                <div class="review-preview flex items-center gap-3">
+                    ${r.photo_url ? `<img src="${r.photo_url}" class="w-14 h-14 rounded-xl object-cover flex-shrink-0">` : '<div class="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center text-2xl flex-shrink-0">📷</div>'}
+                    <div class="flex-1 min-w-0">
+                        <div class="font-black text-gray-800 text-sm">${r.student_name}</div>
+                        <div class="text-xs text-blue-600 font-bold">${r.category}</div>
+                        <div class="text-xs text-gray-400 truncate">${r.comment || ''}</div>
+                    </div>
+                    <button onclick="deleteReview(${r.id})" class="text-red-500 text-xs font-black bg-red-50 px-3 py-2 rounded-xl hover:bg-red-100 flex-shrink-0">Del</button>
+                </div>`).join('');
+        }
+
+        async function deleteReview(id) {
+            if(!confirm('এই Review মুছে ফেলতে চাও?')) return;
+            await atlas.from('reviews').delete().eq('id', id);
+            loadReviewsAdmin();
+        }
+
+        // ===== COURSES =====
+        async function saveCourse() {
+            const btn = document.getElementById('courseBtn');
+            const name = document.getElementById('cName').value.trim();
+            const link = document.getElementById('cLink').value.trim();
+            if(!name || !link) { showStatus('courseStatus', '❌ Name ও Link দরকার!', false); return; }
+            btn.disabled = true;
+            try {
+                const { error } = await atlas.from('courses').insert([{
+                    name, link,
+                    description: document.getElementById('cDesc').value.trim() || null,
+                    features: document.getElementById('cFeatures').value.trim() || null
+                }]);
+                if(error) throw error;
+                showStatus('courseStatus', '✅ Course Added!', true);
+                ['cName','cLink','cDesc','cFeatures'].forEach(id => document.getElementById(id).value = '');
+                loadCourses();
+            } catch(err) {
+                showStatus('courseStatus', '❌ ' + err.message, false);
+            } finally { btn.disabled = false; }
+        }
+
+        async function loadCourses() {
+            const { data } = await atlas.from('courses').select('*').order('created_at', { ascending: false });
+            const list = data || [];
+            document.getElementById('courseCountAdmin').textContent = list.length + ' টি';
+            const container = document.getElementById('courseListAdmin');
+            if(list.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs font-bold py-4">কোনো Course নেই</p>'; return; }
+            container.innerHTML = list.map(c => `
+                <div class="course-item">
+                    <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center text-xl flex-shrink-0">🎓</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-black text-gray-800 text-sm truncate">${c.name}</div>
+                        <div class="text-xs text-gray-400 truncate">${c.link}</div>
+                    </div>
+                    <div class="flex gap-2 flex-shrink-0">
+                        <a href="${c.link}" target="_blank" class="bg-blue-50 text-blue-700 text-xs font-black px-3 py-2 rounded-xl hover:bg-blue-100">🔗</a>
+                        <button onclick="deleteCourse(${c.id})" class="text-red-500 text-xs font-black bg-red-50 px-3 py-2 rounded-xl hover:bg-red-100">Del</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function deleteCourse(id) {
+            if(!confirm('এই Course মুছে ফেলতে চাও?')) return;
+            await atlas.from('courses').delete().eq('id', id);
+            loadCourses();
+        }
+
+        // ===== STUDENTS =====
+        async function loadStudents() {
+            const { data } = await atlas.from('students').select('*').order('created_at', { ascending: false });
+            allStudents = data || [];
+            document.getElementById('studentCountAdmin').textContent = allStudents.length + ' জন';
+            renderStudents(allStudents);
+        }
+
+        function filterStudents() {
+            const q = document.getElementById('studentSearch').value.toLowerCase();
+            const filtered = allStudents.filter(s =>
+                (s.name||'').toLowerCase().includes(q) || (s.whatsapp||'').includes(q) || (s.college||'').toLowerCase().includes(q)
+            );
+            renderStudents(filtered);
+        }
+
+        function renderStudents(list) {
+            const container = document.getElementById('studentListAdmin');
+            if(list.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs font-bold py-4">কোনো student পাওয়া যায়নি</p>'; return; }
+            container.innerHTML = list.map((s, i) => `
+                <div class="student-row">
+                    <div class="student-avatar">${(s.name||'A')[0].toUpperCase()}</div>
+                    <div class="flex-1 min-w-0" style="margin-left:12px;">
+                        <div class="font-black text-gray-800 text-sm">${s.name || '—'}</div>
+                        <div class="text-xs text-gray-400 font-bold">${s.college || '—'} · HSC ${s.hsc_batch || '—'}</div>
+                        <div class="text-xs text-blue-600 font-bold">${s.whatsapp || '—'}</div>
+                    </div>
+                    <div class="text-[10px] text-gray-300 font-bold flex-shrink-0">#${i+1}</div>
+                </div>`).join('');
+        }
+
+        // ===== HOME BUTTONS =====
+        async function saveNewBtn() {
+            const name = document.getElementById('btnName').value.trim();
+            const link = document.getElementById('btnLink').value.trim();
+            const icon = document.getElementById('btnIcon').value.trim();
+            if(!name || !link) { showStatus('btnStatus', '❌ নাম ও Link দরকার!', false); return; }
+            const { error } = await atlas.from('home_buttons').insert([{ name, link, icon: icon || '🚀' }]);
+            if(error) { showStatus('btnStatus', '❌ ' + error.message, false); return; }
+            showStatus('btnStatus', '✅ Button Added!', true);
+            ['btnName','btnLink','btnIcon'].forEach(id => document.getElementById(id).value = '');
+            loadButtons();
+        }
+
+        async function loadButtons() {
+            const { data } = await atlas.from('home_buttons').select('*').order('created_at', { ascending: false });
+            const list = data || [];
+            const container = document.getElementById('btnListAdmin');
+            if(list.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs font-bold py-4">কোনো button নেই</p>'; return; }
+            container.innerHTML = list.map(b => `
+                <div class="course-item">
+                    <div class="text-2xl">${b.icon || '🚀'}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-black text-gray-800 text-sm">${b.name}</div>
+                        <div class="text-xs text-gray-400 truncate">${b.link}</div>
+                    </div>
+                    <button onclick="deleteButton(${b.id})" class="text-red-500 text-xs font-black bg-red-50 px-3 py-2 rounded-xl hover:bg-red-100">Del</button>
+                </div>`).join('');
+        }
+
+        async function deleteButton(id) {
+            if(!confirm('এই Button মুছে ফেলতে চাও?')) return;
+            await atlas.from('home_buttons').delete().eq('id', id);
+            loadButtons();
+        }
+
+        // ===== COUNTDOWN =====
+        async function saveCountdown() {
+            const title = document.getElementById('cdTitle').value.trim();
+            const endTime = document.getElementById('cdEndTime').value;
+            if(!title || !endTime) { showStatus('cdStatus', '❌ Title ও সময় দরকার!', false); return; }
+            const { error } = await atlas.from('countdown_cards').insert([{
+                title, end_time: new Date(endTime).toISOString(), active: true
+            }]);
+            if(error) { showStatus('cdStatus', '❌ ' + error.message, false); return; }
+            showStatus('cdStatus', '✅ Countdown Added!', true);
+            document.getElementById('cdTitle').value = '';
+            document.getElementById('cdEndTime').value = '';
+            loadCountdowns();
+        }
+
+        async function loadCountdowns() {
+            const { data } = await atlas.from('countdown_cards').select('*').order('created_at', { ascending: false });
+            const list = data || [];
+            const container = document.getElementById('countdownListAdmin');
+            if(list.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs font-bold py-4">কোনো countdown নেই</p>'; return; }
+            container.innerHTML = list.map(c => `
+                <div class="course-item">
+                    <div class="text-2xl">⏰</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-black text-gray-800 text-sm">${c.title}</div>
+                        <div class="text-xs text-gray-400">${new Date(c.end_time).toLocaleString('bn-BD')}</div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="toggleCountdown(${c.id}, ${!c.active})" class="text-xs font-black px-3 py-2 rounded-xl ${c.active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}">${c.active ? 'Active' : 'Inactive'}</button>
+                        <button onclick="deleteCountdown(${c.id})" class="text-red-500 text-xs font-black bg-red-50 px-3 py-2 rounded-xl hover:bg-red-100">Del</button>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function toggleCountdown(id, active) {
+            await atlas.from('countdown_cards').update({ active }).eq('id', id);
+            loadCountdowns();
+        }
+
+        async function deleteCountdown(id) {
+            if(!confirm('এই Countdown মুছে ফেলতে চাও?')) return;
+            await atlas.from('countdown_cards').delete().eq('id', id);
+            loadCountdowns();
+        }
+
+        // Enter key login
+        document.addEventListener('keydown', e => {
+            if(e.key === 'Enter' && !document.getElementById('loginArea').classList.contains('hidden')) checkAdmin();
+        });
+    </script>
+</body>
+</html>
