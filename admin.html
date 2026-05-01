@@ -3,243 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Master Control Panel</title>
+    <title>ATLAS | Master Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f0f4f8; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f4f7fa; }
+        .grid-card { background: white; padding: 25px; border-radius: 35px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); text-align: center; cursor: pointer; transition: 0.3s; }
+        .grid-card:active { transform: scale(0.95); }
         .tab-content { display: none; }
-        .active { display: block; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        input, select, textarea { border: 2px solid #e2e8f0 !important; outline: none; transition: 0.3s; }
-        input:focus { border-color: #1e40af !important; background: #fff !important; }
+        .active-tab { display: block; }
     </style>
 </head>
-<body class="pb-10">
+<body class="pb-20">
 
-    <div id="loginArea" class="flex items-center justify-center min-h-screen p-6">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md text-center border-b-8 border-blue-800 font-bold">
-            <h2 class="text-4xl font-black text-blue-800 mb-6 italic uppercase tracking-tighter">ATLAS MASTER</h2>
-            <input type="tel" id="admPhone" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 text-center" placeholder="01754365403">
-            <input type="password" id="admPass" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 text-center" placeholder="Password">
-            <button onclick="checkAdmin()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black shadow-xl active:scale-95 transition-all">LOGIN</button>
+    <nav class="bg-white p-5 shadow-sm flex justify-between items-center sticky top-0 z-[100]">
+        <div class="flex items-center space-x-2 cursor-pointer" onclick="showDashboard()">
+            <div class="w-10 h-10 bg-blue-800 rounded-xl flex items-center justify-center text-white font-black italic">A</div>
+            <span class="font-black text-blue-900 italic uppercase underline decoration-blue-200">ATLAS BOSS</span>
+        </div>
+        <button onclick="logout()" class="text-red-500 font-bold text-[10px] bg-red-50 px-4 py-2 rounded-full uppercase">Logout</button>
+    </nav>
+
+    <div id="gridArea" class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div onclick="showTab('add_exam')" class="grid-card border-b-4 border-green-500">
+            <div class="text-3xl mb-2">📝</div><p class="text-[11px] font-black uppercase">Add Exam</p>
+        </div>
+        <div onclick="showTab('add_class')" class="grid-card border-b-4 border-blue-500">
+            <div class="text-3xl mb-2">📺</div><p class="text-[11px] font-black uppercase">Add Class</p>
+        </div>
+        <div onclick="showTab('add_review')" class="grid-card border-b-4 border-yellow-500">
+            <div class="text-3xl mb-2">⭐</div><p class="text-[11px] font-black uppercase">Reviews</p>
+        </div>
+        <div onclick="showTab('students')" class="grid-card border-b-4 border-indigo-500">
+            <div class="text-3xl mb-2">👥</div><p class="text-[11px] font-black uppercase">Students</p>
+        </div>
+        <div onclick="showTab('home_manage')" class="grid-card border-b-4 border-red-500">
+            <div class="text-3xl mb-2">➕</div><p class="text-[11px] font-black uppercase">Home Buttons</p>
         </div>
     </div>
 
-    <div id="dashboard" class="hidden">
-        <nav class="bg-white p-5 shadow-sm flex justify-between items-center sticky top-0 z-50">
-            <span class="font-black text-blue-800 italic">ATLAS PANEL</span>
-            <button onclick="location.reload()" class="text-red-500 font-bold text-[10px] bg-red-50 px-4 py-2 rounded-full border border-red-100">LOGOUT</button>
-        </nav>
-
-        <div class="p-5 max-w-4xl mx-auto space-y-6">
-            <div class="flex space-x-2 overflow-x-auto pb-2 no-scrollbar font-bold">
-                <button onclick="showTab('add', this)" class="tab-btn bg-blue-800 text-white px-8 py-4 rounded-2xl text-xs shadow-lg whitespace-nowrap">ADD NEW</button>
-                <button onclick="showTab('manage', this)" class="tab-btn bg-white text-gray-500 px-8 py-4 rounded-2xl text-xs shadow-sm whitespace-nowrap">MANAGE ALL</button>
-                <button onclick="showTab('access', this)" class="tab-btn bg-white text-gray-500 px-8 py-4 rounded-2xl text-xs shadow-sm whitespace-nowrap">ACCESS CONTROL</button>
+    <div id="add_review" class="tab-content p-6 max-w-xl mx-auto">
+        <div class="bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
+            <h3 class="font-black text-blue-800 uppercase italic mb-4">Add Student Review</h3>
+            
+            <select id="revType" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold text-sm">
+                <option value="Class">Class Review</option>
+                <option value="Exam">Exam Review</option>
+                <option value="Mentoring">Mentoring Review</option>
+                <option value="Service">Course Service</option>
+            </select>
+            
+            <input id="revName" placeholder="Student Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+            <textarea id="revText" placeholder="What did they say?" class="w-full p-4 bg-gray-50 rounded-2xl border-none h-24 font-bold"></textarea>
+            
+            <div class="border-2 border-dashed border-gray-100 p-6 rounded-3xl text-center">
+                <p class="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest">Select Student Photo</p>
+                <input type="file" id="revFile" accept="image/*" class="text-xs">
             </div>
 
-            <div id="addTab" class="tab-content active">
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border space-y-5 font-bold">
-                    <div class="flex justify-between items-center border-b pb-4">
-                        <h3 class="text-blue-800 uppercase italic">Publish Content</h3>
-                        <select id="mType" onchange="toggleForm()" class="bg-blue-50 text-blue-800 px-4 py-2 rounded-xl text-xs border-none font-bold">
-                            <option value="classes">📺 CLASS</option>
-                            <option value="exams">📝 EXAM</option>
-                        </select>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input list="subList" id="mSub" placeholder="Subject" class="w-full p-4 bg-gray-50 rounded-2xl text-sm border">
-                        <input list="papList" id="mPap" placeholder="Paper" class="w-full p-4 bg-gray-50 rounded-2xl text-sm border">
-                    </div>
-                    <input type="text" id="mChap" placeholder="Chapter Name" class="w-full p-4 bg-gray-50 rounded-2xl text-sm border">
-
-                    <div id="examFields" class="hidden space-y-4">
-                        <textarea id="mDesc" class="w-full p-4 bg-gray-50 rounded-2xl text-sm h-20 border" placeholder="Exam Rules/Description..."></textarea>
-                        
-                        <div class="bg-blue-50 p-5 rounded-[2rem] space-y-3">
-                            <p class="text-[10px] text-blue-800 uppercase font-black">📅 Start Time & Date</p>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="date" id="mStartDate" class="p-3 bg-white rounded-xl text-xs border">
-                                <input type="time" id="mStartTime" class="p-3 bg-white rounded-xl text-xs border">
-                            </div>
-                        </div>
-
-                        <div class="bg-red-50 p-5 rounded-[2rem] space-y-3">
-                            <p class="text-[10px] text-red-800 uppercase font-black">📅 End Time & Date</p>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="date" id="mEndDate" class="p-3 bg-white rounded-xl text-xs border">
-                                <input type="time" id="mEndTime" class="p-3 bg-white rounded-xl text-xs border">
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="number" id="mDur" placeholder="Duration (Min)" class="w-full p-4 bg-gray-50 rounded-2xl text-sm border">
-                            <select id="mMode" onchange="toggleMode()" class="w-full p-4 bg-gray-50 rounded-2xl text-sm border">
-                                <option value="csv">CSV MCQ File</option>
-                                <option value="link">External Link</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div id="csvBox" class="hidden p-6 border-2 border-dashed rounded-[2rem] text-center">
-                        <input type="file" id="mFile" accept=".csv" class="text-xs">
-                    </div>
-                    
-                    <input type="url" id="mLink" placeholder="Link (Video or Exam)" class="w-full p-4 bg-gray-50 rounded-2xl text-sm border">
-
-                    <button onclick="saveResource()" id="saveBtn" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black shadow-xl uppercase italic tracking-widest">PUBLISH</button>
-                </div>
-            </div>
-
-            <div id="manageTab" class="tab-content space-y-4 pb-10">
-                <div id="masterList" class="space-y-4"></div>
-            </div>
-
-            <div id="accessTab" class="tab-content space-y-6">
-                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border font-bold space-y-4">
-                    <input type="tel" id="edPhone" placeholder="Editor Phone" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-                    <input type="password" id="edPass" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-                    <button onclick="addEditor()" class="w-full bg-indigo-700 text-white py-4 rounded-2xl font-black">GRANT ACCESS</button>
-                </div>
-                <div id="editorList" class="space-y-2"></div>
-            </div>
+            <button onclick="uploadReview()" id="revBtn" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black shadow-xl uppercase tracking-widest">Publish Review</button>
         </div>
     </div>
-
-    <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 font-bold">
-        <div class="bg-white w-full max-w-md p-8 rounded-[3rem] shadow-2xl space-y-3 overflow-y-auto max-h-[90vh]">
-            <h3 class="text-center text-blue-800 italic uppercase">Edit Entry</h3>
-            <input type="text" id="ev1" placeholder="Subject" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-            <input type="text" id="ev2" placeholder="Paper" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-            <input type="text" id="ev3" placeholder="Chapter" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-            <textarea id="ev4" placeholder="Link/Desc" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm h-24"></textarea>
-            <div id="editExtra" class="hidden grid grid-cols-2 gap-2">
-                <input type="date" id="evD" class="p-3 bg-gray-50 rounded-xl border text-xs">
-                <input type="number" id="evM" placeholder="Min" class="p-3 bg-gray-50 rounded-xl border text-xs">
-            </div>
-            <div class="flex space-x-2 mt-4">
-                <button onclick="closeModal()" class="flex-1 bg-gray-100 py-4 rounded-2xl text-gray-400">Cancel</button>
-                <button id="upBtn" class="flex-1 bg-blue-800 text-white py-4 rounded-2xl">Update</button>
-            </div>
-        </div>
-    </div>
-
-    <datalist id="subList"></datalist><datalist id="papList"></datalist>
 
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        async function checkAdmin() {
-            const p = document.getElementById('admPhone').value;
-            const s = document.getElementById('admPass').value;
-            if(p === "01754365403" && s === "atlas2026") loginOk();
-            else {
-                const { data } = await atlas.from('admins').select('*').eq('phone', p).eq('password', s).single();
-                if(data) loginOk(); else alert("Denied!");
-            }
-        }
+        // --- REVIEW UPLOAD LOGIC ---
+        async function uploadReview() {
+            const btn = document.getElementById('revBtn');
+            const file = document.getElementById('revFile').files[0];
+            const name = document.getElementById('revName').value;
+            const text = document.getElementById('revText').value;
+            const type = document.getElementById('revType').value;
 
-        async function loginOk() {
-            document.getElementById('loginArea').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-            await sync();
-        }
+            if(!file || !name || !text) return alert("সব তথ্য পূরণ করুন!");
+            btn.innerText = "UPLOADING PHOTO...";
 
-        function toggleForm() {
-            const isEx = document.getElementById('mType').value === 'exams';
-            document.getElementById('examFields').className = isEx ? 'block space-y-4' : 'hidden';
-            toggleMode();
-        }
+            // ১. ফটো আপলোড (Storage এ)
+            const fileName = Date.now() + "_" + file.name;
+            const { data: uploadData, error: uploadError } = await atlas.storage
+                .from('review-photos')
+                .upload(fileName, file);
 
-        function toggleMode() {
-            const isCSV = document.getElementById('mMode').value === 'csv' && document.getElementById('mType').value === 'exams';
-            document.getElementById('csvBox').className = isCSV ? 'block' : 'hidden';
-            document.getElementById('mLink').placeholder = isCSV ? "Enter Link (Optional)" : "Enter Video/Exam Link";
-        }
+            if(uploadError) return alert("Photo Upload Failed: " + uploadError.message);
 
-        async function saveResource() {
-            const btn = document.getElementById('saveBtn');
-            const table = document.getElementById('mType').value;
-            btn.innerText = "SAVING...";
+            // ২. ফটোর পাবলিক লিঙ্ক তৈরি
+            const { data: urlData } = atlas.storage.from('review-photos').getPublicUrl(fileName);
+            const photoUrl = urlData.publicUrl;
 
-            const payload = { subject: mSub.value, paper: mPap.value, chapter: mChap.value };
+            // ৩. ডাটাবেসে সেভ করা
+            btn.innerText = "SAVING DATA...";
+            const { error: dbError } = await atlas.from('reviews').insert([{
+                category: type,
+                student_name: name,
+                comment: text,
+                photo_url: photoUrl
+            }]);
 
-            if(table === 'classes') {
-                payload.link = mLink.value;
-                await atlas.from('classes').insert([payload]);
+            if(!dbError) {
+                alert("রিভিউ সফলভাবে পাবলিশ হয়েছে!");
+                location.reload();
             } else {
-                payload.description = mDesc.value;
-                payload.start_date = mStartDate.value; payload.start_time = mStartTime.value;
-                payload.end_date = mEndDate.value; payload.end_time = mEndTime.value;
-                payload.duration = parseInt(mDur.value) || 0;
-                payload.type = mMode.value;
-
-                if(payload.type === 'link') {
-                    payload.ext_link = mLink.value;
-                    await atlas.from('exams').insert([payload]);
-                } else {
-                    Papa.parse(mFile.files[0], { header: true, skipEmptyLines: true, complete: async (r) => {
-                        payload.questions = r.data;
-                        await atlas.from('exams').insert([payload]);
-                        finishSave();
-                    }});
-                    return;
-                }
+                alert("Database Error: " + dbError.message);
             }
-            finishSave();
         }
 
-        function finishSave() { alert("Saved!"); location.reload(); }
-
-        async function sync() {
-            const { data: cls } = await atlas.from('classes').select('*').order('created_at', { ascending: false });
-            const { data: exs } = await atlas.from('exams').select('*').order('created_at', { ascending: false });
-            
-            // Auto suggestions
-            const subs = [...new Set([...cls, ...exs].map(i => i.subject))];
-            const paps = [...new Set(cls.map(i => i.paper))];
-            document.getElementById('subList').innerHTML = subs.map(s => `<option value="${s}">`).join('');
-            document.getElementById('papList').innerHTML = paps.map(p => `<option value="${p}">`).join('');
-            
-            if(document.getElementById('manageTab').classList.contains('active')) renderList(cls, exs);
+        // Tab and Dashboard Logic
+        function showTab(id) {
+            document.getElementById('gridArea').classList.add('hidden');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-tab'));
+            document.getElementById(id).classList.add('active-tab');
         }
-
-        function renderList(cls, exs) {
-            const container = document.getElementById('masterList');
-            let html = '<p class="text-[10px] font-black text-blue-600 tracking-widest uppercase">Classes</p>';
-            html += cls.map(c => `<div class="bg-white p-5 rounded-[2rem] border shadow-sm flex justify-between items-center text-xs font-bold"><div>${c.subject} - ${c.paper}<p class="text-gray-400 font-normal">${c.chapter}</p></div><div class="flex space-x-2"><button onclick="openEdit('classes','${c.id}','${c.subject}','${c.paper}','${c.chapter}','${c.link}')" class="text-blue-600 underline italic">Edit</button><button onclick="del('classes','${c.id}')" class="text-red-400 underline italic">Del</button></div></div>`).join('');
-            
-            html += '<p class="text-[10px] font-black text-green-600 tracking-widest uppercase mt-4">Exams</p>';
-            html += exs.map(e => `<div class="bg-white p-5 rounded-[2rem] border shadow-sm flex justify-between items-center text-xs font-bold"><div>${e.subject} - ${e.chapter}<p class="text-gray-400 font-normal text-[8px] uppercase">${e.type} Exam</p></div><div class="flex space-x-2"><button onclick="openEdit('exams','${e.id}','${e.subject}','${e.chapter}','${e.description}','${e.ext_link||''}', '${e.end_date}', '${e.duration}')" class="text-blue-600 underline italic">Edit</button><button onclick="del('exams','${e.id}')" class="text-red-400 underline italic">Del</button></div></div>`).join('');
-            container.innerHTML = html;
+        function showDashboard() {
+            document.getElementById('gridArea').classList.remove('hidden');
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-tab'));
         }
-
-        function openEdit(table, id, v1, v2, v3, v4, v5, v6) {
-            ev1.value = v1; ev2.value = v2; ev3.value = v3; ev4.value = v4;
-            const ex = document.getElementById('editExtra');
-            if(table === 'exams') { ex.classList.remove('hidden'); evD.value = v5; evM.value = v6; } else { ex.classList.add('hidden'); }
-            document.getElementById('editModal').classList.remove('hidden');
-            document.getElementById('upBtn').onclick = async () => {
-                const up = table === 'classes' ? { subject: ev1.value, paper: ev2.value, chapter: ev3.value, link: ev4.value } : { subject: ev1.value, chapter: ev2.value, description: ev3.value, ext_link: ev4.value, end_date: evD.value, duration: parseInt(evM.value) };
-                await atlas.from(table).update(up).eq('id', id); finishSave();
-            };
-        }
-
-        function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
-        function showTab(t, b) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(t+'Tab').classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.replace('bg-blue-800','bg-white'));
-            b.classList.replace('bg-white','bg-blue-800'); sync();
-        }
-        async function del(t, id) { if(confirm("Sure?")) { await atlas.from(t).delete().eq('id', id); sync(); } }
-        async function addEditor() { await atlas.from('admins').insert([{ phone: edPhone.value, password: edPass.value }]); alert("Added!"); sync(); }
     </script>
 </body>
 </html>
