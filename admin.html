@@ -3,124 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Master Admin</title>
+    <title>ATLAS | Master Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f4f7fa; }
-        .grid-card { background: white; padding: 25px; border-radius: 35px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); text-align: center; cursor: pointer; transition: 0.3s; }
-        .grid-card:active { transform: scale(0.95); }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
+        .grid-card { background: white; padding: 30px; border-radius: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); text-align: center; cursor: pointer; transition: 0.3s; border: 2px solid transparent; }
+        .grid-card:hover { border-color: #1e40af; transform: translateY(-5px); }
         .tab-content { display: none; }
         .active-tab { display: block; }
     </style>
 </head>
 <body class="pb-20">
 
-    <nav class="bg-white p-5 shadow-sm flex justify-between items-center sticky top-0 z-[100]">
-        <div class="flex items-center space-x-2 cursor-pointer" onclick="showDashboard()">
-            <div class="w-10 h-10 bg-blue-800 rounded-xl flex items-center justify-center text-white font-black italic">A</div>
-            <span class="font-black text-blue-900 italic uppercase underline decoration-blue-200">ATLAS BOSS</span>
-        </div>
-        <button onclick="logout()" class="text-red-500 font-bold text-[10px] bg-red-50 px-4 py-2 rounded-full uppercase">Logout</button>
-    </nav>
-
-    <div id="gridArea" class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div onclick="showTab('add_exam')" class="grid-card border-b-4 border-green-500">
-            <div class="text-3xl mb-2">📝</div><p class="text-[11px] font-black uppercase">Add Exam</p>
-        </div>
-        <div onclick="showTab('add_class')" class="grid-card border-b-4 border-blue-500">
-            <div class="text-3xl mb-2">📺</div><p class="text-[11px] font-black uppercase">Add Class</p>
-        </div>
-        <div onclick="showTab('add_review')" class="grid-card border-b-4 border-yellow-500">
-            <div class="text-3xl mb-2">⭐</div><p class="text-[11px] font-black uppercase">Reviews</p>
-        </div>
-        <div onclick="showTab('students')" class="grid-card border-b-4 border-indigo-500">
-            <div class="text-3xl mb-2">👥</div><p class="text-[11px] font-black uppercase">Students</p>
-        </div>
-        <div onclick="showTab('home_manage')" class="grid-card border-b-4 border-red-500">
-            <div class="text-3xl mb-2">➕</div><p class="text-[11px] font-black uppercase">Home Buttons</p>
+    <div id="loginArea" class="flex items-center justify-center min-h-screen p-6">
+        <div class="bg-white p-10 rounded-[3.5rem] shadow-2xl w-full max-w-md text-center">
+            <div class="mb-8" onclick="location.reload()">
+                <span class="text-4xl font-black text-blue-800 italic tracking-tighter">ATLAS</span>
+            </div>
+            <input type="tel" id="admPhone" class="w-full p-5 bg-gray-50 rounded-3xl mb-4 border-none text-center font-bold" placeholder="Admin Phone">
+            <input type="password" id="admPass" class="w-full p-5 bg-gray-50 rounded-3xl mb-6 border-none text-center font-bold" placeholder="Password">
+            <button onclick="checkAdmin()" class="w-full bg-blue-800 text-white py-5 rounded-[2.5rem] font-black shadow-xl uppercase tracking-widest">Login to Dashboard</button>
         </div>
     </div>
 
-    <div id="add_review" class="tab-content p-6 max-w-xl mx-auto">
-        <div class="bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
-            <h3 class="font-black text-blue-800 uppercase italic mb-4">Add Student Review</h3>
+    <div id="dashboard" class="hidden">
+        <nav class="bg-white p-5 shadow-sm flex justify-between items-center sticky top-0 z-[100]">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="showDashboard()">
+                <div class="w-10 h-10 bg-blue-800 rounded-xl flex items-center justify-center text-white font-black italic">A</div>
+                <span class="font-black text-blue-900 italic uppercase">ATLAS BOSS</span>
+            </div>
+            <button onclick="logout()" class="text-red-500 font-bold text-[10px] bg-red-50 px-4 py-2 rounded-full uppercase">Logout</button>
+        </nav>
+
+        <div id="gridArea" class="p-6 grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div onclick="location.href='add-exam.html'" class="grid-card">
+                <div class="text-4xl mb-3">📝</div><p class="text-xs font-black uppercase text-gray-600">Add Exam</p>
+            </div>
+            <div onclick="location.href='add-class.html'" class="grid-card">
+                <div class="text-4xl mb-3">📺</div><p class="text-xs font-black uppercase text-gray-600">Add Class</p>
+            </div>
+            <div onclick="showTab('review_tab')" class="grid-card">
+                <div class="text-4xl mb-3">⭐</div><p class="text-xs font-black uppercase text-gray-600">Reviews</p>
+            </div>
+            <div onclick="showTab('course_tab')" class="grid-card">
+                <div class="text-4xl mb-3">🎓</div><p class="text-xs font-black uppercase text-gray-600">All Courses</p>
+            </div>
+            <div onclick="showTab('student_tab')" class="grid-card">
+                <div class="text-4xl mb-3">👥</div><p class="text-xs font-black uppercase text-gray-600">Students</p>
+            </div>
+            <div onclick="showTab('button_tab')" class="grid-card">
+                <div class="text-4xl mb-3">➕</div><p class="text-xs font-black uppercase text-gray-600">New Button</p>
+            </div>
+        </div>
+
+        <div class="p-6 max-w-4xl mx-auto">
             
-            <select id="revType" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold text-sm">
-                <option value="Class">Class Review</option>
-                <option value="Exam">Exam Review</option>
-                <option value="Mentoring">Mentoring Review</option>
-                <option value="Service">Course Service</option>
-            </select>
-            
-            <input id="revName" placeholder="Student Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
-            <textarea id="revText" placeholder="What did they say?" class="w-full p-4 bg-gray-50 rounded-2xl border-none h-24 font-bold"></textarea>
-            
-            <div class="border-2 border-dashed border-gray-100 p-6 rounded-3xl text-center">
-                <p class="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest">Select Student Photo</p>
-                <input type="file" id="revFile" accept="image/*" class="text-xs">
+            <div id="review_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
+                <h3 class="font-black text-blue-800 uppercase italic mb-4">Add Student Review</h3>
+                <select id="revCat" class="w-full p-4 bg-gray-50 rounded-2xl font-bold border-none">
+                    <option value="Class">Class Review</option>
+                    <option value="Exam">Exam Review</option>
+                    <option value="Mentoring">Mentoring Review</option>
+                    <option value="Service">Course Service</option>
+                </select>
+                <input id="revName" placeholder="Student Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <textarea id="revText" placeholder="Review Text..." class="w-full p-4 bg-gray-50 rounded-2xl border-none h-24 font-bold"></textarea>
+                <div class="border-2 border-dashed p-6 rounded-3xl text-center">
+                    <p class="text-[10px] font-bold text-gray-400 mb-2 uppercase">Upload Student Photo</p>
+                    <input type="file" id="revFile" accept="image/*" class="text-xs">
+                </div>
+                <button onclick="uploadReview()" id="revBtn" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl">Publish Review</button>
             </div>
 
-            <button onclick="uploadReview()" id="revBtn" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black shadow-xl uppercase tracking-widest">Publish Review</button>
+            <div id="course_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
+                <h3 class="font-black text-blue-800 uppercase italic mb-4">Course Manager</h3>
+                <input id="cName" placeholder="Course Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="cLink" placeholder="Course Landing Page Link" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <button onclick="saveCourse()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase">Add Course</button>
+                <div id="courseList" class="mt-6 space-y-2"></div>
+            </div>
+
+            <div id="button_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
+                <h3 class="font-black text-blue-800 uppercase italic mb-4">Add Home Page Button</h3>
+                <input id="btnName" placeholder="Button Label (e.g. Free Notes)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="btnLink" placeholder="URL / Link" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="btnIcon" placeholder="Icon Emoji (e.g. 📚)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <button onclick="saveNewBtn()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase">Add to Home</button>
+            </div>
+
+            <div id="student_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm">
+                <h3 class="font-black text-blue-800 uppercase italic mb-6">Registered Students</h3>
+                <div id="studentDisplay" class="space-y-3"></div>
+            </div>
+
         </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
-        const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_KEY = 'YOUR_ANON_KEY';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // --- REVIEW UPLOAD LOGIC ---
-        async function uploadReview() {
-            const btn = document.getElementById('revBtn');
-            const file = document.getElementById('revFile').files[0];
-            const name = document.getElementById('revName').value;
-            const text = document.getElementById('revText').value;
-            const type = document.getElementById('revType').value;
+        // Auto-Login & Control
+        window.onload = () => {
+            if(localStorage.getItem('atlas_logged') === 'true') loginOk();
+        };
 
-            if(!file || !name || !text) return alert("সব তথ্য পূরণ করুন!");
-            btn.innerText = "UPLOADING PHOTO...";
-
-            // ১. ফটো আপলোড (Storage এ)
-            const fileName = Date.now() + "_" + file.name;
-            const { data: uploadData, error: uploadError } = await atlas.storage
-                .from('review-photos')
-                .upload(fileName, file);
-
-            if(uploadError) return alert("Photo Upload Failed: " + uploadError.message);
-
-            // ২. ফটোর পাবলিক লিঙ্ক তৈরি
-            const { data: urlData } = atlas.storage.from('review-photos').getPublicUrl(fileName);
-            const photoUrl = urlData.publicUrl;
-
-            // ৩. ডাটাবেসে সেভ করা
-            btn.innerText = "SAVING DATA...";
-            const { error: dbError } = await atlas.from('reviews').insert([{
-                category: type,
-                student_name: name,
-                comment: text,
-                photo_url: photoUrl
-            }]);
-
-            if(!dbError) {
-                alert("রিভিউ সফলভাবে পাবলিশ হয়েছে!");
-                location.reload();
-            } else {
-                alert("Database Error: " + dbError.message);
-            }
+        async function checkAdmin() {
+            const p = document.getElementById('admPhone').value;
+            const s = document.getElementById('admPass').value;
+            if(p === "01754365403" && s === "atlas2026") {
+                localStorage.setItem('atlas_logged', 'true');
+                loginOk();
+            } else { alert("Wrong Credentials!"); }
         }
 
-        // Tab and Dashboard Logic
+        function loginOk() {
+            document.getElementById('loginArea').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            loadStudents(); loadCourses();
+        }
+
+        function logout() { localStorage.removeItem('atlas_logged'); location.reload(); }
+
+        // Navigation Logic
         function showTab(id) {
             document.getElementById('gridArea').classList.add('hidden');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-tab'));
             document.getElementById(id).classList.add('active-tab');
         }
+
         function showDashboard() {
             document.getElementById('gridArea').classList.remove('hidden');
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active-tab'));
+        }
+
+        // Feature: Review with Direct Upload
+        async function uploadReview() {
+            const btn = document.getElementById('revBtn');
+            const file = document.getElementById('revFile').files[0];
+            if(!file) return alert("Select Student Photo!");
+            
+            btn.innerText = "UPDATING...";
+            const fileName = Date.now() + "_" + file.name;
+            await atlas.storage.from('review-photos').upload(fileName, file);
+            const { data: url } = atlas.storage.from('review-photos').getPublicUrl(fileName);
+
+            const { error } = await atlas.from('reviews').insert([{
+                category: revCat.value, student_name: revName.value, comment: revText.value, photo_url: url.publicUrl
+            }]);
+            if(!error) { alert("Review Published!"); location.reload(); }
+        }
+
+        // Feature: Dynamic Home Button
+        async function saveNewBtn() {
+            const { error } = await atlas.from('home_buttons').insert([{
+                name: btnName.value, link: btnLink.value, icon: btnIcon.value
+            }]);
+            if(!error) alert("Button Added Successfully!");
+        }
+
+        // Feature: Student List
+        async function loadStudents() {
+            const { data } = await atlas.from('students').select('*').order('created_at', {ascending: false});
+            document.getElementById('studentDisplay').innerHTML = data.map(s => `
+                <div class="p-4 bg-gray-50 rounded-2xl flex justify-between items-center text-[11px] font-bold">
+                    <span>${s.name} (${s.whatsapp})</span>
+                    <span class="text-blue-600">${s.college || 'N/A'}</span>
+                </div>
+            `).join('');
+        }
+
+        // Feature: Courses
+        async function saveCourse() {
+            await atlas.from('courses').insert([{ name: cName.value, link: cLink.value }]);
+            alert("Course Added!"); loadCourses();
+        }
+
+        async function loadCourses() {
+            const { data } = await atlas.from('courses').select('*');
+            document.getElementById('courseList').innerHTML = data.map(c => `
+                <div class="p-3 bg-blue-50 rounded-xl text-xs font-bold text-blue-800">${c.name}</div>
+            `).join('');
         }
     </script>
 </body>
