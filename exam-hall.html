@@ -19,43 +19,43 @@
         .nav-dot { aspect-ratio: 1; border-radius: 10px; font-size: 11px; font-weight: bold; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
         .nav-dot.done { background: #1e40af; color: white; }
         .fixed-sub { position: fixed; bottom: 30px; right: 30px; z-index: 50; padding: 18px 40px; border-radius: 35px; font-weight: 900; background: #1e40af; color: white; text-transform: uppercase; box-shadow: 0 10px 25px rgba(30,64,175,0.3); border: none; cursor: pointer; }
-        .filter-btn { padding: 10px 20px; border-radius: 25px; font-size: 13px; font-weight: bold; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: 0.2s; }
+        .filter-btn { padding: 10px 20px; border-radius: 25px; font-size: 13px; font-weight: bold; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: 0.2s; white-space: nowrap; }
         .f-active { background: #16a34a; color: white; border-color: #16a34a; }
         @media (max-width: 1024px) { .nav-box { display: none; } .fixed-sub { right: 5%; width: 90%; } }
-        @media print { .no-print { display: none !important; } }
+        @media print { .no-print { display: none !important; } body { background: white; } .print-area { width: 100% !important; margin: 0 !important; } }
     </style>
 </head>
 <body class="pb-32">
-    <div class="container mx-auto p-4 md:p-6">
+    <div class="container mx-auto p-4 md:p-6 print-area">
         
-        <div id="startScreen" class="hidden fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center">
+        <div id="startScreen" class="hidden fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center no-print">
             <h1 class="text-3xl font-black text-blue-900 mb-1 italic uppercase tracking-tighter">ATLAS ADMISSION CARE</h1>
             <p id="sChap" class="text-sm font-bold text-blue-600 mb-8 uppercase tracking-widest"></p>
             <div class="bg-gray-50 p-8 rounded-[2.5rem] border mb-8 w-full max-w-sm">
                 <div class="grid grid-cols-3 gap-4 mb-6">
                     <div><p class="text-[9px] text-gray-400 font-black uppercase">Time</p><p id="sTime" class="font-black text-blue-800 text-lg">0 M</p></div>
                     <div><p class="text-[9px] text-gray-400 font-black uppercase">Questions</p><p id="sQs" class="font-black text-blue-800 text-lg">0</p></div>
-                    <div><p class="text-[9px] text-gray-400 font-black uppercase">Negative</p><p id="sNeg" class="font-black text-red-600 text-lg">0.0</p></div>
+                    <div><p class="text-[9px] text-gray-400 font-black uppercase">Neg</p><p id="sNeg" class="font-black text-red-600 text-lg">0.0</p></div>
                 </div>
                 <input type="text" id="stuName" class="w-full bg-white border p-4 rounded-2xl font-bold text-center outline-none focus:border-blue-500" placeholder="আপনার নাম লিখুন">
             </div>
             <button onclick="startExam()" class="w-full max-w-sm bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl">Start Exam Now</button>
         </div>
 
-        <div id="liveArea" class="hidden">
-            <nav class="bg-white/90 backdrop-blur-md p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center px-6 rounded-3xl mb-8 no-print border border-gray-100">
+        <div id="liveArea" class="hidden no-print">
+            <nav class="bg-white/90 backdrop-blur-md p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center px-6 rounded-3xl mb-8 border border-gray-100">
                 <span class="font-black text-blue-900 italic uppercase">ATLAS LIVE</span>
                 <div id="timer" class="font-black text-red-600 bg-red-50 px-6 py-2 rounded-full border border-red-100 text-xl tracking-tighter">00:00</div>
             </nav>
-            <div id="nav" class="nav-box no-print"></div>
+            <div id="nav" class="nav-box"></div>
             <main id="qs" class="max-w-3xl lg:ml-12 space-y-8"></main>
-            <button onclick="submitExam()" class="fixed-sub no-print">Submit Exam</button>
+            <button onclick="submitExam()" class="fixed-sub">Submit Exam</button>
         </div>
 
         <div id="resArea" class="hidden max-w-4xl mx-auto py-6">
             <div class="flex justify-between items-center mb-8 no-print">
-                <button onclick="location.reload()" class="bg-white border px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-600">❮ Retake Exam</button>
-                <button onclick="window.print()" class="bg-blue-900 text-white px-6 py-2.5 rounded-2xl font-black text-xs shadow-lg uppercase tracking-widest">Download PDF</button>
+                <button onclick="location.reload()" class="bg-white border px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-600 shadow-sm">❮ Retake Exam</button>
+                <button onclick="window.print()" class="bg-blue-900 text-white px-6 py-2.5 rounded-2xl font-black text-xs shadow-lg uppercase tracking-widest">Download PDF / Print</button>
             </div>
 
             <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-sm border border-gray-100 mb-10">
@@ -63,11 +63,11 @@
                 <div class="flex flex-col md:flex-row items-center gap-12">
                     <div class="w-48 h-48 shrink-0"><canvas id="chart"></canvas></div>
                     <div class="flex-1 w-full grid grid-cols-2 gap-5">
-                        <div class="bg-green-50 p-5 rounded-3xl border border-green-100 text-center">
+                        <div class="bg-green-50 p-5 rounded-3xl border border-green-100 text-center shadow-sm">
                             <p class="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Correct</p>
                             <p id="rC" class="text-3xl font-black text-green-600">+0.0</p>
                         </div>
-                        <div class="bg-red-50 p-5 rounded-3xl border border-red-100 text-center">
+                        <div class="bg-red-50 p-5 rounded-3xl border border-red-100 text-center shadow-sm">
                             <p class="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Negative</p>
                             <p id="rN" class="text-3xl font-black text-red-600">-0.0</p>
                         </div>
@@ -91,21 +91,22 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
-        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const atlas = window.supabase.createClient('https://gdmhswxnlhvtyfxaevnt.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI');
         
         let examData = null, userAns = {}, locked = {}, timerIv;
         const examId = new URLSearchParams(window.location.search).get('id');
         const L = ['A', 'B', 'C', 'D', 'E'];
 
         window.onload = async () => {
-            if(!examId) return;
-            const { data } = await atlas.from('exams').select('*').eq('exam_id', examId).single();
+            if(!examId) return alert("লিংক সঠিক নয়!");
+            const { data, error } = await atlas.from('exams').select('*').eq('exam_id', examId).single();
             if(data) {
                 examData = data;
-                document.getElementById('sChap').innerText = examData.subject + " | " + examData.chapter;
-                document.getElementById('sTime').innerText = examData.duration + " M";
+                // Ensure questions is processed correctly (handle string or object)
+                examData.questions = typeof data.questions === 'string' ? JSON.parse(data.questions) : (data.questions || []);
+                
+                document.getElementById('sChap').innerText = (examData.subject || "") + " | " + (examData.chapter || "");
+                document.getElementById('sTime').innerText = (examData.duration || 20) + " M";
                 document.getElementById('sQs').innerText = examData.questions.length;
                 document.getElementById('sNeg').innerText = examData.negative_marking ? examData.negative_value : "0.0";
                 document.getElementById('startScreen').classList.remove('hidden');
@@ -117,7 +118,7 @@
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('liveArea').classList.remove('hidden');
             renderQuestions();
-            let timeLeft = examData.duration * 60;
+            let timeLeft = (examData.duration || 20) * 60;
             timerIv = setInterval(() => {
                 if(timeLeft <= 0) { clearInterval(timerIv); submitExam(); }
                 let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
@@ -131,8 +132,8 @@
             document.getElementById('qs').innerHTML = examData.questions.map((q, i) => {
                 const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
                 return `
-                <div id="q-${i}" class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
-                    <p class="font-bold text-gray-800 text-lg mb-8 leading-relaxed"><span class="text-blue-700 mr-2 font-black">${i+1}.</span> ${q.questions}</p>
+                <div id="q-${i}" class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm transition hover:border-blue-200">
+                    <p class="font-bold text-gray-800 text-lg mb-8 leading-relaxed"><span class="text-blue-700 mr-2 font-black">${i+1}.</span> ${q.questions || q.question}</p>
                     <div class="space-y-3">
                         ${opts.map((o, oi) => `
                         <div onclick="selectOpt(${i}, ${oi+1}, this)" class="opt-btn ob-${i}">
@@ -155,47 +156,55 @@
             clearInterval(timerIv);
             let correct = 0, wrong = 0, skipped = 0;
             examData.questions.forEach((q, i) => {
+                const actualAns = parseInt(q.answer);
                 if(!userAns[i]) skipped++;
-                else if(parseInt(userAns[i]) === parseInt(q.answer)) correct++;
+                else if(parseInt(userAns[i]) === actualAns) correct++;
                 else wrong++;
             });
-            const neg = (wrong * (examData.negative_value || 0)).toFixed(2);
-            const total = (correct - parseFloat(neg)).toFixed(2);
+
+            const negPerWrong = parseFloat(examData.negative_value) || 0.25;
+            const negMark = examData.negative_marking ? (wrong * negPerWrong).toFixed(2) : "0.00";
+            const total = (correct - parseFloat(negMark)).toFixed(2);
+
             document.getElementById('rC').innerText = `+${correct}.0`;
-            document.getElementById('rN').innerText = `-${neg}`;
+            document.getElementById('rN').innerText = `-${negMark}`;
             document.getElementById('rF').innerText = Math.max(0, total);
+
             new Chart(document.getElementById('chart'), {
                 type: 'doughnut',
                 data: { datasets: [{ data: [correct, wrong, skipped], backgroundColor: ['#22c55e', '#ef4444', '#e2e8f0'], borderWidth: 0 }] },
                 options: { cutout: '80%', plugins: { legend: { display: false } } }
             });
+
             document.getElementById('liveArea').classList.add('hidden');
             document.getElementById('resArea').classList.remove('hidden');
             window.scrollTo(0,0); filterQs('all');
         }
 
-        function filterQs(f) {
+        function filterQs(filterType) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('f-active'));
-            document.getElementById(`f-${f}`).classList.add('f-active');
+            document.getElementById(`f-${filterType}`).classList.add('f-active');
             let html = '';
             examData.questions.forEach((q, i) => {
                 const u = userAns[i], c = parseInt(q.answer);
                 const s = !u ? 'skipped' : (u === c ? 'correct' : 'wrong');
-                if(f !== 'all' && s !== f) return;
+                if(filterType !== 'all' && s !== filterType) return;
+
                 const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
                 let bCls = s === 'correct' ? 'bg-green-100 text-green-600' : (s === 'wrong' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500');
+
                 html += `
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm mb-6">
                     <div class="flex items-start gap-4 mb-6">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${bCls}">${i+1}</div>
-                        <p class="font-bold text-gray-800 pt-1 leading-relaxed">${q.questions}</p>
+                        <p class="font-bold text-gray-800 pt-1 leading-relaxed">${q.questions || q.question}</p>
                     </div>
                     <div class="pl-14 space-y-3">
                         ${opts.map((o, oi) => {
-                            let ic = `<div class="opt-letter border border-gray-200 bg-white">${L[oi]}</div>`;
-                            if(oi+1 === c) ic = `<div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">✓</div>`;
-                            else if(oi+1 === u && s === 'wrong') ic = `<div class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">✕</div>`;
-                            return `<div class="flex items-center text-sm font-semibold text-gray-700">${ic}<span>${o}</span></div>`;
+                            let icon = `<div class="opt-letter border border-gray-200 bg-white">${L[oi]}</div>`;
+                            if(oi+1 === c) icon = `<div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">✓</div>`;
+                            else if(oi+1 === u && s === 'wrong') icon = `<div class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">✕</div>`;
+                            return `<div class="flex items-center text-sm font-semibold text-gray-700">${icon}<span>${o}</span></div>`;
                         }).join('')}
                     </div>
                     ${q.explanation ? `<div class="pl-14 mt-6"><div class="bg-blue-50/50 p-5 rounded-3xl border-l-4 border-blue-500 text-xs text-gray-600"><span class="font-black text-blue-900 block mb-2 uppercase text-[9px] tracking-widest">Explanation</span>${q.explanation}</div></div>` : ''}
