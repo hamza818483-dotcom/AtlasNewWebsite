@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | My Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
+        .logo-font { font-family: 'Sora', sans-serif; }
+        .card { background: white; border-radius: 24px; border: 1.5px solid #f1f5f9; }
+        .stat-box { background: white; border-radius: 18px; padding: 16px 12px; text-align: center; flex: 1; border: 1.5px solid #f1f5f9; }
+        .history-item { background: white; border-radius: 20px; border: 1.5px solid #f1f5f9; overflow: hidden; transition: 0.2s; }
+        .history-item:hover { border-color: #bfdbfe; }
+        .detail-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
+        .detail-modal.open { display: flex; }
+        .detail-sheet { background: white; border-radius: 28px 28px 0 0; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px; }
+        .q-review { background: #f8fafc; border-radius: 14px; padding: 14px; margin-bottom: 10px; border-left: 4px solid #e2e8f0; }
+        .q-review.correct { border-left-color: #16a34a; background: #f0fdf4; }
+        .q-review.wrong { border-left-color: #dc2626; background: #fff1f2; }
+        .q-review.skipped { border-left-color: #f59e0b; background: #fffbeb; }
+        .logout-btn { background: #fff1f2; color: #dc2626; border: 2px solid #fecaca; border-radius: 14px; padding: 12px 24px; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.2s; }
+        .logout-btn:hover { background: #fee2e2; }
+        .avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; background: linear-gradient(135deg, #1e40af, #3b82f6); }
+        .progress-bar-outer { background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden; }
+        .progress-bar-inner { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e40af; border-radius: 2px; }
+    </style>
+</head>
+<body class="pb-16">
+
+    <!-- Navbar -->
+    <nav class="bg-white px-5 py-4 flex items-center gap-3 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
+        <a href="index.html">
+            <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+        </a>
+        <div>
+            <div class="logo-font font-black text-blue-900 text-base">My Profile</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">আমার তথ্য ও ইতিহাস</div>
+        </div>
+        <div class="ml-auto">
+            <button onclick="logout()" class="logout-btn text-xs">Logout</button>
+        </div>
+    </nav>
+
+    <div class="max-w-xl mx-auto px-4 pt-6">
+
+        <!-- Profile Card -->
+        <div class="card p-6 mb-5 shadow-sm">
+            <div class="flex items-center gap-4 mb-5">
+                <div class="avatar-big" id="profileAvatar">A</div>
+                <div>
+                    <div class="logo-font font-black text-gray-900 text-xl" id="profileName">—</div>
+                    <div class="text-sm text-gray-500 font-bold" id="profileCollege">—</div>
+                    <div class="text-xs text-blue-600 font-bold mt-1" id="profileBatch">—</div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="bg-gray-50 rounded-2xl p-3">
+                    <div class="text-gray-400 font-bold uppercase tracking-wide text-[10px] mb-1">📞 WhatsApp</div>
+                    <div class="font-black text-gray-700" id="profilePhone">—</div>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-3">
+                    <div class="text-gray-400 font-bold uppercase tracking-wide text-[10px] mb-1">🔗 Social</div>
+                    <div class="font-black text-blue-600 truncate" id="profileSocial">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Overall Stats -->
+        <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">পরীক্ষার সারসংক্ষেপ</div>
+        <div class="flex gap-3 mb-5">
+            <div class="stat-box shadow-sm">
+                <div class="logo-font text-2xl font-black text-blue-700" id="totalExams">0</div>
+                <div class="text-[10px] font-bold text-gray-400 uppercase mt-1">মোট Exam</div>
+            </div>
+            <div class="stat-box shadow-sm">
+                <div class="logo-font text-2xl font-black text-green-600" id="avgScore">0%</div>
+                <div class="text-[10px] font-bold text-gray-400 uppercase mt-1">গড় Score</div>
+            </div>
+            <div class="stat-box shadow-sm">
+                <div class="logo-font text-2xl font-black text-purple-600" id="totalQuestions">0</div>
+                <div class="text-[10px] font-bold text-gray-400 uppercase mt-1">মোট প্রশ্ন</div>
+            </div>
+        </div>
+
+        <!-- Exam History -->
+        <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Exam History</div>
+        <div id="historyList" class="space-y-3">
+            <div class="text-center py-10 text-gray-400 font-bold">
+                <div class="text-4xl mb-3">📋</div>
+                <p>লোড হচ্ছে...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Bottom Sheet -->
+    <div class="detail-modal" id="detailModal">
+        <div class="detail-sheet">
+            <div class="flex items-center justify-between mb-5">
+                <div>
+                    <div class="logo-font font-black text-blue-900 text-base" id="detailTitle">Exam Details</div>
+                    <div class="text-xs text-gray-400 font-bold" id="detailSubject"></div>
+                </div>
+                <button onclick="closeDetail()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-black text-lg">×</button>
+            </div>
+
+            <!-- Score Summary -->
+            <div class="flex gap-3 mb-5">
+                <div class="flex-1 bg-green-50 rounded-2xl p-3 text-center">
+                    <div class="text-xl font-black text-green-600" id="detailCorrect">0</div>
+                    <div class="text-[10px] font-bold text-green-500 uppercase">Correct</div>
+                </div>
+                <div class="flex-1 bg-red-50 rounded-2xl p-3 text-center">
+                    <div class="text-xl font-black text-red-600" id="detailWrong">0</div>
+                    <div class="text-[10px] font-bold text-red-400 uppercase">Wrong</div>
+                </div>
+                <div class="flex-1 bg-amber-50 rounded-2xl p-3 text-center">
+                    <div class="text-xl font-black text-amber-600" id="detailSkipped">0</div>
+                    <div class="text-[10px] font-bold text-amber-400 uppercase">Skipped</div>
+                </div>
+            </div>
+
+            <!-- Question Review List -->
+            <div class="logo-font font-black text-gray-700 text-xs uppercase tracking-wide mb-3">প্রশ্নের বিস্তারিত</div>
+            <div id="questionReviewList" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let studentId = null;
+
+        window.onload = async () => {
+            const raw = localStorage.getItem('atlas_user');
+            if(!raw) { window.location.href = 'register.html'; return; }
+
+            const user = JSON.parse(raw);
+            studentId = user.id;
+
+            // Fill profile UI
+            document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+            document.getElementById('profileName').textContent = user.name || '—';
+            document.getElementById('profileCollege').textContent = user.college || '—';
+            document.getElementById('profileBatch').textContent = user.batch ? 'HSC ' + user.batch : '—';
+            document.getElementById('profilePhone').textContent = user.phone || '—';
+
+            // Fetch full student data from DB for social link
+            if(studentId) {
+                const { data: stu } = await db.from('students').select('social_link').eq('id', studentId).single();
+                if(stu && stu.social_link) {
+                    const sl = document.getElementById('profileSocial');
+                    sl.textContent = 'Profile Link';
+                    sl.onclick = () => window.open(stu.social_link, '_blank');
+                    sl.style.cursor = 'pointer';
+                }
+            }
+
+            await loadHistory();
+        };
+
+        async function loadHistory() {
+            if(!studentId) return;
+
+            const { data, error } = await db
+                .from('exam_results')
+                .select('*, exams(title, subject, chapter, paper)')
+                .eq('student_id', studentId)
+                .order('created_at', { ascending: false });
+
+            const list = data || [];
+            const container = document.getElementById('historyList');
+
+            // Overall stats
+            document.getElementById('totalExams').textContent = list.length;
+            if(list.length > 0) {
+                const totalQ = list.reduce((a, r) => a + (r.total_questions || 0), 0);
+                const totalCorrect = list.reduce((a, r) => a + (r.correct || 0), 0);
+                const avgPct = totalQ > 0 ? Math.round((totalCorrect / totalQ) * 100) : 0;
+                document.getElementById('avgScore').textContent = avgPct + '%';
+                document.getElementById('totalQuestions').textContent = totalQ;
+            }
+
+            if(list.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12">
+                        <div class="text-5xl mb-4">📝</div>
+                        <div class="logo-font font-black text-gray-600 text-base mb-2">এখনো কোনো Exam দাওনি</div>
+                        <p class="text-gray-400 text-sm">প্রথম পরীক্ষা দিয়ে ইতিহাস শুরু করো!</p>
+                        <a href="exams.html" class="inline-block mt-4 bg-blue-900 text-white px-6 py-3 rounded-xl font-bold text-sm">Exams দেখো →</a>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = list.map((result, i) => {
+                const exam = result.exams || {};
+                const totalQ = result.total_questions || 0;
+                const correct = result.correct || 0;
+                const wrong = result.wrong || 0;
+                const skipped = result.skipped || 0;
+                const pct = totalQ > 0 ? Math.round((correct / totalQ) * 100) : 0;
+                const netMark = result.net_mark !== undefined ? result.net_mark : (correct - wrong * 0.25).toFixed(2);
+                const date = result.created_at ? new Date(result.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+
+                const scoreColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
+                const barColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
+
+                return `
+                <div class="history-item">
+                    <div class="p-5">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-black text-gray-800 text-sm">${exam.title || exam.chapter || 'Exam #' + (i+1)}</div>
+                                <div class="flex gap-2 flex-wrap mt-1">
+                                    ${exam.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${exam.subject}</span>` : ''}
+                                    ${exam.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${exam.paper}</span>` : ''}
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;">${date}</span>
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <div class="logo-font text-2xl font-black" style="color:${scoreColor}">${pct}%</div>
+                                <div class="text-[10px] font-bold text-gray-400">Net: ${netMark}</div>
+                            </div>
+                        </div>
+
+                        <!-- Progress bar -->
+                        <div class="progress-bar-outer mb-3">
+                            <div class="progress-bar-inner" style="width:${pct}%;background:${barColor}"></div>
+                        </div>
+
+                        <!-- Stats row -->
+                        <div class="flex gap-3 mb-3">
+                            <div class="flex-1 text-center">
+                                <span class="text-sm font-black text-green-600">${correct}</span>
+                                <span class="text-[10px] text-gray-400 font-bold block">Correct</span>
+                            </div>
+                            <div class="flex-1 text-center">
+                                <span class="text-sm font-black text-red-600">${wrong}</span>
+                                <span class="text-[10px] text-gray-400 font-bold block">Wrong</span>
+                            </div>
+                            <div class="flex-1 text-center">
+                                <span class="text-sm font-black text-amber-600">${skipped}</span>
+                                <span class="text-[10px] text-gray-400 font-bold block">Skipped</span>
+                            </div>
+                            <div class="flex-1 text-center">
+                                <span class="text-sm font-black text-gray-700">${totalQ}</span>
+                                <span class="text-[10px] text-gray-400 font-bold block">মোট</span>
+                            </div>
+                        </div>
+
+                        <!-- Detail button -->
+                        ${result.answers ? `
+                        <button onclick='openDetail(${JSON.stringify(result).replace(/'/g,"&#39;")})' 
+                            class="w-full py-2.5 bg-blue-50 text-blue-700 rounded-xl text-xs font-black hover:bg-blue-100 transition-colors">
+                            📋 বিস্তারিত দেখো (প্রশ্ন + উত্তর)
+                        </button>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openDetail(result) {
+            const exam = result.exams || {};
+            document.getElementById('detailTitle').textContent = exam.title || exam.chapter || 'Exam Detail';
+            document.getElementById('detailSubject').textContent = [exam.subject, exam.paper].filter(Boolean).join(' · ');
+            document.getElementById('detailCorrect').textContent = result.correct || 0;
+            document.getElementById('detailWrong').textContent = result.wrong || 0;
+            document.getElementById('detailSkipped').textContent = result.skipped || 0;
+
+            const answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || []);
+            const container = document.getElementById('questionReviewList');
+
+            if(!answers || answers.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 font-bold py-6">প্রশ্নের তথ্য পাওয়া যায়নি</p>';
+            } else {
+                container.innerHTML = answers.map((a, i) => {
+                    const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
+                    const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
+                    const qText = a.question || a.questions || `প্রশ্ন ${i+1}`;
+                    return `
+                    <div class="q-review ${status}">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[11px] font-black text-gray-500">প্রশ্ন ${i+1}</span>
+                            <span class="text-[11px] font-black">${statusLabel}</span>
+                        </div>
+                        <p class="text-sm font-bold text-gray-800 mb-2 leading-relaxed">${qText}</p>
+                        ${a.selected ? `<p class="text-xs font-bold text-gray-600">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
+                        ${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
+                        ${a.explanation ? `<p class="text-xs text-gray-500 mt-1 leading-relaxed">💡 ${a.explanation}</p>` : ''}
+                    </div>`;
+                }).join('');
+            }
+
+            document.getElementById('detailModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function logout() {
+            if(confirm('Logout করতে চাও?')) {
+                localStorage.removeItem('atlas_user');
+                window.location.href = 'index.html';
+            }
+        }
+
+        document.getElementById('detailModal').addEventListener('click', function(e) {
+            if(e.target === this) closeDetail();
+        });
+    </script>
+</body>
+</html>
