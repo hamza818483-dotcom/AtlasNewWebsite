@@ -10,8 +10,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
         .nav-shadow { box-shadow: 0 2px 15px rgba(0,0,0,0.05); }
-        .dynamic-card { transition: 0.3s; }
-        .dynamic-card:hover { transform: translateY(-5px); border-color: #1e40af; }
+        .dynamic-card { transition: 0.3s; border: 1px solid #f1f5f9; }
+        .dynamic-card:hover { transform: translateY(-5px); border-color: #1e40af; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        /* Hide scrollbar for review section */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="pb-10">
@@ -41,7 +44,7 @@
     </header>
 
     <main class="px-6 grid grid-cols-1 md:grid-cols-2 gap-5" id="mainGrid">
-        <div onclick="handleRedirect('classes.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
+        <div onclick="handleRedirect('classes.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
             <div class="bg-red-50 p-4 rounded-[1.5rem] text-3xl">📺</div>
             <div>
                 <h3 class="text-lg font-bold text-gray-800">Free Classes</h3>
@@ -49,31 +52,32 @@
             </div>
         </div>
 
-        <div onclick="handleRedirect('exams.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
+        <div onclick="handleRedirect('exams.html')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
             <div class="bg-green-50 p-4 rounded-[1.5rem] text-3xl">📝</div>
             <div>
                 <h3 class="text-lg font-bold text-gray-800">Free Exams</h3>
                 <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">নিজেকে যাচাই করো</p>
             </div>
         </div>
-
+        
         </main>
 
     <section class="mt-12 px-6">
         <h2 class="text-xl font-black text-blue-900 uppercase italic mb-6 ml-2">What Students Say ⭐</h2>
-        <div id="reviewGrid" class="flex overflow-x-auto space-x-4 pb-4 scrollbar-hide">
-            </div>
+        <div id="reviewGrid" class="flex overflow-x-auto space-x-4 pb-6 scrollbar-hide">
+            <p class="text-gray-400 text-xs animate-pulse">Loading reviews...</p>
+        </div>
     </section>
 
     <footer class="mt-12 text-center pb-10">
-        <p class="text-gray-300 text-[10px] font-bold tracking-[0.2em] uppercase">Powered by ATLAS Team</p>
+        <p class="text-gray-300 text-[10px] font-bold tracking-[0.2em] uppercase">© 2026 Powered by ATLAS Team</p>
         <div class="mt-6">
             <a href="admin.html" class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.3em] border-b border-gray-200 pb-1 hover:text-blue-800 transition-all">Admin Access</a>
         </div>
     </footer>
 
     <script>
-        // Supabase Configuration
+        // Supabase Initialization
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -83,60 +87,71 @@
             fetchReviews();
         };
 
-        // ১. অ্যাডমিন থেকে অ্যাড করা বাটনগুলো লোড করা
+        // ১. ডাইনামিক বাটন লোড করা
         async function fetchDynamicButtons() {
-            const { data, error } = await atlas.from('home_buttons').select('*');
-            if (data) {
-                const mainGrid = document.getElementById('mainGrid');
-                data.forEach(btn => {
-                    const btnHtml = `
-                        <div onclick="handleRedirect('${btn.link}')" class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
-                            <div class="bg-blue-50 p-4 rounded-[1.5rem] text-3xl">${btn.icon || '🚀'}</div>
-                            <div>
-                                <h3 class="text-lg font-bold text-gray-800">${btn.name}</h3>
-                                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">ক্লিক করে বিস্তারিত দেখো</p>
+            try {
+                const { data, error } = await atlas.from('home_buttons').select('*');
+                if (data && data.length > 0) {
+                    const mainGrid = document.getElementById('mainGrid');
+                    data.forEach(btn => {
+                        const btnHtml = `
+                            <div onclick="handleRedirect('${btn.link}')" class="bg-white p-6 rounded-[2.5rem] shadow-sm flex items-center space-x-5 cursor-pointer active:scale-95 dynamic-card">
+                                <div class="bg-blue-50 p-4 rounded-[1.5rem] text-3xl">${btn.icon || '🚀'}</div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-800">${btn.name}</h3>
+                                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">বিস্তারিত তথ্য জানো</p>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                    mainGrid.insertAdjacentHTML('beforeend', btnHtml);
-                });
-            }
+                        `;
+                        mainGrid.insertAdjacentHTML('beforeend', btnHtml);
+                    });
+                }
+            } catch (err) { console.log(err); }
         }
 
-        // ২. অ্যাডমিন থেকে অ্যাড করা রিভিউগুলো লোড করা
+        // ২. রিভিউ লোড করা (ফিক্সড ফটো লজিক)
         async function fetchReviews() {
-            const { data, error } = await atlas.from('reviews').select('*').order('created_at', {ascending: false});
-            const reviewGrid = document.getElementById('reviewGrid');
-            if (data && data.length > 0) {
-                reviewGrid.innerHTML = data.map(rev => `
-                    <div class="min-w-[280px] bg-white p-6 rounded-[2rem] shadow-sm border border-gray-50">
-                        <div class="flex items-center space-x-3 mb-4">
-                            <img src="${rev.photo_url || 'https://via.placeholder.com/50'}" class="w-12 h-12 rounded-full border-2 border-blue-100 object-cover">
-                            <div>
-                                <h4 class="font-bold text-sm text-gray-800">${rev.student_name}</h4>
-                                <p class="text-[10px] text-blue-600 font-bold uppercase">${rev.category}</p>
+            try {
+                const { data, error } = await atlas.from('reviews').select('*').order('created_at', {ascending: false});
+                const reviewGrid = document.getElementById('reviewGrid');
+                
+                if (data && data.length > 0) {
+                    reviewGrid.innerHTML = data.map(rev => {
+                        // ফটো না থাকলে ইউজারনেম দিয়ে লগো জেনারেট হবে
+                        const profilePic = rev.photo_url ? rev.photo_url : `https://ui-avatars.com/api/?name=${rev.student_name}&background=random&color=fff`;
+                        
+                        return `
+                            <div class="min-w-[280px] max-w-[300px] bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center space-x-3 mb-4">
+                                        <img src="${profilePic}" 
+                                             class="w-12 h-12 rounded-full border-2 border-blue-100 object-cover"
+                                             onerror="this.src='https://ui-avatars.com/api/?name=${rev.student_name}'">
+                                        <div>
+                                            <h4 class="font-bold text-sm text-gray-800">${rev.student_name}</h4>
+                                            <p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest">${rev.category}</p>
+                                        </div>
+                                    </div>
+                                    <p class="text-gray-600 text-[13px] leading-relaxed italic">"${rev.comment}"</p>
+                                </div>
                             </div>
-                        </div>
-                        <p class="text-gray-600 text-xs leading-relaxed italic">"${rev.comment}"</p>
-                    </div>
-                `).join('');
-            } else {
-                reviewGrid.innerHTML = `<p class="text-gray-400 text-xs ml-2 italic">No reviews yet.</p>`;
-            }
+                        `;
+                    }).join('');
+                } else {
+                    reviewGrid.innerHTML = `<p class="text-gray-400 text-xs ml-2 italic">কোনো রিভিউ পাওয়া যায়নি।</p>`;
+                }
+            } catch (err) { console.log(err); }
         }
 
+        // ৩. স্মার্ট রিডাইরেকশন
         function handleRedirect(url) {
             const userData = localStorage.getItem('atlas_user');
-            if (!userData && url !== 'admin.html') {
+            // অ্যাডমিন এক্সেস বা রেজিস্ট্রেশন পেজ হলে চেক করবে না
+            if (!userData && url !== 'admin.html' && url !== 'register.html') {
                 alert("কন্টেন্ট দেখতে আগে ছোট একটি রেজিস্ট্রেশন সম্পূর্ণ করো!");
                 window.location.href = 'register.html';
             } else {
-                // যদি পূর্ণাঙ্গ URL (http) হয় তবে সরাসরি যাবে, নাহলে লোকাল ফাইল খুঁজবে
-                if (url.startsWith('http')) {
-                    window.location.href = url;
-                } else {
-                    window.location.href = url;
-                }
+                window.location.href = url;
             }
         }
     </script>
