@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Master Admin Panel</title>
+    <title>ATLAS | Master Admin V3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f0f4f8; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f4f7f9; }
         .tab-content { display: none; }
         .active { display: block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -40,58 +40,77 @@
             </div>
 
             <div id="addTab" class="tab-content active space-y-6">
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4">
-                    <h3 class="font-bold text-blue-700 border-b pb-2">📺 Add New Class</h3>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4 font-bold">
+                    <h3 class="text-blue-700 border-b pb-2">📺 Add New Class</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="cSub" placeholder="Subject" class="p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                        <input type="text" id="cPaper" placeholder="Paper" class="p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+                        <input type="text" id="cSub" placeholder="Subject" class="p-4 bg-gray-50 rounded-2xl border text-sm">
+                        <input type="text" id="cPaper" placeholder="Paper" class="p-4 bg-gray-50 rounded-2xl border text-sm">
                     </div>
-                    <input type="text" id="cChap" placeholder="Chapter Name" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                    <input type="text" id="cLink" placeholder="YouTube Link" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                    <button onclick="saveClass()" id="btnSaveClass" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-md">Save Class</button>
+                    <input type="text" id="cChap" placeholder="Chapter Name" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
+                    <input type="text" id="cLink" placeholder="YouTube Link" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
+                    <button onclick="saveClass()" id="btnSaveClass" class="w-full bg-blue-600 text-white py-4 rounded-2xl shadow-md">Save Class</button>
                 </div>
 
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4">
-                    <h3 class="font-bold text-green-700 border-b pb-2">📝 Add New Exam</h3>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4 font-bold">
+                    <h3 class="text-green-700 border-b pb-2">📝 Add New Exam</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <input type="text" id="eSub" placeholder="Subject" class="p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                        <input type="text" id="eChap" placeholder="Chapter" class="p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+                        <input type="text" id="eSub" placeholder="Subject" class="p-4 bg-gray-50 rounded-2xl border text-sm">
+                        <input type="text" id="eChap" placeholder="Chapter" class="p-4 bg-gray-50 rounded-2xl border text-sm">
                     </div>
-                    <select id="eType" onchange="toggleExamInput()" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+                    <select id="eType" onchange="toggleExamInput()" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
                         <option value="csv">CSV MCQ File</option>
                         <option value="link">External Link</option>
                     </select>
                     <input type="file" id="eFile" accept=".csv" class="w-full p-2 text-xs">
-                    <input type="url" id="eExt" placeholder="External URL" class="hidden w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                    <button onclick="saveExam()" id="btnSaveExam" class="w-full bg-green-600 text-white py-4 rounded-2xl font-bold shadow-md">Create Exam</button>
+                    <input type="url" id="eExt" placeholder="External URL" class="hidden w-full p-4 bg-gray-50 rounded-2xl border text-sm">
+                    <button onclick="saveExam()" id="btnSaveExam" class="w-full bg-green-600 text-white py-4 rounded-2xl shadow-md">Create Exam</button>
                 </div>
             </div>
 
             <div id="manageTab" class="tab-content space-y-4">
+                <div class="flex justify-between items-center px-2">
+                    <h3 class="font-bold text-gray-700 text-xs uppercase tracking-widest">Resources List</h3>
+                    <button onclick="loadLists()" class="text-blue-600 text-[10px] font-bold underline italic">Refresh</button>
+                </div>
                 <div id="masterList" class="space-y-3 pb-10"></div>
             </div>
 
             <div id="editorsTab" class="tab-content space-y-6">
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4">
-                    <h3 class="font-bold text-indigo-700 border-b pb-2">👤 Add Editor</h3>
-                    <input type="tel" id="edPhone" placeholder="Phone" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                    <input type="password" id="edPass" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-                    <button onclick="addEditor()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">Allow Access</button>
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4 font-bold">
+                    <h3 class="text-indigo-700 border-b pb-2">👤 Add Editor</h3>
+                    <input type="tel" id="edPhone" placeholder="Phone" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
+                    <input type="password" id="edPass" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
+                    <button onclick="addEditor()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl">Give Access</button>
                 </div>
                 <div id="editorList" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
-    <div id="editModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl space-y-4">
-            <h3 class="font-bold text-center text-blue-800 uppercase italic">Edit Resource</h3>
-            <input type="text" id="editVal1" placeholder="Subject" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-            <input type="text" id="editVal2" placeholder="Paper/Chapter" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-            <input type="text" id="editVal3" placeholder="Link/Chapter" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
-            <div class="flex space-x-3 mt-4">
+    <div id="editModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-6">
+        <div class="bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl space-y-3">
+            <h3 class="font-black text-center text-blue-800 uppercase italic mb-2">Update Info</h3>
+            
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 ml-1">SUBJECT</label>
+                <input type="text" id="editVal1" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+            </div>
+            <div>
+                <label id="label2" class="text-[10px] font-bold text-gray-400 ml-1">PAPER / CHAPTER</label>
+                <input type="text" id="editVal2" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-gray-400 ml-1">CHAPTER NAME</label>
+                <input type="text" id="editVal3" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+            </div>
+            <div id="linkContainer">
+                <label class="text-[10px] font-bold text-gray-400 ml-1">LINK</label>
+                <input type="text" id="editVal4" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm font-bold">
+            </div>
+
+            <div class="flex space-x-3 mt-6">
                 <button onclick="closeModal()" class="flex-1 bg-gray-100 py-4 rounded-2xl font-bold text-gray-500">Cancel</button>
-                <button id="finalUpdateBtn" class="flex-1 bg-blue-700 text-white py-4 rounded-2xl font-bold shadow-lg">Update</button>
+                <button id="finalUpdateBtn" class="flex-1 bg-blue-700 text-white py-4 rounded-2xl font-bold">Update</button>
             </div>
         </div>
     </div>
@@ -104,14 +123,10 @@
         async function checkAdmin() {
             const p = document.getElementById('admPhone').value;
             const s = document.getElementById('admPass').value;
-
-            // আপনার নতুন নম্বর 01754365403 আপডেট করা হয়েছে
-            if(p === "01754365403" && s === "atlas2026") {
-                loginSuccess();
-            } else {
+            if(p === "01754365403" && s === "atlas2026") loginSuccess();
+            else {
                 const { data } = await atlas.from('admins').select('*').eq('phone', p).eq('password', s).single();
-                if(data) loginSuccess();
-                else alert("ভুল পাসওয়ার্ড বা নম্বর!");
+                if(data) loginSuccess(); else alert("ভুল তথ্য!");
             }
         }
 
@@ -132,8 +147,7 @@
         }
 
         async function saveClass() {
-            const payload = { subject: cSub.value, paper: cPaper.value, chapter: cChap.value, link: cLink.value };
-            const { error } = await atlas.from('classes').insert([payload]);
+            const { error } = await atlas.from('classes').insert([{ subject: cSub.value, paper: cPaper.value, chapter: cChap.value, link: cLink.value }]);
             if(!error) alert("Class Saved!");
         }
 
@@ -148,13 +162,10 @@
             const payload = { subject: eSub.value, chapter: eChap.value, type: type };
             if(type === 'link') {
                 payload.ext_link = eExt.value;
-                await atlas.from('exams').insert([payload]);
-                alert("Exam Link Saved!");
+                await atlas.from('exams').insert([payload]); alert("Exam Link Saved!");
             } else {
                 Papa.parse(eFile.files[0], { header: true, complete: async (r) => {
-                    payload.questions = r.data;
-                    await atlas.from('exams').insert([payload]);
-                    alert("CSV Exam Saved!");
+                    payload.questions = r.data; await atlas.from('exams').insert([payload]); alert("CSV Exam Saved!");
                 }});
             }
         }
@@ -163,27 +174,26 @@
             const container = document.getElementById('masterList');
             const { data: cls } = await atlas.from('classes').select('*');
             const { data: exs } = await atlas.from('exams').select('*');
-
             let html = '<div class="space-y-4">';
             if(cls) cls.forEach(c => {
                 html += `
-                    <div class="bg-white p-5 rounded-[2rem] shadow-sm border flex justify-between items-center font-bold">
-                        <div class="text-xs"><p class="text-blue-900">${c.subject} - ${c.paper}</p><p class="text-gray-400 font-normal">${c.chapter}</p></div>
-                        <div class="flex space-x-2">
-                            <button onclick="openEdit('classes', '${c.id}', '${c.subject}', '${c.paper}', '${c.link}', '${c.chapter}')" class="text-blue-600 text-xs">Edit</button>
-                            <button onclick="deleteItem('classes', '${c.id}')" class="text-red-500 text-xs">Delete</button>
-                        </div>
-                    </div>`;
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border flex justify-between items-center font-bold">
+                    <div class="text-xs"><p class="text-blue-900">${c.subject} - ${c.paper}</p><p class="text-gray-400 font-normal">${c.chapter}</p></div>
+                    <div class="flex space-x-2">
+                        <button onclick="openEdit('classes', '${c.id}', '${c.subject}', '${c.paper}', '${c.chapter}', '${c.link}')" class="text-blue-600 text-[10px] underline uppercase">Edit</button>
+                        <button onclick="deleteItem('classes', '${c.id}')" class="text-red-500 text-[10px] underline uppercase">Del</button>
+                    </div>
+                </div>`;
             });
             if(exs) exs.forEach(e => {
                 html += `
-                    <div class="bg-white p-5 rounded-[2rem] shadow-sm border flex justify-between items-center font-bold">
-                        <div class="text-xs"><p class="text-green-900">${e.subject} - ${e.chapter}</p><p class="text-gray-400 font-normal uppercase text-[8px]">${e.type}</p></div>
-                        <div class="flex space-x-2">
-                            <button onclick="openEdit('exams', '${e.id}', '${e.subject}', '${e.chapter}', '${e.ext_link || ''}')" class="text-blue-600 text-xs">Edit</button>
-                            <button onclick="deleteItem('exams', '${e.id}')" class="text-red-500 text-xs">Delete</button>
-                        </div>
-                    </div>`;
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border flex justify-between items-center font-bold">
+                    <div class="text-xs"><p class="text-green-900">${e.subject} - ${e.chapter}</p><p class="text-gray-400 font-normal text-[8px] uppercase">${e.type}</p></div>
+                    <div class="flex space-x-2">
+                        <button onclick="openEdit('exams', '${e.id}', '${e.subject}', '${e.chapter}', '', '${e.ext_link || ''}')" class="text-blue-600 text-[10px] underline uppercase">Edit</button>
+                        <button onclick="deleteItem('exams', '${e.id}')" class="text-red-500 text-[10px] underline uppercase">Del</button>
+                    </div>
+                </div>`;
             });
             container.innerHTML = html + '</div>';
         }
@@ -193,24 +203,24 @@
             document.getElementById('editVal1').value = v1;
             document.getElementById('editVal2').value = v2;
             document.getElementById('editVal3').value = v3;
+            document.getElementById('editVal4').value = v4;
+            
+            document.getElementById('label2').innerText = table === 'classes' ? 'PAPER' : 'CHAPTER';
             document.getElementById('editModal').classList.remove('hidden');
             
             document.getElementById('finalUpdateBtn').onclick = async () => {
-                let obj = table === 'classes' ? { subject: editVal1.value, paper: editVal2.value, link: editVal3.value } : { subject: editVal1.value, chapter: editVal2.value, ext_link: editVal3.value };
-                await atlas.from(table).update(obj).eq('id', id);
-                alert("Updated!"); closeModal(); loadLists();
+                let obj = table === 'classes' 
+                ? { subject: editVal1.value, paper: editVal2.value, chapter: editVal3.value, link: editVal4.value } 
+                : { subject: editVal1.value, chapter: editVal2.value, ext_link: editVal4.value };
+                
+                const { error } = await atlas.from(table).update(obj).eq('id', id);
+                if(!error) { alert("Updated!"); closeModal(); loadLists(); }
             };
         }
 
         function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
-
         async function deleteItem(table, id) { if(confirm("Are you sure?")) { await atlas.from(table).delete().eq('id', id); loadLists(); } }
-
-        async function addEditor() {
-            await atlas.from('admins').insert([{ phone: edPhone.value, password: edPass.value }]);
-            alert("Editor Access Added!"); loadEditors();
-        }
-
+        async function addEditor() { await atlas.from('admins').insert([{ phone: edPhone.value, password: edPass.value }]); alert("Access Given!"); loadEditors(); }
         async function loadEditors() {
             const { data } = await atlas.from('admins').select('*');
             document.getElementById('editorList').innerHTML = data.map(e => `<div class="bg-indigo-50 p-4 rounded-2xl flex justify-between font-bold text-xs"><span>${e.phone}</span><button onclick="deleteItem('admins', '${e.id}'); loadEditors();" class="text-red-500">Remove</button></div>`).join('');
