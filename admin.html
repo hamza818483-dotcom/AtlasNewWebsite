@@ -3,166 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Master Admin</title>
+    <title>ATLAS | Admin Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f0f4f8; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .active { display: block; }
     </style>
 </head>
-<body class="pb-10">
-
+<body>
     <div id="loginArea" class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border">
-            <h2 class="text-3xl font-black text-blue-800 text-center mb-6">ATLAS ADMIN</h2>
-            <div class="space-y-4 font-bold">
-                <input type="tel" id="adminPhone" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none border focus:border-blue-500" placeholder="ফোন নম্বর">
-                <input type="password" id="adminPass" class="w-full px-5 py-4 bg-gray-50 rounded-2xl outline-none border focus:border-blue-500" placeholder="পাসওয়ার্ড">
-                <button onclick="loginAdmin()" class="w-full bg-blue-700 text-white py-5 rounded-3xl font-bold shadow-xl hover:bg-blue-800 transition-all">লগইন করুন</button>
-            </div>
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border font-bold">
+            <h2 class="text-3xl text-blue-800 text-center mb-6">ADMIN LOGIN</h2>
+            <input type="tel" id="adminPhone" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 border" placeholder="ফোন নম্বর">
+            <input type="password" id="adminPass" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 border" placeholder="পাসওয়ার্ড">
+            <button onclick="login()" class="w-full bg-blue-700 text-white py-4 rounded-3xl shadow-lg">লগইন</button>
         </div>
     </div>
 
-    <div id="dashboardArea" class="hidden">
-        <nav class="bg-white px-6 py-4 shadow-sm flex justify-between items-center sticky top-0 z-50">
-            <div class="flex items-center space-x-2">
-                <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="Logo" class="w-8 h-8">
-                <h1 class="text-xl font-black text-blue-900">ATLAS PANEL</h1>
-            </div>
-            <button onclick="location.reload()" class="bg-red-50 text-red-500 px-4 py-2 rounded-xl text-xs font-bold">Logout</button>
+    <div id="dashboard" class="hidden">
+        <nav class="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-50">
+            <h1 class="font-black text-blue-800">ATLAS PANEL</h1>
+            <button onclick="location.reload()" class="text-red-500 font-bold text-xs">Logout</button>
         </nav>
-
         <div class="p-5 max-w-4xl mx-auto space-y-6">
+            <div class="flex space-x-2 overflow-x-auto pb-2 font-bold">
+                <button onclick="show('classes')" class="bg-blue-700 text-white px-6 py-3 rounded-2xl text-sm shadow-md">📺 ক্লাস</button>
+                <button onclick="show('exams')" class="bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm shadow-sm">📝 এক্সাম</button>
+                <button onclick="show('students')" class="bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm shadow-sm">👥 স্টুডেন্ট</button>
+            </div>
+
+            <div id="classesTab" class="tab-content active bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4 font-bold">
+                <h3 class="text-blue-700 underline">Add YouTube Class</h3>
+                <input type="text" id="cSub" placeholder="Subject" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="cPaper" placeholder="Paper" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="cChap" placeholder="Chapter" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="cLink" placeholder="YouTube Link" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <button onclick="saveClass()" class="w-full bg-blue-600 text-white py-3 rounded-xl">Save Class</button>
+            </div>
+
+            <div id="examsTab" class="tab-content bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4 font-bold">
+                <h3 class="text-green-700 underline">New Exam</h3>
+                <input type="text" id="eSub" placeholder="Subject" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="text" id="eChap" placeholder="Chapter" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <select id="eType" class="w-full p-3 bg-gray-50 rounded-xl border"><option value="csv">CSV Import</option><option value="link">External Link</option></select>
+                <input type="file" id="csv" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <input type="url" id="ext" placeholder="External URL (Optional)" class="w-full p-3 bg-gray-50 rounded-xl border">
+                <button onclick="saveExam()" class="w-full bg-green-600 text-white py-3 rounded-xl">Create Exam</button>
+            </div>
             
-            <div class="flex space-x-2 overflow-x-auto pb-2 no-scrollbar font-bold">
-                <button onclick="openTab('classes')" id="btn-classes" class="tab-btn bg-blue-700 text-white px-6 py-3 rounded-2xl text-sm whitespace-nowrap">📺 ক্লাস অ্যাড</button>
-                <button onclick="openTab('exams')" id="btn-exams" class="tab-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm whitespace-nowrap shadow-sm">📝 এক্সাম তৈরি</button>
-                <button onclick="openTab('students')" id="btn-students" class="tab-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm whitespace-nowrap shadow-sm">👥 স্টুডেন্ট লিস্ট</button>
+            <div id="studentsTab" class="tab-content space-y-3">
+                <div id="list" class="space-y-2"></div>
             </div>
-
-            <div id="classesTab" class="tab-content active space-y-4">
-                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4 font-bold border border-blue-50">
-                    <h3 class="text-blue-700 underline mb-2">ইউটিউব ক্লাস যোগ করুন</h3>
-                    <input type="text" id="clsSub" placeholder="বিষয় (যেমন: জীববিজ্ঞান)" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none">
-                    <input type="text" id="clsChap" placeholder="অধ্যায় ও পত্র" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none">
-                    <input type="text" id="clsLink" placeholder="ইউটিউব ভিডিও লিঙ্ক" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none">
-                    <button onclick="saveClass()" class="w-full bg-blue-600 text-white py-4 rounded-2xl shadow-lg">সেভ করুন</button>
-                </div>
-            </div>
-
-            <div id="examsTab" class="tab-content space-y-4">
-                <div class="bg-white p-6 rounded-[2.5rem] shadow-sm space-y-4 font-bold border border-green-50">
-                    <h3 class="text-green-700 underline mb-2">নতুন এক্সাম তৈরি (CSV)</h3>
-                    <input type="text" id="exName" placeholder="এক্সামের নাম" class="w-full p-4 bg-gray-50 rounded-2xl border outline-none">
-                    
-                    <div class="grid grid-cols-2 gap-4 text-xs">
-                        <div>
-                            <label class="text-gray-400 ml-1">শুরু (তারিখ ও সময়)</label>
-                            <input type="datetime-local" id="exStart" class="w-full p-3 mt-1 bg-gray-50 rounded-xl border">
-                        </div>
-                        <div>
-                            <label class="text-gray-400 ml-1">শেষ (তারিখ ও সময়)</label>
-                            <input type="datetime-local" id="exEnd" class="w-full p-3 mt-1 bg-gray-50 rounded-xl border">
-                        </div>
-                    </div>
-
-                    <div class="p-6 border-2 border-dashed border-blue-200 rounded-3xl text-center bg-blue-50/30">
-                        <input type="file" id="csvFile" accept=".csv" class="hidden">
-                        <label for="csvFile" class="cursor-pointer text-blue-600">
-                            <span class="block">📁 CSV ফাইল সিলেক্ট করুন</span>
-                            <span class="text-[10px] text-gray-400 font-normal">Format: questions, option1, option2... answer</span>
-                        </label>
-                    </div>
-                    
-                    <button onclick="createExam()" class="w-full bg-green-600 text-white py-4 rounded-2xl shadow-lg">এক্সাম তৈরি ও লিংক কপি করুন</button>
-                </div>
-            </div>
-
-            <div id="studentsTab" class="tab-content space-y-4">
-                <h3 class="font-bold text-gray-800 ml-2">নিবন্ধিত স্টুডেন্ট লিস্ট</h3>
-                <div id="studentList" class="grid grid-cols-1 gap-3">
-                    </div>
-            </div>
-
         </div>
     </div>
 
     <script>
-        // আপনার সুপাবেস কানেকশন
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        function loginAdmin() {
-            const p = document.getElementById('adminPhone').value;
-            const s = document.getElementById('adminPass').value;
-            if(p === "01754365403" && s === "atlas2026") {
+        function login() {
+            if(document.getElementById('adminPhone').value === "01754364703" && document.getElementById('adminPass').value === "atlas2026") {
                 document.getElementById('loginArea').classList.add('hidden');
-                document.getElementById('dashboardArea').classList.remove('hidden');
+                document.getElementById('dashboard').classList.remove('hidden');
                 loadStudents();
             } else { alert("ভুল তথ্য!"); }
         }
 
-        function openTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => {
-                b.classList.replace('bg-blue-700', 'bg-white');
-                b.classList.replace('text-white', 'text-gray-500');
-            });
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            document.getElementById('btn-' + tabName).classList.replace('bg-white', 'bg-blue-700');
-            document.getElementById('btn-' + tabName).classList.replace('text-gray-500', 'text-white');
+        function show(t) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(t+'Tab').classList.add('active');
+        }
+
+        async function saveClass() {
+            const { error } = await atlas.from('classes').insert([{ subject: cSub.value, paper: cPaper.value, chapter: cChap.value, link: cLink.value }]);
+            if(!error) alert("Saved!");
+        }
+
+        async function saveExam() {
+            const file = csv.files[0];
+            if(eType.value === 'link') {
+                await atlas.from('exams').insert([{ subject: eSub.value, chapter: eChap.value, type: 'link', ext_link: ext.value }]);
+                alert("Link Exam Saved!");
+            } else {
+                Papa.parse(file, { header: true, complete: async (r) => {
+                    await atlas.from('exams').insert([{ subject: eSub.value, chapter: eChap.value, type: 'csv', questions: r.data }]);
+                    alert("CSV Exam Saved!");
+                }});
+            }
         }
 
         async function loadStudents() {
             const { data } = await atlas.from('students').select('*');
-            const list = document.getElementById('studentList');
-            list.innerHTML = data.map(s => `
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center">
-                    <div>
-                        <p class="font-bold text-blue-900">${s.name}</p>
-                        <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">HSC ${s.hsc_batch} | ${s.college}</p>
-                    </div>
-                    <a href="https://wa.me/${s.whatsapp}" class="bg-green-100 text-green-600 p-2 rounded-xl text-xs font-bold italic">WhatsApp</a>
-                </div>
-            `).join('');
-        }
-
-        async function saveClass() {
-            const sub = document.getElementById('clsSub').value;
-            const chap = document.getElementById('clsChap').value;
-            const link = document.getElementById('clsLink').value;
-            if(!sub || !chap || !link) return alert("সব তথ্য দিন!");
-
-            const { error } = await atlas.from('classes').insert([{ subject: sub, chapter: chap, link: link }]);
-            if(!error) { alert("ক্লাস সেভ হয়েছে!"); location.reload(); }
-        }
-
-        function createExam() {
-            const file = document.getElementById('csvFile').files[0];
-            const name = document.getElementById('exName').value;
-            if(!file || !name) return alert("ফাইল ও নাম সিলেক্ট করুন!");
-
-            Papa.parse(file, {
-                header: true,
-                complete: async function(results) {
-                    const { error } = await atlas.from('exams').insert([{
-                        name: name,
-                        start_time: document.getElementById('exStart').value,
-                        end_time: document.getElementById('exEnd').value,
-                        questions: results.data
-                    }]);
-                    if(!error) {
-                        const examUrl = window.location.origin + "/exam.html?id=" + encodeURIComponent(name);
-                        navigator.clipboard.writeText(examUrl);
-                        alert("এক্সাম তৈরি হয়েছে! লিঙ্ক কপি হয়ে গেছে।");
-                    }
-                }
-            });
+            document.getElementById('list').innerHTML = data.map(s => `<div class="p-4 bg-white rounded-2xl shadow-sm border font-bold text-sm">${s.name} - ${s.hsc_batch}</div>`).join('');
         }
     </script>
 </body>
