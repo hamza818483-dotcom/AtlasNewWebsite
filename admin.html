@@ -3,109 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Master Admin V4</title>
+    <title>ATLAS | Master Control Panel</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f4f7f9; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f0f4f8; }
         .tab-content { display: none; }
         .active { display: block; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        input, select, textarea { border: 2px solid #e2e8f0 !important; transition: all 0.3s; }
+        input:focus { border-color: #1e40af !important; background-color: #fff !important; }
     </style>
 </head>
 <body class="pb-10">
 
     <div id="loginArea" class="flex items-center justify-center min-h-screen p-6">
-        <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border-4 border-blue-50 text-center font-bold">
-            <h2 class="text-3xl font-black text-blue-800 mb-6 italic uppercase tracking-tighter">ATLAS ADMIN</h2>
-            <input type="tel" id="admPhone" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 border focus:outline-blue-500" placeholder="01754365403">
-            <input type="password" id="admPass" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 border focus:outline-blue-500" placeholder="Password">
-            <button onclick="checkAdmin()" class="w-full bg-blue-700 text-white py-4 rounded-3xl shadow-lg active:scale-95 transition-all">Login</button>
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-md text-center border-b-8 border-blue-800">
+            <h2 class="text-4xl font-black text-blue-800 mb-2 italic uppercase tracking-tighter">ATLAS</h2>
+            <p class="text-gray-400 text-[10px] font-bold uppercase tracking-[0.3em] mb-8">Admin Dashboard 2026</p>
+            <input type="tel" id="admPhone" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 font-bold text-center" placeholder="01754365403">
+            <input type="password" id="admPass" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 font-bold text-center" placeholder="Password">
+            <button onclick="checkAdmin()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black shadow-xl active:scale-95 transition-all">ENTER DASHBOARD</button>
         </div>
     </div>
 
     <div id="dashboard" class="hidden">
-        <nav class="bg-white p-4 shadow-sm flex justify-between items-center sticky top-0 z-50">
-            <span class="font-black text-blue-800 italic uppercase tracking-tighter">ATLAS PANEL</span>
-            <button onclick="location.reload()" class="text-red-500 font-bold text-[10px] bg-red-50 px-4 py-2 rounded-full uppercase">Logout</button>
+        <nav class="bg-white p-5 shadow-sm flex justify-between items-center sticky top-0 z-50">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 bg-blue-800 rounded-lg"></div>
+                <span class="font-black text-blue-800 italic uppercase">ATLAS MASTER</span>
+            </div>
+            <button onclick="location.reload()" class="text-red-500 font-bold text-[10px] bg-red-50 px-4 py-2 rounded-full border border-red-100">LOGOUT</button>
         </nav>
 
         <div class="p-5 max-w-4xl mx-auto space-y-6">
             <div class="flex space-x-2 overflow-x-auto pb-2 no-scrollbar font-bold">
-                <button onclick="showTab('add', this)" class="tab-btn bg-blue-700 text-white px-6 py-3 rounded-2xl text-sm shadow-md whitespace-nowrap">Add Content</button>
-                <button onclick="showTab('manage', this)" class="tab-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm shadow-sm whitespace-nowrap">Manage resources</button>
-                <button onclick="showTab('editors', this)" class="tab-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-sm shadow-sm whitespace-nowrap">Admin Access</button>
+                <button onclick="showTab('add', this)" class="tab-btn bg-blue-800 text-white px-8 py-4 rounded-2xl text-xs shadow-lg whitespace-nowrap">ADD NEW</button>
+                <button onclick="showTab('manage', this)" class="tab-btn bg-white text-gray-500 px-8 py-4 rounded-2xl text-xs shadow-sm whitespace-nowrap">MANAGE ALL</button>
+                <button onclick="showTab('access', this)" class="tab-btn bg-white text-gray-500 px-8 py-4 rounded-2xl text-xs shadow-sm whitespace-nowrap">ACCESS CONTROL</button>
             </div>
 
             <div id="addTab" class="tab-content active space-y-6">
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4 font-bold">
-                    <h3 class="text-blue-700 border-b pb-2">➕ Add New Resource</h3>
-                    
-                    <select id="resType" class="w-full p-4 bg-blue-50 rounded-2xl border text-blue-800">
-                        <option value="classes">Add as CLASS 📺</option>
-                        <option value="exams">Add as EXAM 📝</option>
-                    </select>
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 space-y-5 font-bold">
+                    <div class="flex justify-between items-center border-b pb-4">
+                        <h3 class="text-blue-800 uppercase italic">Create Resource</h3>
+                        <select id="masterType" onchange="toggleFormUI()" class="bg-blue-50 text-blue-800 px-4 py-2 rounded-xl text-xs border-none">
+                            <option value="classes">📺 CLASS</option>
+                            <option value="exams">📝 EXAM</option>
+                        </select>
+                    </div>
 
-                    <div class="grid grid-cols-1 gap-3">
-                        <label class="text-[10px] text-gray-400 ml-1 uppercase">Subject (Auto-suggest)</label>
-                        <input list="subList" id="iSub" placeholder="Type or Select Subject" class="p-4 bg-gray-50 rounded-2xl border text-sm">
-                        <datalist id="subList"></datalist>
-
-                        <label class="text-[10px] text-gray-400 ml-1 uppercase">Paper (Auto-suggest)</label>
-                        <input list="papList" id="iPaper" placeholder="Type or Select Paper" class="p-4 bg-gray-50 rounded-2xl border text-sm">
-                        <datalist id="papList"></datalist>
-
-                        <label class="text-[10px] text-gray-400 ml-1 uppercase">Chapter Name</label>
-                        <input type="text" id="iChap" placeholder="Enter Chapter" class="p-4 bg-gray-50 rounded-2xl border text-sm">
-
-                        <div id="linkArea">
-                            <label class="text-[10px] text-gray-400 ml-1 uppercase">Link (Video/External Exam)</label>
-                            <input type="text" id="iLink" placeholder="Link here" class="p-4 bg-gray-50 rounded-2xl border text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-[10px] text-gray-400 ml-1 uppercase">Subject</label>
+                            <input list="subList" id="mSub" placeholder="Biology/Physics..." class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 ml-1 uppercase">Paper</label>
+                            <input list="papList" id="mPap" placeholder="1st/2nd Paper" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
                         </div>
                     </div>
 
-                    <button onclick="saveResource()" class="w-full bg-blue-700 text-white py-4 rounded-2xl shadow-md font-black italic">SAVE CONTENT</button>
+                    <div>
+                        <label class="text-[10px] text-gray-400 ml-1 uppercase">Chapter Name</label>
+                        <input type="text" id="mChap" placeholder="Cell Structure..." class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                    </div>
+
+                    <div id="examOnlyFields" class="hidden space-y-4">
+                        <div>
+                            <label class="text-[10px] text-gray-400 ml-1 uppercase">Exam Description</label>
+                            <textarea id="mDesc" class="w-full p-4 bg-gray-50 rounded-2xl text-sm h-20" placeholder="Instructions for students..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-gray-400 ml-1 uppercase">Exam Date</label>
+                                <input type="date" id="mDate" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 ml-1 uppercase">Start Time</label>
+                                <input type="time" id="mTime" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] text-gray-400 ml-1 uppercase">Duration (Min)</label>
+                                <input type="number" id="mDur" placeholder="20" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 ml-1 uppercase">Exam Mode</label>
+                                <select id="mExamMode" onchange="toggleExamModeUI()" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                                    <option value="csv">CSV Upload</option>
+                                    <option value="link">External Link</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="csvInput" class="hidden">
+                        <label class="text-[10px] text-gray-400 ml-1 uppercase">Upload MCQ CSV</label>
+                        <input type="file" id="mFile" accept=".csv" class="w-full p-3 bg-gray-100 rounded-2xl text-xs">
+                    </div>
+
+                    <div id="linkInput">
+                        <label class="text-[10px] text-gray-400 ml-1 uppercase">Resource URL (Video/Exam Link)</label>
+                        <input type="url" id="mLink" placeholder="https://..." class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                    </div>
+
+                    <button onclick="saveResource()" id="saveBtn" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black shadow-xl italic uppercase tracking-widest">Publish Content</button>
                 </div>
             </div>
 
             <div id="manageTab" class="tab-content space-y-4">
-                <div id="masterList" class="space-y-4 pb-10"></div>
+                <div id="masterDisplayList" class="space-y-4 pb-10"></div>
             </div>
 
-            <div id="editorsTab" class="tab-content space-y-4">
-                <div class="bg-white p-6 rounded-[2rem] shadow-sm border space-y-4 font-bold">
-                    <h3 class="text-indigo-700 border-b pb-2">👤 Admin & Editor Access</h3>
-                    <input type="tel" id="edPhone" placeholder="Phone" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-                    <input type="password" id="edPass" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-                    <button onclick="addEditor()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl">Give Access</button>
+            <div id="accessTab" class="tab-content space-y-6">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border font-bold space-y-4">
+                    <h3 class="text-indigo-800 uppercase italic border-b pb-2">Admin & Editor Access</h3>
+                    <input type="tel" id="edPhone" placeholder="Editor Phone" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                    <input type="password" id="edPass" placeholder="Set Password" class="w-full p-4 bg-gray-50 rounded-2xl text-sm">
+                    <button onclick="addEditor()" class="w-full bg-indigo-700 text-white py-4 rounded-2xl font-black">GRANT ACCESS</button>
                 </div>
-                <div id="editorList" class="space-y-2"></div>
+                <div id="editorDisplayList" class="space-y-2 font-bold"></div>
             </div>
         </div>
     </div>
 
-    <div id="editModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-6 font-bold">
-        <div class="bg-white w-full max-w-md p-8 rounded-[2.5rem] shadow-2xl space-y-3">
-            <h3 class="text-center text-blue-800 italic uppercase">Update Entry</h3>
+    <div id="editModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-[100] flex items-center justify-center p-6 font-bold">
+        <div class="bg-white w-full max-w-md p-8 rounded-[3rem] shadow-2xl space-y-3 overflow-y-auto max-h-[90vh]">
+            <h3 class="text-center text-blue-800 uppercase italic mb-4">Edit Information</h3>
             <input type="text" id="ev1" placeholder="Subject" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
             <input type="text" id="ev2" placeholder="Paper" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
             <input type="text" id="ev3" placeholder="Chapter" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-            <input type="text" id="ev4" placeholder="Link" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm">
-            <div class="flex space-x-3 mt-4">
+            <textarea id="ev4" placeholder="Description/Link" class="w-full p-4 bg-gray-50 rounded-2xl border text-sm h-24"></textarea>
+            <div id="examEditExtra" class="hidden grid grid-cols-2 gap-2">
+                <input type="date" id="evDate" class="p-4 bg-gray-50 rounded-2xl border text-xs">
+                <input type="number" id="evDur" placeholder="Min" class="p-4 bg-gray-50 rounded-2xl border text-xs">
+            </div>
+            <div class="flex space-x-3 mt-6">
                 <button onclick="closeModal()" class="flex-1 bg-gray-100 py-4 rounded-2xl text-gray-500">Cancel</button>
-                <button id="updateBtn" class="flex-1 bg-blue-700 text-white py-4 rounded-2xl">Update</button>
+                <button id="updateBtn" class="flex-1 bg-blue-800 text-white py-4 rounded-2xl font-black">Update</button>
             </div>
         </div>
     </div>
+
+    <datalist id="subList"></datalist>
+    <datalist id="papList"></datalist>
 
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let activeData = { classes: [], exams: [] };
+        let dataStore = { classes: [], exams: [] };
 
         async function checkAdmin() {
             const p = document.getElementById('admPhone').value;
@@ -120,100 +172,140 @@
         async function loginSuccess() {
             document.getElementById('loginArea').classList.add('hidden');
             document.getElementById('dashboard').classList.remove('hidden');
-            await refreshData();
+            await syncData();
         }
 
-        async function refreshData() {
-            const { data: cls } = await atlas.from('classes').select('*');
-            const { data: exs } = await atlas.from('exams').select('*');
-            activeData.classes = cls || [];
-            activeData.exams = exs || [];
-            updateSuggestions();
+        async function syncData() {
+            const { data: cls } = await atlas.from('classes').select('*').order('created_at', { ascending: false });
+            const { data: exs } = await atlas.from('exams').select('*').order('created_at', { ascending: false });
+            dataStore.classes = cls || [];
+            dataStore.exams = exs || [];
+            
+            // Auto-suggestion Logic
+            const subs = [...new Set([...dataStore.classes, ...dataStore.exams].map(i => i.subject))];
+            const paps = [...new Set(dataStore.classes.map(i => i.paper))];
+            document.getElementById('subList').innerHTML = subs.map(s => `<option value="${s}">`).join('');
+            document.getElementById('papList').innerHTML = paps.map(p => `<option value="${p}">`).join('');
+            
             if(document.getElementById('manageTab').classList.contains('active')) renderManageList();
         }
 
-        function updateSuggestions() {
-            const allItems = [...activeData.classes, ...activeData.exams];
-            const subs = [...new Set(allItems.map(i => i.subject))];
-            const paps = [...new Set(activeData.classes.map(i => i.paper))];
+        function toggleFormUI() {
+            const type = document.getElementById('masterType').value;
+            const examFields = document.getElementById('examOnlyFields');
+            const csvInput = document.getElementById('csvInput');
             
-            document.getElementById('subList').innerHTML = subs.map(s => `<option value="${s}">`).join('');
-            document.getElementById('papList').innerHTML = paps.map(p => `<option value="${p}">`).join('');
-        }
-
-        function showTab(t, b) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.getElementById(t+'Tab').classList.add('active');
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.replace('bg-blue-700','bg-white'));
-            b.classList.replace('bg-white','bg-blue-700');
-            if(t === 'manage') renderManageList();
-            if(t === 'editors') loadEditors();
-        }
-
-        async function saveResource() {
-            const table = document.getElementById('resType').value;
-            const payload = { 
-                subject: iSub.value, 
-                paper: iPaper.value, 
-                chapter: iChap.value 
-            };
-            
-            if(table === 'classes') payload.link = iLink.value;
-            else payload.ext_link = iLink.value;
-
-            const { error } = await atlas.from(table).insert([payload]);
-            if(!error) { 
-                alert("Saved Successfully!"); 
-                iChap.value = ""; iLink.value = "";
-                refreshData(); 
+            if(type === 'exams') {
+                examFields.classList.remove('hidden');
+                toggleExamModeUI();
+            } else {
+                examFields.classList.add('hidden');
+                csvInput.classList.add('hidden');
+                document.getElementById('linkInput').classList.remove('hidden');
             }
         }
 
-        function renderManageList() {
-            const container = document.getElementById('masterList');
-            let html = '<h4 class="text-blue-800 text-xs font-black uppercase tracking-widest ml-2">Video Classes</h4>';
-            
-            html += activeData.classes.map(c => `
-                <div class="bg-white p-5 rounded-[2rem] border shadow-sm flex justify-between items-center font-bold">
-                    <div class="text-xs"><p class="text-blue-900">${c.subject} - ${c.paper}</p><p class="text-gray-400 font-normal">${c.chapter}</p></div>
-                    <div class="flex space-x-2">
-                        <button onclick="openEdit('classes','${c.id}','${c.subject}','${c.paper}','${c.chapter}','${c.link}')" class="text-blue-600 underline text-[10px]">EDIT</button>
-                        <button onclick="deleteItem('classes','${c.id}')" class="text-red-500 underline text-[10px]">DEL</button>
-                    </div>
-                </div>
-            `).join('');
-
-            html += '<h4 class="text-green-800 text-xs font-black uppercase tracking-widest ml-2 mt-6">Exams List</h4>';
-            html += activeData.exams.map(e => `
-                <div class="bg-white p-5 rounded-[2rem] border shadow-sm flex justify-between items-center font-bold">
-                    <div class="text-xs"><p class="text-green-900">${e.subject}</p><p class="text-gray-400 font-normal">${e.chapter}</p></div>
-                    <div class="flex space-x-2">
-                        <button onclick="openEdit('exams','${e.id}','${e.subject}','','${e.chapter}','${e.ext_link||''}')" class="text-blue-600 underline text-[10px]">EDIT</button>
-                        <button onclick="deleteItem('exams','${e.id}')" class="text-red-500 underline text-[10px]">DEL</button>
-                    </div>
-                </div>
-            `).join('');
-            container.innerHTML = html;
+        function toggleExamModeUI() {
+            const mode = document.getElementById('mExamMode').value;
+            document.getElementById('csvInput').className = mode === 'csv' ? 'block' : 'hidden';
+            document.getElementById('linkInput').className = mode === 'link' ? 'block' : 'hidden';
         }
 
-        function openEdit(table, id, v1, v2, v3, v4) {
+        async function saveResource() {
+            const btn = document.getElementById('saveBtn');
+            const table = document.getElementById('masterType').value;
+            btn.innerText = "PUBLISHING...";
+            
+            const payload = {
+                subject: mSub.value,
+                paper: mPap.value,
+                chapter: mChap.value
+            };
+
+            if(table === 'classes') {
+                payload.link = mLink.value;
+                await atlas.from('classes').insert([payload]);
+            } else {
+                payload.description = mDesc.value;
+                payload.exam_date = mDate.value;
+                payload.exam_time = mTime.value;
+                payload.duration = parseInt(mDur.value);
+                payload.type = mExamMode.value;
+
+                if(payload.type === 'link') {
+                    payload.ext_link = mLink.value;
+                    await atlas.from('exams').insert([payload]);
+                } else {
+                    const file = mFile.files[0];
+                    Papa.parse(file, { header: true, skipEmptyLines: true, complete: async (r) => {
+                        payload.questions = r.data;
+                        await atlas.from('exams').insert([payload]);
+                        alert("CSV Exam Uploaded!");
+                    }});
+                }
+            }
+            alert("Success!");
+            btn.innerText = "Publish Content";
+            mChap.value = ""; mLink.value = ""; await syncData();
+        }
+
+        function renderManageList() {
+            const list = document.getElementById('masterDisplayList');
+            let html = '<h4 class="text-[10px] font-black text-blue-600 tracking-widest uppercase ml-2">Active Classes</h4>';
+            
+            html += dataStore.classes.map(c => `
+                <div class="bg-white p-5 rounded-[2rem] border shadow-sm flex justify-between items-center">
+                    <div class="text-xs font-bold text-blue-900">${c.subject} - ${c.paper}<p class="text-gray-400 font-normal">${c.chapter}</p></div>
+                    <div class="flex space-x-2">
+                        <button onclick="openEdit('classes','${c.id}','${c.subject}','${c.paper}','${c.chapter}','${c.link}')" class="text-blue-600 text-xs font-bold underline italic">Edit</button>
+                        <button onclick="deleteItem('classes','${c.id}')" class="text-red-400 text-xs font-bold underline italic">Del</button>
+                    </div>
+                </div>`).join('');
+
+            html += '<h4 class="text-[10px] font-black text-green-600 tracking-widest uppercase ml-2 mt-6">Active Exams</h4>';
+            html += dataStore.exams.map(e => `
+                <div class="bg-white p-5 rounded-[2rem] border shadow-sm flex justify-between items-center">
+                    <div class="text-xs font-bold text-green-900">${e.subject} - ${e.chapter}<p class="text-gray-400 font-normal uppercase text-[8px] tracking-tighter">${e.type} Exam</p></div>
+                    <div class="flex space-x-2">
+                        <button onclick="openEdit('exams','${e.id}','${e.subject}','${e.chapter}','${e.description}','${e.ext_link||''}', '${e.exam_date}', '${e.duration}')" class="text-blue-600 text-xs font-bold underline italic">Edit</button>
+                        <button onclick="deleteItem('exams','${e.id}')" class="text-red-400 text-xs font-bold underline italic">Del</button>
+                    </div>
+                </div>`).join('');
+            list.innerHTML = html;
+        }
+
+        function openEdit(table, id, v1, v2, v3, v4, v5, v6) {
             ev1.value = v1; ev2.value = v2; ev3.value = v3; ev4.value = v4;
+            const extra = document.getElementById('examEditExtra');
+            if(table === 'exams') {
+                extra.classList.remove('hidden');
+                evDate.value = v5; evDur.value = v6;
+            } else { extra.classList.add('hidden'); }
+            
             document.getElementById('editModal').classList.remove('hidden');
             document.getElementById('updateBtn').onclick = async () => {
                 const up = table === 'classes' 
                     ? { subject: ev1.value, paper: ev2.value, chapter: ev3.value, link: ev4.value }
-                    : { subject: ev1.value, chapter: ev3.value, ext_link: ev4.value };
+                    : { subject: ev1.value, chapter: ev2.value, description: ev3.value, ext_link: ev4.value, exam_date: evDate.value, duration: parseInt(evDur.value) };
                 await atlas.from(table).update(up).eq('id', id);
-                alert("Updated!"); closeModal(); refreshData();
+                alert("Updated!"); closeModal(); await syncData();
             };
         }
 
         function closeModal() { document.getElementById('editModal').classList.add('hidden'); }
-        async function deleteItem(t, id) { if(confirm("Sure?")) { await atlas.from(t).delete().eq('id', id); refreshData(); } }
-        async function addEditor() { await atlas.from('admins').insert([{ phone: edPhone.value, password: edPass.value }]); alert("Added!"); loadEditors(); }
+        function showTab(t, b) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(t+'Tab').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.replace('bg-blue-800','bg-white'));
+            b.classList.replace('bg-white','bg-blue-800');
+            if(t === 'manage') renderManageList();
+            if(t === 'access') loadEditors();
+        }
+        async function deleteItem(t, id) { if(confirm("Sure?")) { await atlas.from(t).delete().eq('id', id); await syncData(); } }
+        async function addEditor() { await atlas.from('admins').insert([{ phone: edPhone.value, password: edPass.value }]); alert("Done!"); loadEditors(); }
         async function loadEditors() {
             const { data } = await atlas.from('admins').select('*');
-            document.getElementById('editorList').innerHTML = data.map(e => `<div class="p-4 bg-indigo-50 rounded-2xl flex justify-between font-bold text-xs"><span>${e.phone}</span><button onclick="deleteItem('admins','${e.id}');loadEditors()">Remove</button></div>`).join('');
+            document.getElementById('editorDisplayList').innerHTML = data.map(e => `<div class="p-4 bg-indigo-50 rounded-2xl flex justify-between items-center text-xs"><span>📱 ${e.phone}</span><button onclick="deleteItem('admins','${e.id}');loadEditors()" class="text-red-500 underline">Remove</button></div>`).join('');
         }
     </script>
 </body>
