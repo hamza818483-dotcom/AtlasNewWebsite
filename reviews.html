@@ -8,30 +8,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
-        .filter-btn { transition: 0.3s; white-space: nowrap; }
-        .active-filter { background-color: #1e40af !important; color: white !important; transform: scale(1.05); }
-        .review-card { break-inside: avoid; margin-bottom: 1.5rem; }
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #ffffff; }
+        .active-filter { background-color: #1e40af !important; color: white !important; }
+        /* ছবিকে একদম ফুল স্ক্রিন চওড়া করার জন্য */
+        .full-photo { width: 100vw; margin-left: calc(-50vw + 50%); margin-right: calc(-50vw + 50%); }
     </style>
 </head>
 <body class="pb-10">
-
     <nav class="bg-white p-5 shadow-sm flex items-center space-x-3 sticky top-0 z-50">
-        <button onclick="history.back()" class="bg-gray-100 p-2 rounded-xl text-blue-800">❮</button>
-        <span class="font-black text-blue-900 uppercase italic">Success Stories</span>
+        <button onclick="history.back()" class="bg-gray-100 px-3 py-2 rounded-xl text-blue-800 font-bold">❮</button>
+        <span class="font-black text-blue-900 uppercase italic">All Reviews</span>
     </nav>
 
-    <div class="p-5 flex space-x-2 overflow-x-auto scrollbar-hide sticky top-[72px] bg-[#f8fafc] z-40">
-        <button onclick="filterReviews('All', this)" class="filter-btn active-filter bg-white text-gray-500 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm border">ALL</button>
-        <button onclick="filterReviews('Class', this)" class="filter-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm border">CLASS</button>
-        <button onclick="filterReviews('Exam', this)" class="filter-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm border">EXAM</button>
-        <button onclick="filterReviews('Mentoring', this)" class="filter-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm border">MENTORING</button>
-        <button onclick="filterReviews('Service', this)" class="filter-btn bg-white text-gray-500 px-6 py-3 rounded-2xl text-xs font-bold shadow-sm border">SERVICE</button>
+    <div class="p-4 flex space-x-2 overflow-x-auto sticky top-[72px] bg-white border-b z-40 scrollbar-hide">
+        <button onclick="filterReviews('All', this)" class="filter-btn active-filter bg-gray-50 px-5 py-2 rounded-2xl text-[11px] font-bold shadow-sm border">ALL</button>
+        <button onclick="filterReviews('Class', this)" class="filter-btn bg-gray-50 px-5 py-2 rounded-2xl text-[11px] font-bold shadow-sm border">CLASS</button>
+        <button onclick="filterReviews('Exam', this)" class="filter-btn bg-gray-50 px-5 py-2 rounded-2xl text-[11px] font-bold shadow-sm border">EXAM</button>
+        <button onclick="filterReviews('Mentoring', this)" class="filter-btn bg-gray-50 px-5 py-2 rounded-2xl text-[11px] font-bold shadow-sm border">MENTORING</button>
+        <button onclick="filterReviews('Service', this)" class="filter-btn bg-gray-50 px-5 py-2 rounded-2xl text-[11px] font-bold shadow-sm border">SERVICE</button>
     </div>
 
-    <main class="p-5 columns-1 md:columns-2 lg:columns-3 gap-6" id="reviewContainer">
-        <p class="text-center text-gray-400 font-bold col-span-full py-10 animate-pulse">রিভিউগুলো লোড হচ্ছে...</p>
-    </main>
+    <main class="w-full" id="reviewContainer">
+        </main>
 
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
@@ -39,55 +37,47 @@
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allReviews = [];
-
-        window.onload = fetchAllReviews;
-
-        async function fetchAllReviews() {
-            const { data, error } = await atlas.from('reviews').select('*').order('created_at', {ascending: false});
-            if (data) {
-                allReviews = data;
-                displayReviews(allReviews);
-            }
-        }
+        window.onload = async () => {
+            const { data } = await atlas.from('reviews').select('*').order('created_at', {ascending: false});
+            if (data) { allReviews = data; displayReviews(allReviews); }
+        };
 
         function displayReviews(reviews) {
             const container = document.getElementById('reviewContainer');
             if(reviews.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 py-10 font-bold">এই ক্যাটাগরিতে কোনো রিভিউ নেই!</p>';
+                container.innerHTML = '<p class="text-center text-gray-400 py-10 font-bold italic text-xs">কোনো রিভিউ পাওয়া যায়নি!</p>';
                 return;
             }
 
             container.innerHTML = reviews.map(rev => `
-                <div class="review-card bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-                    <img src="${rev.photo_url}" alt="Success" class="w-full h-auto object-cover">
-                    <div class="p-5">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <div class="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center text-[10px] font-black text-blue-800 uppercase">
+                <div class="mb-8 border-b border-gray-100 pb-4">
+                    <div class="px-5 py-3 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-blue-800 rounded-full flex items-center justify-center text-white font-black text-xs uppercase">
                                 ${rev.student_name.charAt(0)}
                             </div>
                             <div>
-                                <h4 class="font-bold text-xs text-gray-800">${rev.student_name}</h4>
-                                <p class="text-[9px] text-blue-600 font-bold uppercase tracking-widest">${rev.category}</p>
+                                <h4 class="font-black text-sm text-gray-900 leading-none">${rev.student_name}</h4>
+                                <p class="text-[10px] text-blue-600 font-bold uppercase mt-1 tracking-widest">${rev.category}</p>
                             </div>
                         </div>
-                        <p class="text-gray-500 text-[11px] leading-relaxed italic">"${rev.comment}"</p>
+                    </div>
+
+                    <div class="w-full bg-gray-50">
+                        <img src="${rev.photo_url}" class="w-full h-auto block" loading="lazy">
+                    </div>
+
+                    <div class="px-5 mt-3">
+                        <p class="text-gray-600 text-xs italic leading-relaxed">"${rev.comment}"</p>
                     </div>
                 </div>
             `).join('');
         }
 
         function filterReviews(category, btn) {
-            // বাটন ডিজাইন চেঞ্জ
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active-filter'));
             btn.classList.add('active-filter');
-
-            // ডাটা ফিল্টার
-            if (category === 'All') {
-                displayReviews(allReviews);
-            } else {
-                const filtered = allReviews.filter(r => r.category === category);
-                displayReviews(filtered);
-            }
+            displayReviews(category === 'All' ? allReviews : allReviews.filter(r => r.category === category));
         }
     </script>
 </body>
