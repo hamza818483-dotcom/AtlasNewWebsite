@@ -3,87 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration | ATLAS</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <title>ATLAS | Register</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f8fafc; }
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
+        .input-box { width: 100%; padding: 16px; background: #fff; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 12px; font-weight: bold; outline: none; }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-
-    <div class="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-gray-100">
-        <div class="text-center mb-8">
-            <div class="inline-block p-4 bg-blue-50 rounded-3xl mb-4">
-                <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-12 h-12">
-            </div>
-            <h1 class="text-3xl font-black text-blue-800 tracking-tight">ATLAS</h1>
-            <p class="text-gray-500 mt-2 font-medium">একাউন্টটি সেটআপ করে নাও</p>
-        </div>
-
-        <form id="regForm" class="space-y-5">
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">তোমার নাম</label>
-                <input type="text" id="name" required class="w-full px-5 py-4 border-none bg-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="উদা: আমির হামজা">
-            </div>
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">HSC ব্যাচ</label>
-                <input type="text" id="hsc_batch" required class="w-full px-5 py-4 border-none bg-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="উদা: 2026">
-            </div>
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">কলেজের নাম</label>
-                <input type="text" id="college" required class="w-full px-5 py-4 border-none bg-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="উদা: ঢাকা কলেজ">
-            </div>
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">WhatsApp নম্বর</label>
-                <input type="tel" id="whatsapp" required class="w-full px-5 py-4 border-none bg-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="01XXXXXXXXX">
-            </div>
-
-            <button type="submit" id="submitBtn" class="w-full bg-blue-700 text-white py-5 rounded-[1.5rem] font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-800 active:scale-95 transition-all">
-                শুরু করো 🚀
-            </button>
-        </form>
+<body class="flex items-center justify-center min-h-screen p-6">
+    <div class="bg-white p-10 rounded-[3rem] shadow-xl w-full max-w-md text-center border border-gray-100">
+        <div class="w-20 h-20 bg-blue-800 rounded-3xl mx-auto mb-6 flex items-center justify-center text-white font-black italic text-4xl shadow-xl shadow-blue-200">A</div>
+        <h2 class="text-2xl font-black text-blue-900 mb-2 italic">ATLAS Registration</h2>
+        <p class="text-gray-400 font-bold text-[10px] uppercase tracking-widest mb-8">Create your profile to start exam</p>
+        
+        <input type="text" id="regName" placeholder="Full Name" class="input-box">
+        <input type="tel" id="regPhone" placeholder="WhatsApp Number" class="input-box">
+        <input type="text" id="regCollege" placeholder="College Name" class="input-box">
+        
+        <button onclick="registerStudent()" id="regBtn" class="w-full bg-blue-900 text-white py-5 rounded-3xl font-black uppercase tracking-widest shadow-lg mt-4 active:scale-95 transition">Join Now</button>
     </div>
 
     <script>
-        // Supabase Connection Settings
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
-        
-        const atlasClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        const regForm = document.getElementById('regForm');
-        
-        regForm.onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = "অপেক্ষা করো...";
-            btn.disabled = true;
+        async function registerStudent() {
+            const name = regName.value, phone = regPhone.value, college = regCollege.value;
+            if(!name || !phone) return alert("সবগুলো তথ্য দাও!");
 
-            const studentData = {
-                name: document.getElementById('name').value,
-                hsc_batch: document.getElementById('hsc_batch').value,
-                college: document.getElementById('college').value,
-                whatsapp: document.getElementById('whatsapp').value
-            };
-
-            // ডাটাবেসে তথ্য পাঠানো
-            const { data, error } = await atlasClient
-                .from('students')
-                .insert([studentData]);
-
-            if (error) {
-                alert("ভুল হয়েছে: " + error.message);
-                btn.innerText = "আবার চেষ্টা করো";
-                btn.disabled = false;
-            } else {
-                // স্টুডেন্টের ফোনে ডাটা সেভ করা (যাতে বারবার ফর্ম না আসে)
-                localStorage.setItem('atlas_user', JSON.stringify(studentData));
-                alert("রেজিস্ট্রেশন সফল হয়েছে!");
-                window.location.href = 'index.html'; // হোমপেজে নিয়ে যাবে
-            }
-        };
+            const { data, error } = await atlas.from('students').insert([{ name, whatsapp: phone, college }]).select();
+            if(!error) {
+                localStorage.setItem('atlas_user', JSON.stringify(data[0]));
+                // যেখানে যেতে চেয়েছিল সেখানে পাঠিয়ে দিবে
+                const lastExam = localStorage.getItem('last_exam_id');
+                window.location.href = lastExam ? `exam-hall.html?id=${lastExam}` : 'index.html';
+            } else { alert("Error: " + error.message); }
+        }
     </script>
 </body>
 </html>
