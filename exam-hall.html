@@ -3,124 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Add Exam</title>
+    <title>ATLAS | Live Exam</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
-        .input-box { width: 100%; padding: 15px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 15px; font-weight: bold; }
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f8fafc; }
+        .opt { cursor: pointer; transition: 0.2s; border: 2px solid #f1f5f9; border-radius: 1rem; padding: 12px; font-weight: bold; font-size: 14px; background: #fff; margin-bottom: 8px; }
+        .selected { border-color: #1e40af; background: #eff6ff; }
+        .nav-box { position: fixed; right: 20px; top: 100px; width: 150px; max-height: 60vh; overflow-y: auto; background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 40; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+        .nav-btn { width: 100%; aspect-ratio: 1; border-radius: 8px; font-size: 10px; font-weight: bold; background: #f1f5f9; color: #64748b; border: none; cursor: pointer; }
+        .nav-btn.answered { background: #1e40af; color: white; }
+        .fixed-submit { position: fixed; bottom: 30px; right: 30px; z-index: 50; padding: 15px 30px; border-radius: 30px; font-weight: 900; box-shadow: 0 10px 20px rgba(30,64,175,0.3); }
+        @media (max-width: 768px) { .nav-box { display: none; } .fixed-submit { right: 50%; transform: translateX(50%); width: 90%; } }
+        @media print { .no-print { display: none !important; } body { background: #fff; } }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-xl mx-auto bg-white p-8 rounded-[2.5rem] shadow-xl">
-        <h2 class="text-2xl font-black text-blue-900 mb-6 italic uppercase">Create New Exam 📝</h2>
+<body class="pb-32">
+
+    <div id="startScreen" class="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center">
+        <h1 id="vSubject" class="text-3xl font-black text-blue-900 mb-1">Loading...</h1>
+        <p id="vChap" class="text-sm font-bold text-blue-600 mb-6 uppercase tracking-widest">Paper & Chapter</p>
         
-        <input type="text" id="examSubject" placeholder="Subject (e.g. Biology)" class="input-box">
-        <input type="text" id="examPaper" placeholder="Paper (e.g. 1st Paper)" class="input-box">
-        <input type="text" id="examChapter" placeholder="Chapter (e.g. Cell & Its Structure)" class="input-box">
-        <textarea id="examDesc" placeholder="Exam Description/Instructions" class="input-box h-24"></textarea>
-        
-        <div class="grid grid-cols-2 gap-4">
-            <div>
-                <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Date & Time</label>
-                <input type="datetime-local" id="examDateTime" class="input-box">
-            </div>
-            <div>
-                <label class="text-[10px] font-bold text-gray-400 uppercase ml-2">Total Time (Min)</label>
-                <input type="number" id="examDuration" placeholder="e.g. 20" class="input-box">
+        <div class="bg-gray-50 p-6 rounded-3xl w-full max-w-sm mb-6 border">
+            <p id="vDesc" class="text-sm text-gray-500 font-bold mb-4">Instructions...</p>
+            <div class="flex justify-around border-t pt-4">
+                <div><p class="text-[10px] font-black text-gray-400 uppercase">Time</p><p id="vTime" class="font-black text-blue-800">0 M</p></div>
+                <div><p class="text-[10px] font-black text-gray-400 uppercase">Total Qs</p><p id="vCount" class="font-black text-blue-800">0</p></div>
+                <div><p class="text-[10px] font-black text-gray-400 uppercase">Negative</p><p id="vNeg" class="font-black text-red-600">0.0</p></div>
             </div>
         </div>
+        <button onclick="startExam()" class="w-full max-w-sm bg-blue-900 text-white py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl">Start Exam</button>
+    </div>
 
-        <div class="flex space-x-2 mb-6">
-            <button onclick="toggleType('csv')" id="csvBtn" class="flex-1 py-3 rounded-2xl font-bold bg-blue-800 text-white shadow-lg">CSV Upload</button>
-            <button onclick="toggleType('link')" id="linkBtn" class="flex-1 py-3 rounded-2xl font-bold bg-gray-100 text-gray-500">External Link</button>
-        </div>
+    <nav class="bg-white p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center px-6 no-print">
+        <span class="font-black text-blue-900 italic uppercase">ATLAS Live</span>
+        <div id="timer" class="font-black text-red-600 bg-red-50 px-4 py-1.5 rounded-full border border-red-100">00:00</div>
+    </nav>
 
-        <div id="csvSection">
-            <div class="border-2 border-dashed p-6 rounded-3xl text-center mb-6">
-                <input type="file" id="csvFile" accept=".csv" class="text-xs">
-                <p class="text-[10px] text-gray-400 mt-2">Format: questions, option1-4, option5, answer, exp, type, section</p>
+    <div id="navBox" class="nav-box no-print scrollbar-hide"></div>
+
+    <main id="qContainer" class="p-4 max-w-3xl md:ml-10 space-y-6 mt-4"></main>
+
+    <button onclick="submitExam()" class="fixed-submit bg-blue-900 text-white uppercase tracking-widest no-print hover:scale-105 transition">Submit Exam</button>
+
+    <div id="resModal" class="fixed inset-0 bg-white z-[200] hidden overflow-y-auto p-6">
+        <div class="max-w-md mx-auto text-center py-6">
+            <h2 class="text-2xl font-black text-blue-900 italic mb-2">Detailed Analysis</h2>
+            
+            <div class="relative w-48 h-48 mx-auto my-6"><canvas id="resChart"></canvas></div>
+            
+            <p class="text-[10px] font-bold text-gray-400 uppercase">Total Score Generated</p>
+            <div class="text-5xl font-black text-blue-800 mb-6" id="rFinalScore">0.0</div>
+
+            <div class="grid grid-cols-4 gap-2 mb-8">
+                <div class="bg-gray-50 p-2 rounded-xl border"><p class="text-[8px] font-black text-gray-400 uppercase">Total</p><p id="rTotal" class="font-black">0</p></div>
+                <div class="bg-green-50 p-2 rounded-xl border border-green-100"><p class="text-[8px] font-black text-green-600 uppercase">Right</p><p id="rRight" class="font-black text-green-700">0</p></div>
+                <div class="bg-red-50 p-2 rounded-xl border border-red-100"><p class="text-[8px] font-black text-red-600 uppercase">Wrong</p><p id="rWrong" class="font-black text-red-700">0</p></div>
+                <div class="bg-yellow-50 p-2 rounded-xl border border-yellow-100"><p class="text-[8px] font-black text-yellow-600 uppercase">Skip</p><p id="rSkip" class="font-black text-yellow-700">0</p></div>
             </div>
-        </div>
 
-        <div id="linkSection" class="hidden">
-            <input type="url" id="externalUrl" placeholder="Paste External Exam Link" class="input-box">
+            <button onclick="generateSolveSheet()" class="w-full bg-gray-900 text-white py-4 rounded-[1.5rem] font-black uppercase text-xs mb-3">View Full Solve Sheet</button>
+            <button onclick="window.print()" class="w-full bg-blue-50 text-blue-800 py-4 rounded-[1.5rem] font-black uppercase text-xs">Download PDF</button>
         </div>
-
-        <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl">Publish & Get Link</button>
+        <div id="solveArea" class="max-w-2xl mx-auto mt-10 hidden text-left pb-20"></div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
-        const SUPABASE_KEY = 'YOUR_KEY_HERE'; // আপনার কী বসান
+        const SUPABASE_KEY = 'YOUR_KEY_HERE';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let examType = 'csv';
+        let exam = null, userAns = {}, score = 0, wrongCount = 0;
+        const examId = new URLSearchParams(window.location.search).get('id');
 
-        function toggleType(type) {
-            examType = type;
-            if(type === 'csv') {
-                document.getElementById('csvSection').classList.remove('hidden');
-                document.getElementById('linkSection').classList.add('hidden');
-                document.getElementById('csvBtn').className = "flex-1 py-3 rounded-2xl font-bold bg-blue-800 text-white shadow-lg";
-                document.getElementById('linkBtn').className = "flex-1 py-3 rounded-2xl font-bold bg-gray-100 text-gray-500";
-            } else {
-                document.getElementById('linkSection').classList.remove('hidden');
-                document.getElementById('csvSection').classList.add('hidden');
-                document.getElementById('linkBtn').className = "flex-1 py-3 rounded-2xl font-bold bg-blue-800 text-white shadow-lg";
-                document.getElementById('csvBtn').className = "flex-1 py-3 rounded-2xl font-bold bg-gray-100 text-gray-500";
+        window.onload = async () => {
+            const { data } = await atlas.from('exams').select('*').eq('id', examId).single();
+            if(data) {
+                exam = data;
+                document.getElementById('vSubject').innerText = exam.subject;
+                document.getElementById('vChap').innerText = exam.paper + " | " + exam.chapter;
+                document.getElementById('vDesc').innerText = exam.description || "সকল প্রশ্নের মান সমান।";
+                document.getElementById('vTime').innerText = exam.duration;
+                document.getElementById('vCount').innerText = exam.questions.length;
+                document.getElementById('vNeg').innerText = exam.neg_mark;
             }
+        };
+
+        function startExam() {
+            document.getElementById('startScreen').classList.add('hidden');
+            renderQ(); setupNav(); runTimer(exam.duration);
         }
 
-        async function publishExam() {
-            const btn = document.getElementById('pubBtn');
-            btn.innerText = "PROCESSING...";
+        function renderQ() {
+            document.getElementById('qContainer').innerHTML = exam.questions.map((q, i) => `
+                <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100" id="qBox-${i}">
+                    <p class="font-black text-gray-800 text-[15px] mb-4 leading-relaxed"><span class="text-blue-700">${i+1}.</span> ${q.q}</p>
+                    <div class="space-y-1">
+                        ${[q.o1, q.o2, q.o3, q.o4].map(o => `
+                            <div onclick="selectOpt(${i}, '${o}', this)" class="opt opt-btn-${i}">${o}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setupNav() {
+            document.getElementById('navBox').innerHTML = exam.questions.map((_, i) => `
+                <button id="nav-${i}" onclick="document.getElementById('qBox-${i}').scrollIntoView({behavior:'smooth'})" class="nav-btn">${i+1}</button>
+            `).join('');
+        }
+
+        function selectOpt(idx, ans, el) {
+            userAns[idx] = ans;
+            document.querySelectorAll(`.opt-btn-${idx}`).forEach(b => b.classList.remove('selected'));
+            el.classList.add('selected');
+            document.getElementById(`nav-${idx}`).classList.add('answered');
+        }
+
+        function runTimer(m) {
+            let t = m * 60;
+            const iv = setInterval(() => {
+                let ms = Math.floor(t/60), ss = t%60;
+                document.getElementById('timer').innerText = `${ms<10?'0':''}${ms}:${ss<10?'0':''}${ss}`;
+                if(t <= 0) { clearInterval(iv); submitExam(); }
+                t--;
+            }, 1000);
+        }
+
+        function submitExam() {
+            score = 0; wrongCount = 0;
+            const total = exam.questions.length;
             
-            let questions = [];
-            if(examType === 'csv') {
-                const file = document.getElementById('csvFile').files[0];
-                if(!file) return alert("Select CSV File!");
-                questions = await parseCSV(file);
-                alert("Upload Successfully!");
-            }
+            exam.questions.forEach((q, i) => {
+                if(userAns[i]) {
+                    if(userAns[i].trim() === q.ans.trim()) score++;
+                    else wrongCount++;
+                }
+            });
 
-            const examData = {
-                subject: examSubject.value,
-                paper: examPaper.value,
-                chapter: examChapter.value,
-                description: examDesc.value,
-                date_time: examDateTime.value,
-                duration: examDuration.value,
-                type: examType,
-                external_link: externalUrl.value,
-                questions: questions // JSON হিসেবে সেভ হবে
-            };
+            const skipped = total - (score + wrongCount);
+            const finalMark = score - (wrongCount * exam.neg_mark);
 
-            const { data, error } = await atlas.from('exams').insert([examData]).select();
-            if(!error) {
-                const examId = data[0].id;
-                prompt("Exam Live! Copy this link:", window.location.origin + "/exam-hall.html?id=" + examId);
-                location.reload();
-            }
+            document.getElementById('rFinalScore').innerText = finalMark.toFixed(2);
+            document.getElementById('rTotal').innerText = total;
+            document.getElementById('rRight').innerText = score;
+            document.getElementById('rWrong').innerText = wrongCount;
+            document.getElementById('rSkip').innerText = skipped;
+
+            // Draw Chart
+            new Chart(document.getElementById('resChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Right', 'Wrong', 'Skip'],
+                    datasets: [{ data: [score, wrongCount, skipped], backgroundColor: ['#22c55e', '#ef4444', '#facc15'], borderWidth: 0 }]
+                },
+                options: { cutout: '75%', plugins: { legend: { display: false } } }
+            });
+
+            document.getElementById('resModal').classList.remove('hidden');
+            window.scrollTo(0,0);
         }
 
-        function parseCSV(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const lines = e.target.result.split('\n').slice(1);
-                    const result = lines.filter(l => l.trim()).map(line => {
-                        const cols = line.split(','); // এখানে আপনার ক্লিন টেক্সট লজিক কাজ করবে
-                        return {
-                            question: cols[0], opt1: cols[1], opt2: cols[2], opt3: cols[3], opt4: cols[4],
-                            opt5: cols[5], answer: cols[6], explanation: cols[7], type: cols[8], section: cols[9]
-                        };
-                    });
-                    resolve(result);
-                };
-                reader.readAsText(file);
-            });
+        function generateSolveSheet() {
+            const area = document.getElementById('solveArea');
+            area.classList.remove('hidden');
+            area.innerHTML = `<h3 class="font-black text-xl text-center mb-6 underline">SOLVE SHEET</h3>` + 
+            exam.questions.map((q, i) => {
+                const uAns = userAns[i] || "Skipped";
+                const isRight = uAns.trim() === q.ans.trim();
+                return `
+                <div class="mb-6 p-4 rounded-xl border ${isRight ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}">
+                    <p class="font-bold text-sm mb-2">${i+1}. ${q.q}</p>
+                    <p class="text-xs"><b>Your Answer:</b> ${uAns}</p>
+                    <p class="text-xs text-green-700 mt-1"><b>Correct Answer: ✅ ${q.ans}</b></p>
+                    <div class="mt-3 p-3 bg-white rounded-lg text-xs border-l-4 border-blue-500">
+                        <b>Explanation:</b><br>${q.exp || 'No explanation provided.'}
+                    </div>
+                </div>`;
+            }).join('');
         }
     </script>
 </body>
