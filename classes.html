@@ -3,57 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Classes</title>
+    <title>Classes | ATLAS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
-    </style>
+    <style>body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }</style>
 </head>
-<body class="pb-10">
-
-    <nav class="bg-white px-6 py-4 shadow-sm sticky top-0 z-50 flex items-center space-x-4">
-        <button onclick="history.back()" class="text-blue-800 text-xl font-bold">←</button>
-        <h1 class="text-xl font-black text-blue-800 tracking-tighter italic">ATLAS CLASSES</h1>
+<body>
+    <nav class="bg-white p-4 shadow-sm font-black text-blue-800 sticky top-0 z-50 flex items-center">
+        <button onclick="history.back()" class="mr-4 text-xl">←</button> ATLAS CLASSES
     </nav>
-
-    <header class="p-6 bg-blue-700 text-white rounded-b-[2rem] mb-6">
-        <h2 class="text-xl font-bold">ফ্রি ভিডিও ক্লাস 📺</h2>
-        <p class="text-blue-100 text-xs">বিষয়ভিত্তিক পূর্ণাঙ্গ ক্লাসগুলো এখান থেকে করো।</p>
-    </header>
-
-    <main id="classList" class="px-6 space-y-4">
-        <div class="text-center text-gray-400 py-10">ক্লাসগুলো লোড হচ্ছে...</div>
-    </main>
-
+    <div id="classList" class="p-6 space-y-4"></div>
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        async function fetchClasses() {
-            const { data, error } = await atlas.from('classes').select('*');
-            const list = document.getElementById('classList');
-            
-            if (data) {
-                list.innerHTML = data.map(c => `
-                    <div class="bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
-                            <div class="bg-red-50 p-3 rounded-2xl text-xl">🎬</div>
-                            <div>
-                                <h3 class="font-bold text-gray-800 leading-tight">${c.subject} | ${c.paper}</h3>
-                                <p class="text-gray-500 text-[11px] font-bold uppercase tracking-wider">${c.chapter}</p>
-                            </div>
-                        </div>
-                        <a href="${c.link}" target="_blank" class="bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold">Watch</a>
-                    </div>
-                `).join('');
-            } else {
-                list.innerHTML = `<p class="text-center text-red-400">কোনো ক্লাস পাওয়া যায়নি।</p>`;
-            }
-        }
-        fetchClasses();
+        async function load() {
+            const { data } = await atlas.from('classes').select('*');
+            document.getElementById('classList').innerHTML = data.map(c => `
+                <div class="bg-white p-5 rounded-[2rem] shadow-sm border flex items-center justify-between font-bold">
+                    <div><p class="text-blue-800">${c.subject} | ${c.chapter}</p><p class="text-[10px] text-gray-400">YOUTUBE CLASS</p></div>
+                    <a href="${c.link}" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded-xl text-xs">Watch</a>
+                </div>
+            `).join('');
+        } load();
     </script>
 </body>
 </html>
