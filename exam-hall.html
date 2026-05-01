@@ -3,215 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Premium Exam Hall</title>
+    <title>ATLAS | Exam Hall</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { font-family: 'Hind Siliguri', sans-serif; background: #f8fafc; scroll-behavior: smooth; }
-        .opt-btn { cursor: pointer; border: 2px solid #f1f5f9; border-radius: 1.25rem; padding: 16px; font-weight: 600; background: #fff; margin-bottom: 12px; display: flex; align-items: center; transition: 0.2s; }
-        .opt-letter { width: 32px; height: 32px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; margin-right: 14px; flex-shrink: 0; }
-        .selected { border-color: #1e40af; background: #eff6ff; }
-        .selected .opt-letter { background: #1e40af; color: white; }
-        .locked { cursor: not-allowed; opacity: 0.6; pointer-events: none; }
-        .nav-box { position: fixed; right: 20px; top: 110px; width: 160px; max-height: 55vh; overflow-y: auto; background: white; padding: 15px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border: 1px solid #e2e8f0; z-index: 40; }
-        .nav-dot { aspect-ratio: 1; border-radius: 10px; font-size: 11px; font-weight: bold; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; }
-        .nav-dot.done { background: #1e40af; color: white; }
-        .fixed-sub { position: fixed; bottom: 30px; right: 30px; z-index: 50; padding: 18px 40px; border-radius: 35px; font-weight: 900; background: #1e40af; color: white; text-transform: uppercase; box-shadow: 0 10px 25px rgba(30,64,175,0.3); border: none; cursor: pointer; }
-        .filter-btn { padding: 10px 20px; border-radius: 25px; font-size: 13px; font-weight: bold; border: 1px solid #e2e8f0; background: white; color: #64748b; transition: 0.2s; white-space: nowrap; }
-        .f-active { background: #16a34a; color: white; border-color: #16a34a; }
-        @media (max-width: 1024px) { .nav-box { display: none; } .fixed-sub { right: 5%; width: 90%; } }
-        @media print { .no-print { display: none !important; } body { background: white; } .print-area { width: 100% !important; margin: 0 !important; } }
+        body { font-family:'Hind Siliguri',sans-serif; background:#f8fafc; scroll-behavior:smooth; }
+        .logo-font { font-family:'Sora',sans-serif; }
+        .opt-btn { cursor:pointer; border:2px solid #f1f5f9; border-radius:20px; padding:14px 18px; font-weight:600; background:#fff; margin-bottom:10px; display:flex; align-items:center; transition:0.2s; font-family:'Hind Siliguri',sans-serif; }
+        .opt-letter { width:34px;height:34px;border-radius:50%;background:#f1f5f9;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-right:14px;flex-shrink:0; }
+        .opt-btn:hover:not(.locked) { border-color:#3b82f6; background:#f0f9ff; }
+        .selected { border-color:#1e40af!important; background:#eff6ff!important; }
+        .selected .opt-letter { background:#1e40af; color:white; }
+        .locked { cursor:not-allowed; opacity:0.7; pointer-events:none; }
+        .nav-box { position:fixed;right:16px;top:90px;width:156px;max-height:58vh;overflow-y:auto;background:white;padding:14px;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,0.08);display:grid;grid-template-columns:repeat(3,1fr);gap:7px;border:1px solid #e2e8f0;z-index:40; }
+        .nav-dot { aspect-ratio:1;border-radius:10px;font-size:11px;font-weight:800;background:#f1f5f9;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:0.2s; }
+        .nav-dot.done { background:#1e40af;color:white; }
+        .fixed-sub { position:fixed;bottom:24px;right:50%;transform:translateX(50%);z-index:50;padding:16px 44px;border-radius:50px;font-weight:900;background:#1e40af;color:white;text-transform:uppercase;letter-spacing:0.1em;box-shadow:0 10px 30px rgba(30,64,175,0.35);border:none;cursor:pointer;font-family:'Sora',sans-serif;font-size:13px; }
+        .fixed-sub:hover { background:#1d4ed8;transform:translateX(50%) translateY(-2px); }
+        .filter-btn { padding:9px 18px;border-radius:50px;font-size:12px;font-weight:700;border:1.5px solid #e2e8f0;background:white;color:#64748b;transition:0.2s;white-space:nowrap;cursor:pointer; }
+        .filter-btn.f-active { background:#1e40af;color:white;border-color:#1e40af; }
+        .inp { width:100%;padding:14px 18px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:16px;font-family:'Hind Siliguri',sans-serif;font-size:15px;font-weight:600;outline:none;transition:0.3s; }
+        .inp:focus { border-color:#3b82f6;background:white; }
+        qimg { max-width:100%;border-radius:12px;margin:8px 0; }
+        @media(max-width:900px){.nav-box{display:none!important}}
+        @media(max-width:640px){.fixed-sub{right:16px;left:16px;width:calc(100% - 32px);transform:none;bottom:16px;}}
+        @media print{.no-print{display:none!important}body{background:white}.print-area{width:100%!important;margin:0!important}}
     </style>
 </head>
-<body class="pb-32">
-    <div class="container mx-auto p-4 md:p-6 print-area">
-        
-        <div id="startScreen" class="hidden fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center no-print">
-            <h1 class="text-3xl font-black text-blue-900 mb-1 italic uppercase tracking-tighter">ATLAS ADMISSION CARE</h1>
-            <p id="sChap" class="text-sm font-bold text-blue-600 mb-8 uppercase tracking-widest"></p>
-            <div class="bg-gray-50 p-8 rounded-[2.5rem] border mb-8 w-full max-w-sm">
-                <div class="grid grid-cols-3 gap-4 mb-6">
-                    <div><p class="text-[9px] text-gray-400 font-black uppercase">Time</p><p id="sTime" class="font-black text-blue-800 text-lg">0 M</p></div>
-                    <div><p class="text-[9px] text-gray-400 font-black uppercase">Questions</p><p id="sQs" class="font-black text-blue-800 text-lg">0</p></div>
-                    <div><p class="text-[9px] text-gray-400 font-black uppercase">Neg</p><p id="sNeg" class="font-black text-red-600 text-lg">0.0</p></div>
-                </div>
-                <input type="text" id="stuName" class="w-full bg-white border p-4 rounded-2xl font-bold text-center outline-none focus:border-blue-500" placeholder="আপনার নাম লিখুন">
-            </div>
-            <button onclick="startExam()" class="w-full max-w-sm bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl">Start Exam Now</button>
-        </div>
+<body class="pb-28 print-area">
 
-        <div id="liveArea" class="hidden no-print">
-            <nav class="bg-white/90 backdrop-blur-md p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center px-6 rounded-3xl mb-8 border border-gray-100">
-                <span class="font-black text-blue-900 italic uppercase">ATLAS LIVE</span>
-                <div id="timer" class="font-black text-red-600 bg-red-50 px-6 py-2 rounded-full border border-red-100 text-xl tracking-tighter">00:00</div>
-            </nav>
-            <div id="nav" class="nav-box"></div>
-            <main id="qs" class="max-w-3xl lg:ml-12 space-y-8"></main>
-            <button onclick="submitExam()" class="fixed-sub">Submit Exam</button>
-        </div>
-
-        <div id="resArea" class="hidden max-w-4xl mx-auto py-6">
-            <div class="flex justify-between items-center mb-8 no-print">
-                <button onclick="location.reload()" class="bg-white border px-5 py-2.5 rounded-2xl text-sm font-bold text-gray-600 shadow-sm">❮ Retake Exam</button>
-                <button onclick="window.print()" class="bg-blue-900 text-white px-6 py-2.5 rounded-2xl font-black text-xs shadow-lg uppercase tracking-widest">Download PDF / Print</button>
-            </div>
-
-            <div class="bg-white p-8 md:p-10 rounded-[3rem] shadow-sm border border-gray-100 mb-10">
-                <h3 class="font-black text-gray-800 mb-8 flex items-center text-xl tracking-tight">📊 Performance Analysis</h3>
-                <div class="flex flex-col md:flex-row items-center gap-12">
-                    <div class="w-48 h-48 shrink-0"><canvas id="chart"></canvas></div>
-                    <div class="flex-1 w-full grid grid-cols-2 gap-5">
-                        <div class="bg-green-50 p-5 rounded-3xl border border-green-100 text-center shadow-sm">
-                            <p class="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Correct</p>
-                            <p id="rC" class="text-3xl font-black text-green-600">+0.0</p>
-                        </div>
-                        <div class="bg-red-50 p-5 rounded-3xl border border-red-100 text-center shadow-sm">
-                            <p class="text-[10px] font-black text-red-700 uppercase tracking-widest mb-1">Negative</p>
-                            <p id="rN" class="text-3xl font-black text-red-600">-0.0</p>
-                        </div>
-                        <div class="col-span-2 bg-blue-900 p-6 rounded-[2rem] flex justify-between items-center text-white shadow-2xl">
-                            <span class="font-black text-sm uppercase tracking-widest text-blue-100">Final Score</span>
-                            <span id="rF" class="text-5xl font-black">0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-3 mb-8 no-print overflow-x-auto pb-4 scrollbar-hide">
-                <button onclick="filterQs('all')" id="f-all" class="filter-btn f-active">All Questions</button>
-                <button onclick="filterQs('correct')" id="f-correct" class="filter-btn">Correct</button>
-                <button onclick="filterQs('wrong')" id="f-wrong" class="filter-btn">Incorrect</button>
-                <button onclick="filterQs('skipped')" id="f-skipped" class="filter-btn">Skipped</button>
-            </div>
-            
-            <div id="solve" class="space-y-6"></div>
+<!-- Registration Modal (First time only for external links) -->
+<div id="regModal" class="hidden fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 backdrop-blur-sm">
+    <div style="background:white;border-radius:32px;padding:32px;max-width:440px;width:100%;">
+        <div class="logo-font font-black text-blue-900 text-lg mb-2">প্রিয় শিক্ষার্থী 👋</div>
+        <p style="font-size:14px;color:#64748b;margin-bottom:24px;line-height:1.6;">প্রথমবারের মতো নিচের তথ্যগুলো দিন। এরপর থেকে Unlimited Use করতে পারবেন।</p>
+        <div class="space-y-3" id="regModalForm">
+            <input class="inp" id="rm_name" placeholder="আপনার নাম কি?">
+            <input class="inp" id="rm_batch" placeholder="আপনার HSC ব্যাচ কত?">
+            <input class="inp" id="rm_college" placeholder="আপনার কলেজের নাম?">
+            <input class="inp" id="rm_phone" type="tel" placeholder="Contact / WhatsApp Number">
+            <input class="inp" id="rm_social" placeholder="Telegram / Facebook / Instagram লিংক">
+            <div id="rm_msg" class="hidden p-3 rounded-2xl text-sm font-bold"></div>
+            <button onclick="submitModalReg()" id="rm_btn" style="width:100%;padding:16px;background:#1e40af;color:white;border:none;border-radius:16px;font-family:'Sora',sans-serif;font-weight:800;font-size:13px;letter-spacing:0.08em;cursor:pointer;text-transform:uppercase;">
+                Registration সম্পন্ন করুন
+            </button>
         </div>
     </div>
+</div>
 
-    <script>
-        const atlas = window.supabase.createClient('https://gdmhswxnlhvtyfxaevnt.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI');
+<div class="container mx-auto p-4 md:p-6">
+
+    <!-- Pre-Exam Start Screen -->
+    <div id="startScreen" class="hidden fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center p-6 text-center no-print">
+        <div class="logo-font text-2xl font-black text-blue-900 mb-1 uppercase tracking-tighter">ATLAS Exam</div>
+        <p id="sChap" class="text-sm font-bold text-blue-500 mb-8 uppercase tracking-widest"></p>
+        <div style="background:#f8fafc;padding:28px;border-radius:32px;border:1.5px solid #e2e8f0;margin-bottom:28px;width:100%;max-width:380px;">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+                <div><p style="font-size:9px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">Time</p><p id="sTime" class="logo-font font-black text-blue-800 text-xl">0 M</p></div>
+                <div><p style="font-size:9px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">Questions</p><p id="sQs" class="logo-font font-black text-blue-800 text-xl">0</p></div>
+                <div><p style="font-size:9px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:0.1em;">Negative</p><p id="sNeg" class="logo-font font-black text-red-600 text-xl">0</p></div>
+            </div>
+            <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:16px;padding:12px;margin-bottom:16px;text-align:left;">
+                <p style="font-size:12px;color:#92400e;font-weight:700;">⚠️ একবার অপশন দাগালে আর পরিবর্তন করা যাবে না</p>
+            </div>
+            <div id="startUserInfo" style="text-align:left;"></div>
+        </div>
+        <button onclick="startExam()" style="width:100%;max-width:380px;background:#1e40af;color:white;padding:18px;border-radius:28px;font-family:'Sora',sans-serif;font-weight:900;font-size:14px;letter-spacing:0.1em;text-transform:uppercase;border:none;cursor:pointer;box-shadow:0 10px 30px rgba(30,64,175,0.3);">
+            Start Exam Now ↗
+        </button>
+    </div>
+
+    <!-- Live Exam Area -->
+    <div id="liveArea" class="hidden no-print">
+        <nav class="bg-white/95 backdrop-blur p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center rounded-3xl mb-8 border border-gray-100">
+            <div>
+                <span class="logo-font font-black text-blue-900 text-sm uppercase">ATLAS LIVE</span>
+                <div id="examTitle" style="font-size:10px;color:#94a3b8;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;"></div>
+            </div>
+            <div id="timer" class="logo-font font-black text-red-600 bg-red-50 px-5 py-2 rounded-full border border-red-100 text-xl tracking-tighter">00:00</div>
+        </nav>
+        <div id="nav" class="nav-box"></div>
+        <main id="qs" class="max-w-3xl lg:ml-4 xl:ml-0 space-y-6"></main>
+        <button onclick="confirmSubmit()" class="fixed-sub">Submit Exam</button>
+    </div>
+
+    <!-- Result Area -->
+    <div id="resArea" class="hidden max-w-4xl mx-auto py-6">
+        <div class="flex justify-between items-center mb-8 no-print gap-3 flex-wrap">
+            <button onclick="location.reload()" style="background:white;border:1.5px solid #e2e8f0;padding:10px 20px;border-radius:16px;font-size:13px;font-weight:700;color:#64748b;cursor:pointer;">❮ Retake</button>
+            <button onclick="window.print()" style="background:#1e40af;color:white;padding:11px 22px;border-radius:16px;font-weight:900;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(30,64,175,0.3);">⬇ Download PDF</button>
+        </div>
+
+        <!-- Score Card -->
+        <div style="background:white;padding:32px;border-radius:40px;border:1.5px solid #f1f5f9;margin-bottom:24px;">
+            <h3 class="logo-font font-black text-gray-800 mb-8 text-xl">📊 Performance Analysis</h3>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:32px;">
+                <div style="width:160px;height:160px;flex-shrink:0;"><canvas id="chart"></canvas></div>
+                <div style="flex:1;min-width:200px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div style="background:#f0fdf4;padding:18px;border-radius:24px;border:1px solid #bbf7d0;text-align:center;">
+                        <p style="font-size:9px;font-weight:800;color:#16a34a;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Correct</p>
+                        <p id="rC" class="logo-font font-black text-green-600 text-3xl">+0</p>
+                    </div>
+                    <div style="background:#fef2f2;padding:18px;border-radius:24px;border:1px solid #fecaca;text-align:center;">
+                        <p style="font-size:9px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Wrong</p>
+                        <p id="rW" class="logo-font font-black text-red-600 text-3xl">0</p>
+                    </div>
+                    <div style="background:#f8fafc;padding:18px;border-radius:24px;border:1px solid #e2e8f0;text-align:center;">
+                        <p style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Skipped</p>
+                        <p id="rS" class="logo-font font-black text-gray-500 text-3xl">0</p>
+                    </div>
+                    <div style="background:#fef2f2;padding:18px;border-radius:24px;border:1px solid #fecaca;text-align:center;">
+                        <p style="font-size:9px;font-weight:800;color:#dc2626;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;">Negative</p>
+                        <p id="rN" class="logo-font font-black text-red-600 text-3xl">-0</p>
+                    </div>
+                    <div style="background:#1e40af;padding:20px;border-radius:24px;grid-column:span 2;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-family:'Sora',sans-serif;font-weight:800;font-size:13px;color:#bfdbfe;letter-spacing:0.08em;text-transform:uppercase;">Final Score</span>
+                        <span id="rF" class="logo-font font-black text-white text-4xl">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex gap-3 mb-6 no-print overflow-x-auto pb-2">
+            <button onclick="filterQs('all')" id="f-all" class="filter-btn f-active">সব প্রশ্ন</button>
+            <button onclick="filterQs('correct')" id="f-correct" class="filter-btn">✓ Correct</button>
+            <button onclick="filterQs('wrong')" id="f-wrong" class="filter-btn">✕ Incorrect</button>
+            <button onclick="filterQs('skipped')" id="f-skipped" class="filter-btn">— Skipped</button>
+        </div>
+
+        <div id="solve" class="space-y-5"></div>
+    </div>
+</div>
+
+<script>
+    const SUPABASE_URL='https://gdmhswxnlhvtyfxaevnt.supabase.co';
+    const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+    const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+    let examData=null,userAns={},locked={},timerIv;
+    const examId=new URLSearchParams(window.location.search).get('id');
+    const L=['A','B','C','D','E'];
+    let currentUser=null;
+
+    window.onload=async()=>{
+        if(!examId){document.body.innerHTML='<div style="padding:40px;text-align:center;"><p style="font-size:18px;font-weight:800;color:#ef4444;">❌ Invalid Link</p></div>';return;}
         
-        let examData = null, userAns = {}, locked = {}, timerIv;
-        const examId = new URLSearchParams(window.location.search).get('id');
-        const L = ['A', 'B', 'C', 'D', 'E'];
-
-        window.onload = async () => {
-            if(!examId) return alert("লিংক সঠিক নয়!");
-            const { data, error } = await atlas.from('exams').select('*').eq('exam_id', examId).single();
-            if(data) {
-                examData = data;
-                // Ensure questions is processed correctly (handle string or object)
-                examData.questions = typeof data.questions === 'string' ? JSON.parse(data.questions) : (data.questions || []);
-                
-                document.getElementById('sChap').innerText = (examData.subject || "") + " | " + (examData.chapter || "");
-                document.getElementById('sTime').innerText = (examData.duration || 20) + " M";
-                document.getElementById('sQs').innerText = examData.questions.length;
-                document.getElementById('sNeg').innerText = examData.negative_marking ? examData.negative_value : "0.0";
-                document.getElementById('startScreen').classList.remove('hidden');
-            }
-        };
-
-        function startExam() {
-            if(!document.getElementById('stuName').value) return alert("নাম লিখুন!");
-            document.getElementById('startScreen').classList.add('hidden');
-            document.getElementById('liveArea').classList.remove('hidden');
-            renderQuestions();
-            let timeLeft = (examData.duration || 20) * 60;
-            timerIv = setInterval(() => {
-                if(timeLeft <= 0) { clearInterval(timerIv); submitExam(); }
-                let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
-                document.getElementById('timer').innerText = `${m < 10 ? '0':''}${m}:${s < 10 ? '0':''}${s}`;
-                timeLeft--;
-            }, 1000);
+        // Load exam data
+        const{data,error}=await db.from('exams').select('*').eq('exam_id',examId).single();
+        if(!data){
+            document.body.innerHTML='<div style="padding:40px;text-align:center;"><p style="font-size:18px;font-weight:800;color:#ef4444;">❌ Exam Not Found</p></div>';return;
+        }
+        examData=data;
+        examData.questions=typeof data.questions==='string'?JSON.parse(data.questions):(data.questions||[]);
+        
+        // Check timing
+        const now=new Date();
+        if(examData.start_time && new Date(examData.start_time)>now){
+            document.body.innerHTML=`<div style="padding:40px;text-align:center;"><p style="font-size:18px;font-weight:800;color:#1e40af;">⏰ এক্সাম এখনো শুরু হয়নি</p><p style="color:#64748b;margin-top:8px;">Start: ${new Date(examData.start_time).toLocaleString('bn-BD')}</p></div>`;
+            return;
+        }
+        if(examData.end_time && new Date(examData.end_time)<now){
+            document.body.innerHTML=`<div style="padding:40px;text-align:center;"><p style="font-size:18px;font-weight:800;color:#ef4444;">⌛ এক্সামের সময় শেষ</p></div>`;return;
         }
 
-        function renderQuestions() {
-            document.getElementById('nav').innerHTML = examData.questions.map((_, i) => `<div id="nav-${i}" onclick="document.getElementById('q-${i}').scrollIntoView({behavior:'smooth', block:'center'})" class="nav-dot">${i+1}</div>`).join('');
-            document.getElementById('qs').innerHTML = examData.questions.map((q, i) => {
-                const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
-                return `
-                <div id="q-${i}" class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm transition hover:border-blue-200">
-                    <p class="font-bold text-gray-800 text-lg mb-8 leading-relaxed"><span class="text-blue-700 mr-2 font-black">${i+1}.</span> ${q.questions || q.question}</p>
-                    <div class="space-y-3">
-                        ${opts.map((o, oi) => `
-                        <div onclick="selectOpt(${i}, ${oi+1}, this)" class="opt-btn ob-${i}">
-                            <div class="opt-letter">${L[oi]}</div><span class="font-semibold text-gray-700">${o}</span>
-                        </div>`).join('')}
-                    </div>
+        // Check registration
+        const raw=localStorage.getItem('atlas_user');
+        if(raw){
+            currentUser=JSON.parse(raw);
+            showStartScreen();
+        } else {
+            document.getElementById('regModal').classList.remove('hidden');
+        }
+    };
+
+    function showRmMsg(msg,isError=false){
+        const box=document.getElementById('rm_msg');
+        box.className=`p-3 rounded-2xl text-sm font-bold ${isError?'bg-red-50 text-red-600 border border-red-200':'bg-green-50 text-green-600 border border-green-200'}`;
+        box.textContent=msg;
+        box.classList.remove('hidden');
+    }
+
+    async function submitModalReg(){
+        const name=document.getElementById('rm_name').value.trim();
+        const batch=document.getElementById('rm_batch').value.trim();
+        const college=document.getElementById('rm_college').value.trim();
+        const phone=document.getElementById('rm_phone').value.trim();
+        const social=document.getElementById('rm_social').value.trim();
+        if(!name||!batch||!college||!phone) return showRmMsg('সব তথ্য দেওয়া আবশ্যক!',true);
+        const btn=document.getElementById('rm_btn');
+        btn.disabled=true; btn.textContent='সেভ হচ্ছে...';
+        // Check existing
+        const{data:ex}=await db.from('students').select('*').eq('whatsapp',phone).single();
+        if(ex){
+            currentUser={id:ex.id,name:ex.name,batch:ex.hsc_batch,college:ex.college,phone:ex.whatsapp};
+            localStorage.setItem('atlas_user',JSON.stringify(currentUser));
+            document.getElementById('regModal').classList.add('hidden');
+            showStartScreen(); return;
+        }
+        const{data,error}=await db.from('students').insert([{name,hsc_batch:batch,college,whatsapp:phone,social_link:social}]).select().single();
+        if(error){showRmMsg('সমস্যা: '+error.message,true);btn.disabled=false;btn.textContent='Registration সম্পন্ন করুন';return;}
+        currentUser={id:data.id,name:data.name,batch:data.hsc_batch,college:data.college,phone:data.whatsapp};
+        localStorage.setItem('atlas_user',JSON.stringify(currentUser));
+        document.getElementById('regModal').classList.add('hidden');
+        showStartScreen();
+    }
+
+    function showStartScreen(){
+        document.getElementById('sChap').innerText=(examData.subject||'')+(examData.subject&&examData.chapter?' | ':'')+(examData.chapter||'');
+        document.getElementById('sTime').innerText=(examData.duration||20)+' M';
+        document.getElementById('sQs').innerText=examData.questions.length;
+        const negVal=examData.negative_marking?examData.neg_mark:0;
+        document.getElementById('sNeg').innerText=negVal||'0';
+        if(currentUser){
+            document.getElementById('startUserInfo').innerHTML=`
+                <div style="background:#eff6ff;border-radius:14px;padding:12px 16px;">
+                    <p style="font-size:11px;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:0.08em;">পরীক্ষার্থী</p>
+                    <p style="font-weight:700;color:#1e293b;">${currentUser.name}</p>
+                    <p style="font-size:12px;color:#64748b;">${currentUser.college||''}</p>
                 </div>`;
-            }).join('');
+        }
+        document.getElementById('startScreen').classList.remove('hidden');
+    }
+
+    function startExam(){
+        document.getElementById('startScreen').classList.add('hidden');
+        document.getElementById('liveArea').classList.remove('hidden');
+        document.getElementById('examTitle').textContent=(examData.subject||'')+(examData.chapter?' — '+examData.chapter:'');
+        renderQuestions();
+        let timeLeft=(examData.duration||20)*60;
+        timerIv=setInterval(()=>{
+            if(timeLeft<=0){clearInterval(timerIv);submitExam();return;}
+            const m=Math.floor(timeLeft/60),s=timeLeft%60;
+            document.getElementById('timer').innerText=`${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+            if(timeLeft<=60) document.getElementById('timer').style.color='#ef4444';
+            timeLeft--;
+        },1000);
+    }
+
+    function renderQuestions(){
+        document.getElementById('nav').innerHTML=examData.questions.map((_,i)=>`<div id="nav-${i}" onclick="document.getElementById('q-${i}').scrollIntoView({behavior:'smooth',block:'center'})" class="nav-dot">${i+1}</div>`).join('');
+        document.getElementById('qs').innerHTML=examData.questions.map((q,i)=>{
+            const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o.trim());
+            const qText=q.questions||q.question||'';
+            return `
+            <div id="q-${i}" style="background:white;padding:28px;border-radius:32px;border:1.5px solid #f1f5f9;transition:0.2s;">
+                <p style="font-weight:700;color:#1e293b;font-size:16px;margin-bottom:22px;line-height:1.7;"><span style="color:#1e40af;margin-right:8px;font-weight:900;font-family:'Sora',sans-serif;">${i+1}.</span>${qText}</p>
+                <div>
+                    ${opts.map((o,oi)=>`
+                    <div onclick="selectOpt(${i},${oi+1},this)" class="opt-btn ob-${i}">
+                        <div class="opt-letter">${L[oi]}</div><span>${o}</span>
+                    </div>`).join('')}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function selectOpt(qIndex,ansIndex,element){
+        if(locked[qIndex]) return;
+        userAns[qIndex]=ansIndex; locked[qIndex]=true;
+        element.classList.add('selected');
+        document.getElementById(`nav-${qIndex}`).classList.add('done');
+        document.querySelectorAll(`.ob-${qIndex}`).forEach(btn=>btn.classList.add('locked'));
+    }
+
+    function confirmSubmit(){
+        const answered=Object.keys(userAns).length;
+        const total=examData.questions.length;
+        if(confirm(`${answered}/${total} প্রশ্নের উত্তর দিয়েছো। Submit করবে?`)) submitExam();
+    }
+
+    function submitExam(){
+        clearInterval(timerIv);
+        let correct=0,wrong=0,skipped=0;
+        examData.questions.forEach((q,i)=>{
+            const a=parseInt(q.answer);
+            if(!userAns[i]) skipped++;
+            else if(parseInt(userAns[i])===a) correct++;
+            else wrong++;
+        });
+        const negPerWrong=parseFloat(examData.neg_mark)||0.25;
+        const negMark=examData.negative_marking?(wrong*negPerWrong).toFixed(2):'0.00';
+        const total=Math.max(0,(correct-parseFloat(negMark))).toFixed(2);
+
+        document.getElementById('rC').innerText=`+${correct}`;
+        document.getElementById('rW').innerText=wrong;
+        document.getElementById('rS').innerText=skipped;
+        document.getElementById('rN').innerText=`-${negMark}`;
+        document.getElementById('rF').innerText=total;
+
+        new Chart(document.getElementById('chart'),{
+            type:'doughnut',
+            data:{datasets:[{data:[correct,wrong,skipped],backgroundColor:['#22c55e','#ef4444','#e2e8f0'],borderWidth:0}]},
+            options:{cutout:'75%',plugins:{legend:{display:false}}}
+        });
+
+        // Save result to exam_results table
+        if(currentUser){
+            db.from('exam_results').insert([{
+                student_id:currentUser.id,
+                exam_id:examData.exam_id,
+                correct,wrong,skipped,
+                negative_mark:parseFloat(negMark),
+                final_score:parseFloat(total),
+                answers:JSON.stringify(userAns)
+            }]).then(()=>{});
         }
 
-        function selectOpt(qIndex, ansIndex, element) {
-            if(locked[qIndex]) return;
-            userAns[qIndex] = ansIndex; locked[qIndex] = true;
-            element.classList.add('selected');
-            document.getElementById(`nav-${qIndex}`).classList.add('done');
-            document.querySelectorAll(`.ob-${qIndex}`).forEach(btn => btn.classList.add('locked'));
-        }
+        document.getElementById('liveArea').classList.add('hidden');
+        document.getElementById('resArea').classList.remove('hidden');
+        window.scrollTo(0,0);
+        filterQs('all');
+    }
 
-        function submitExam() {
-            clearInterval(timerIv);
-            let correct = 0, wrong = 0, skipped = 0;
-            examData.questions.forEach((q, i) => {
-                const actualAns = parseInt(q.answer);
-                if(!userAns[i]) skipped++;
-                else if(parseInt(userAns[i]) === actualAns) correct++;
-                else wrong++;
-            });
-
-            const negPerWrong = parseFloat(examData.negative_value) || 0.25;
-            const negMark = examData.negative_marking ? (wrong * negPerWrong).toFixed(2) : "0.00";
-            const total = (correct - parseFloat(negMark)).toFixed(2);
-
-            document.getElementById('rC').innerText = `+${correct}.0`;
-            document.getElementById('rN').innerText = `-${negMark}`;
-            document.getElementById('rF').innerText = Math.max(0, total);
-
-            new Chart(document.getElementById('chart'), {
-                type: 'doughnut',
-                data: { datasets: [{ data: [correct, wrong, skipped], backgroundColor: ['#22c55e', '#ef4444', '#e2e8f0'], borderWidth: 0 }] },
-                options: { cutout: '80%', plugins: { legend: { display: false } } }
-            });
-
-            document.getElementById('liveArea').classList.add('hidden');
-            document.getElementById('resArea').classList.remove('hidden');
-            window.scrollTo(0,0); filterQs('all');
-        }
-
-        function filterQs(filterType) {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('f-active'));
-            document.getElementById(`f-${filterType}`).classList.add('f-active');
-            let html = '';
-            examData.questions.forEach((q, i) => {
-                const u = userAns[i], c = parseInt(q.answer);
-                const s = !u ? 'skipped' : (u === c ? 'correct' : 'wrong');
-                if(filterType !== 'all' && s !== filterType) return;
-
-                const opts = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
-                let bCls = s === 'correct' ? 'bg-green-100 text-green-600' : (s === 'wrong' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500');
-
-                html += `
-                <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm mb-6">
-                    <div class="flex items-start gap-4 mb-6">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm shrink-0 ${bCls}">${i+1}</div>
-                        <p class="font-bold text-gray-800 pt-1 leading-relaxed">${q.questions || q.question}</p>
-                    </div>
-                    <div class="pl-14 space-y-3">
-                        ${opts.map((o, oi) => {
-                            let icon = `<div class="opt-letter border border-gray-200 bg-white">${L[oi]}</div>`;
-                            if(oi+1 === c) icon = `<div class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">✓</div>`;
-                            else if(oi+1 === u && s === 'wrong') icon = `<div class="w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center font-bold mr-4 shrink-0">✕</div>`;
-                            return `<div class="flex items-center text-sm font-semibold text-gray-700">${icon}<span>${o}</span></div>`;
-                        }).join('')}
-                    </div>
-                    ${q.explanation ? `<div class="pl-14 mt-6"><div class="bg-blue-50/50 p-5 rounded-3xl border-l-4 border-blue-500 text-xs text-gray-600"><span class="font-black text-blue-900 block mb-2 uppercase text-[9px] tracking-widest">Explanation</span>${q.explanation}</div></div>` : ''}
-                </div>`;
-            });
-            document.getElementById('solve').innerHTML = html;
-        }
-    </script>
+    function filterQs(type){
+        document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('f-active'));
+        document.getElementById(`f-${type}`).classList.add('f-active');
+        let html='';
+        examData.questions.forEach((q,i)=>{
+            const u=userAns[i],c=parseInt(q.answer);
+            const status=!u?'skipped':(parseInt(u)===c?'correct':'wrong');
+            if(type!=='all'&&status!==type) return;
+            const opts=[q.option1,q.option2,q.option3,q.option4,q.option5].filter(o=>o&&o.trim());
+            const numBg=status==='correct'?'#dcfce7':status==='wrong'?'#fee2e2':'#f1f5f9';
+            const numColor=status==='correct'?'#16a34a':status==='wrong'?'#dc2626':'#64748b';
+            html+=`
+            <div style="background:white;padding:28px;border-radius:32px;border:1.5px solid #f1f5f9;">
+                <div style="display:flex;gap:14px;margin-bottom:18px;align-items:flex-start;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:${numBg};color:${numColor};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0;">${i+1}</div>
+                    <p style="font-weight:700;color:#1e293b;line-height:1.7;flex:1;">${q.questions||q.question}</p>
+                </div>
+                <div style="padding-left:50px;space-y:8px;">
+                    ${opts.map((o,oi)=>{
+                        let icon=`<div style="width:28px;height:28px;border-radius:50%;background:#f1f5f9;color:#64748b;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;margin-right:12px;flex-shrink:0;">${L[oi]}</div>`;
+                        if(oi+1===c) icon=`<div style="width:28px;height:28px;border-radius:50%;background:#22c55e;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;margin-right:12px;flex-shrink:0;">✓</div>`;
+                        else if(oi+1===parseInt(u)&&status==='wrong') icon=`<div style="width:28px;height:28px;border-radius:50%;background:#ef4444;color:white;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;margin-right:12px;flex-shrink:0;">✕</div>`;
+                        return `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f8fafc;font-weight:600;color:#374151;font-size:14px;">${icon}<span>${o}</span></div>`;
+                    }).join('')}
+                </div>
+                ${q.explanation?`<div style="padding-left:50px;margin-top:14px;"><div style="background:#f0f9ff;padding:16px;border-radius:20px;border-left:4px solid #3b82f6;font-size:13px;color:#475569;"><span style="display:block;font-size:9px;font-weight:900;color:#1e40af;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px;">Explanation</span>${q.explanation}</div></div>`:''}
+            </div>`;
+        });
+        if(!html) html=`<div style="text-align:center;padding:40px;color:#94a3b8;"><div style="font-size:40px;">✅</div><p style="font-weight:700;margin-top:8px;">এই ক্যাটাগরিতে কোনো প্রশ্ন নেই</p></div>`;
+        document.getElementById('solve').innerHTML=html;
+    }
+</script>
 </body>
 </html>
