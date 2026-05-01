@@ -3,29 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classes | ATLAS</title>
+    <title>ATLAS | Classes</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }</style>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+        body { font-family: 'Hind Siliguri', sans-serif; background-color: #f3f7fa; }
+    </style>
 </head>
-<body>
+<body class="pb-10">
     <nav class="bg-white p-4 shadow-sm font-black text-blue-800 sticky top-0 z-50 flex items-center">
-        <button onclick="history.back()" class="mr-4 text-xl">←</button> ATLAS CLASSES
+        <button onclick="goBack()" class="mr-4 text-2xl">←</button> 
+        <span id="navTitle" class="italic uppercase tracking-tighter">Classes</span>
     </nav>
-    <div id="classList" class="p-6 space-y-4"></div>
+
+    <div id="displayArea" class="p-6 space-y-4">
+        <div class="text-center text-gray-400 py-10">লোড হচ্ছে...</div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        async function load() {
+
+        let allData = [];
+        let currentState = { subject: null, paper: null, view: 'subject' };
+
+        async function loadData() {
             const { data } = await atlas.from('classes').select('*');
-            document.getElementById('classList').innerHTML = data.map(c => `
-                <div class="bg-white p-5 rounded-[2rem] shadow-sm border flex items-center justify-between font-bold">
-                    <div><p class="text-blue-800">${c.subject} | ${c.chapter}</p><p class="text-[10px] text-gray-400">YOUTUBE CLASS</p></div>
-                    <a href="${c.link}" target="_blank" class="bg-red-600 text-white px-4 py-2 rounded-xl text-xs">Watch</a>
+            allData = data || [];
+            renderSubjects();
+        }
+
+        function renderSubjects() {
+            currentState.view = 'subject';
+            document.getElementById('navTitle').innerText = "Select Subject";
+            const subjects = [...new Set(allData.map(item => item.subject))];
+            
+            document.getElementById('displayArea').innerHTML = subjects.map(sub => `
+                <div onclick="renderPapers('${sub}')" class="bg-white p-6 rounded-[2rem] shadow-sm border font-bold flex justify-between items-center active:scale-95 transition-all">
+                    <span>${sub}</span> <span class="text-blue-500">→</span>
+                </div>
+            `).join('') || '<p class="text-center text-gray-400">কোনো ডাটা পাওয়া যায়নি</p>';
+        }
+
+        function renderPapers(sub) {
+            currentState.subject = sub;
+            currentState.view = 'paper';
+            document.getElementById('navTitle').innerText = sub;
+            const papers = [...new Set(allData.filter(i => i.subject === sub).map(i => i.paper))];
+            
+            document.getElementById('displayArea').innerHTML = papers.map(p => `
+                <div onclick="renderChapters('${p}')" class="bg-white p-6 rounded-[2rem] shadow-sm border font-bold flex justify-between items-center active:scale-95 transition-all">
+                    <span>${p}</span> <span class="text-blue-500">→</span>
                 </div>
             `).join('');
-        } load();
+        }
+
+        function renderChapters(paper) {
+            currentState.paper = paper;
+            currentState.view = 'chapter';
+            document.getElementById('navTitle').innerText = paper;
+            const chapters = allData.filter(i => i.subject === currentState.subject && i.paper === paper);
+            
+            document.getElementById('displayArea').innerHTML = chapters.map(c => `
+                <div class="bg-white p-6 rounded-[2rem] shadow-sm border font-bold flex justify-between items-center">
+                    <span class="text-sm text-gray-700">${c.chapter}</span>
+                    <a href="${c.link}" target="_blank" class="bg-red-600 text-white px-5 py-2 rounded-xl text-xs shadow-lg shadow-red-100">Watch</a>
+                </div>
+            `).join('');
+        }
+
+        function goBack() {
+            if (currentState.view === 'chapter') renderPapers(currentState.subject);
+            else if (currentState.view === 'paper') renderSubjects();
+            else history.back();
+        }
+
+        loadData();
     </script>
 </body>
 </html>
