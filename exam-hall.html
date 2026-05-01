@@ -5,202 +5,179 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ATLAS Exam Hall</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    .option { transition: all 0.2s; }
-    .option.selected { background-color: #10b981; color: white; }
-    .nav-btn { transition: all 0.2s; }
-    .answered { background-color: #10b981; color: white; }
+    @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
+    body { font-family: 'Hind Siliguri', sans-serif; background: #f8fafc; }
+    
+    .opt { cursor: pointer; border: 2px solid #f1f5f9; border-radius: 1rem; padding: 14px; font-weight: 600; background: #fff; margin-bottom: 10px; transition: 0.2s; display: flex; align-items: center; }
+    .opt-letter { width: 28px; height: 28px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; margin-right: 12px; shrink-0; }
+    .selected { border-color: #1e40af; background: #eff6ff; }
+    .selected .opt-letter { background: #1e40af; color: white; }
+    .locked { cursor: not-allowed; opacity: 0.7; }
+    
+    .fixed-submit { position: fixed; bottom: 30px; right: 30px; z-index: 50; padding: 16px 35px; border-radius: 30px; font-weight: 900; background: #1e40af; color: white; text-transform: uppercase; box-shadow: 0 10px 20px rgba(30,64,175,0.3); border: none; cursor: pointer; }
+    
+    .nav-box { position: fixed; right: 20px; top: 100px; width: 160px; max-height: 55vh; overflow-y: auto; background: white; padding: 15px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); z-index: 40; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border: 1px solid #e2e8f0; }
+    .nav-btn { width: 100%; aspect-ratio: 1; border-radius: 10px; font-size: 11px; font-weight: bold; background: #f1f5f9; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .nav-btn.answered { background: #1e40af; color: white; }
+
+    @media (max-width: 1024px) { .nav-box { display: none; } .fixed-submit { right: 5%; width: 90%; } }
   </style>
 </head>
-<body class="bg-gray-100">
-  <div class="max-w-6xl mx-auto flex h-screen">
+<body class="pb-32">
 
-    <!-- Main Question Area -->
-    <div class="flex-1 flex flex-col">
-      <!-- Header -->
-      <div class="bg-white border-b p-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold" id="examTitle">ATLAS Smart Exam</h1>
-        <div class="text-red-600 font-mono text-xl font-bold" id="timer">60:00</div>
-      </div>
+  <div id="mainContainer" class="container mx-auto p-4 md:p-6">
+    
+    <nav id="topNav" class="hidden bg-white/80 backdrop-blur-md p-4 shadow-sm sticky top-0 z-50 flex justify-between items-center px-6 rounded-2xl mb-6">
+      <span class="font-black text-blue-900 italic uppercase">ATLAS Live</span>
+      <div id="timer" class="font-black text-red-600 bg-red-50 px-5 py-2 rounded-full border border-red-100 text-lg">00:00</div>
+    </nav>
 
-      <!-- Question -->
-      <div class="flex-1 p-8 overflow-auto" id="questionArea">
-        <div class="mb-4">
-          <span class="text-sm text-gray-500">প্রশ্ন <span id="currentQ" class="font-bold">1</span> / <span id="totalQ">0</span></span>
+    <div id="sideNav" class="nav-box hidden"></div>
+
+    <main id="qArea" class="max-w-3xl lg:ml-12 space-y-6 hidden"></main>
+
+    <button onclick="submitExam()" id="submitBtn" class="fixed-submit hidden">পরীক্ষা জমা দিন</button>
+
+    <div id="resultArea" class="hidden max-w-2xl mx-auto">
+      <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 mb-6">
+        <h3 class="font-black text-gray-800 mb-4 flex items-center">📊 Score Breakdown</h3>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-green-50 p-4 rounded-2xl border text-center">
+            <p class="text-[9px] font-black text-green-700 uppercase">Correct</p>
+            <p class="text-xl font-black text-green-600" id="rCorrectMark">+0.0</p>
+          </div>
+          <div class="bg-red-50 p-4 rounded-2xl border text-center">
+            <p class="text-[9px] font-black text-red-700 uppercase">Negative</p>
+            <p class="text-xl font-black text-red-600" id="rNegMark">-0.0</p>
+          </div>
+          <div class="col-span-2 bg-blue-900 p-5 rounded-2xl flex justify-between items-center text-white">
+            <span class="font-black uppercase text-xs">Final Score</span>
+            <span class="text-3xl font-black" id="rFinalScore">0.00</span>
+          </div>
         </div>
-        <h2 class="text-2xl font-medium mb-8" id="questionText"></h2>
-
-        <div class="space-y-3" id="options"></div>
       </div>
-
-      <!-- Fixed Footer -->
-      <div class="bg-white border-t p-4 flex justify-between items-center">
-        <button onclick="prevQuestion()" 
-                class="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg">পূর্ববর্তী</button>
-        
-        <button onclick="nextQuestion()" 
-                class="px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg">পরবর্তী</button>
-        
-        <button onclick="submitExam()" 
-                class="px-8 py-3 bg-red-600 text-white hover:bg-red-700 rounded-lg font-semibold">
-          পরীক্ষা জমা দিন
-        </button>
-      </div>
+      <div id="solveSheet" class="space-y-4"></div>
     </div>
 
-    <!-- Navigation Sidebar -->
-    <div class="w-72 bg-white border-l p-4 overflow-auto">
-      <h3 class="font-bold mb-4">প্রশ্ন নেভিগেশন</h3>
-      <div class="grid grid-cols-5 gap-2" id="navBox"></div>
-      
-      <div class="mt-8 text-sm">
-        <div class="flex items-center gap-2 mb-2">
-          <div class="w-5 h-5 bg-green-500 rounded"></div>
-          <span>উত্তর দেওয়া হয়েছে</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="w-5 h-5 border-2 border-gray-400 rounded"></div>
-          <span>এখনো বাকি</span>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
-    let currentExam = null;
-    let currentQuestionIndex = 0;
-    let answers = {};           // {questionId: selectedOption}
-    let locked = {};            // লক করা অপশন
-    let timeLeft = 3600;        // ডিফল্ট ৬০ মিনিট (সেকেন্ডে)
-    let timerInterval;
+    const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+    const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    // URL থেকে Exam ID নেওয়া
-    const params = new URLSearchParams(window.location.search);
-    const examId = params.get('examId');
+    let exam = null, userAns = {}, locked = {}, timeLeft = 0, timerIv;
+    const urlId = new URLSearchParams(window.location.search).get('id');
+    const letters = ['A', 'B', 'C', 'D', 'E'];
 
-    // ==================== লোড এক্সাম ====================
-    function loadExam() {
-      const allExams = JSON.parse(localStorage.getItem('atlas_exams') || '[]');
-      currentExam = allExams.find(ex => ex.examId === examId) || allExams[0];
-
-      if (!currentExam) {
+    window.onload = async () => {
+      if(!urlId) return alert("লিঙ্ক সঠিক নয়!");
+      const { data, error } = await atlas.from('exams').select('*').eq('exam_id', urlId).single();
+      
+      if(data) {
+        exam = data;
+        renderExam();
+      } else {
         alert("পরীক্ষা পাওয়া যায়নি!");
-        return;
       }
+    };
 
-      document.getElementById('examTitle').textContent = currentExam.title || "ATLAS Exam";
-      document.getElementById('totalQ').textContent = currentExam.questions.length;
+    function renderExam() {
+      document.getElementById('topNav').classList.remove('hidden');
+      document.getElementById('sideNav').classList.remove('hidden');
+      document.getElementById('qArea').classList.remove('hidden');
+      document.getElementById('submitBtn').classList.remove('hidden');
 
-      // টাইমার সেট (পরে অ্যাডমিন থেকে আনতে পারবে)
-      timeLeft = 3600;
+      // Timer
+      timeLeft = (exam.duration || 20) * 60;
       startTimer();
 
-      loadQuestion(0);
-      renderNavigation();
+      // Navigation
+      const navBox = document.getElementById('sideNav');
+      navBox.innerHTML = exam.questions.map((_, i) => `<button id="nav-${i}" onclick="scrollToQ(${i})" class="nav-btn">${i+1}</button>`).join('');
+
+      // Questions
+      document.getElementById('qArea').innerHTML = exam.questions.map((q, i) => {
+        const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
+        return `
+          <div class="bg-white p-6 md:p-8 rounded-[2rem] shadow-sm border border-gray-100" id="q-${i}">
+            <p class="font-black text-gray-800 text-lg mb-6 leading-relaxed"><span class="text-blue-700 mr-1">${i+1}.</span> ${q.questions}</p>
+            <div class="space-y-2">
+              ${options.map((opt, oIdx) => `
+                <div onclick="selectOpt(${i}, ${oIdx+1}, this)" class="opt opt-btn-${i}">
+                  <div class="opt-letter">${letters[oIdx]}</div>
+                  <span>${opt}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function selectOpt(qIdx, ansIdx, el) {
+      if(locked[qIdx]) return;
+      userAns[qIdx] = ansIdx;
+      locked[qIdx] = true; // Lock Option
+      el.classList.add('selected');
+      document.getElementById(`nav-${qIdx}`).classList.add('answered');
+      document.querySelectorAll(`.opt-btn-${qIdx}`).forEach(b => b.classList.add('locked'));
+    }
+
+    function scrollToQ(i) {
+      document.getElementById(`q-${i}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function startTimer() {
-      timerInterval = setInterval(() => {
+      timerIv = setInterval(() => {
+        if(timeLeft <= 0) { clearInterval(timerIv); submitExam(); }
+        let m = Math.floor(timeLeft / 60), s = timeLeft % 60;
+        document.getElementById('timer').innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
         timeLeft--;
-        const min = Math.floor(timeLeft / 60);
-        const sec = timeLeft % 60;
-        document.getElementById('timer').textContent = 
-          `\( {min}: \){sec < 10 ? '0' : ''}${sec}`;
-
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          submitExam(true);
-        }
       }, 1000);
     }
 
-    // ==================== প্রশ্ন লোড ====================
-    function loadQuestion(index) {
-      currentQuestionIndex = index;
-      const q = currentExam.questions[index];
+    function submitExam() {
+      if(timerIv) clearInterval(timerIv);
+      let correct = 0, wrong = 0;
       
-      document.getElementById('currentQ').textContent = index + 1;
-      document.getElementById('questionText').textContent = q.question;
-
-      const optionsDiv = document.getElementById('options');
-      optionsDiv.innerHTML = '';
-
-      q.options.forEach((opt, i) => {
-        const optNum = i + 1;
-        const isSelected = answers[q.id] === optNum;
-        const isLocked = locked[q.id];
-
-        const btn = document.createElement('button');
-        btn.className = `option w-full text-left p-4 border rounded-xl text-lg ${isSelected ? 'selected' : 'hover:bg-gray-50'}`;
-        btn.textContent = `${optNum}. ${opt}`;
-        btn.disabled = isLocked;
-        
-        btn.onclick = () => selectOption(q.id, optNum, btn);
-        optionsDiv.appendChild(btn);
+      exam.questions.forEach((q, i) => {
+        if(userAns[i]) {
+          if(parseInt(userAns[i]) === parseInt(q.answer)) correct++;
+          else wrong++;
+        }
       });
-    }
 
-    function selectOption(qId, optionNum, btn) {
-      if (locked[qId]) return;   // লক হয়ে গেলে আর পরিবর্তন হবে না
+      const neg = (wrong * (exam.negative_value || 0.25)).toFixed(2);
+      const final = (correct - neg).toFixed(2);
 
-      answers[qId] = optionNum;
-      locked[qId] = true;        // লক করে দিলাম (নতুন ফিচার)
+      document.getElementById('rCorrectMark').innerText = `+${correct}.0`;
+      document.getElementById('rNegMark').innerText = `-${neg}`;
+      document.getElementById('rFinalScore').innerText = final;
+
+      document.getElementById('topNav').classList.add('hidden');
+      document.getElementById('sideNav').classList.add('hidden');
+      document.getElementById('qArea').classList.add('hidden');
+      document.getElementById('submitBtn').classList.add('hidden');
+      document.getElementById('resultArea').classList.remove('hidden');
       
-      renderNavigation();
-      loadQuestion(currentQuestionIndex); // রিফ্রেশ
+      renderSolve();
     }
 
-    // ==================== নেভিগেশন ====================
-    function renderNavigation() {
-      const navBox = document.getElementById('navBox');
-      navBox.innerHTML = '';
-
-      currentExam.questions.forEach((q, i) => {
-        const btn = document.createElement('button');
-        btn.className = `nav-btn w-10 h-10 rounded-lg border flex items-center justify-center text-sm font-medium
-                         ${answers[q.id] ? 'answered' : 'border-gray-300 hover:border-blue-500'}`;
-        btn.textContent = i + 1;
-        btn.onclick = () => {
-          loadQuestion(i);
-        };
-        navBox.appendChild(btn);
-      });
+    function renderSolve() {
+      document.getElementById('solveSheet').innerHTML = exam.questions.map((q, i) => {
+        const uAns = userAns[i], cAns = parseInt(q.answer);
+        const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(o => o && o.trim());
+        return `
+          <div class="bg-white p-6 rounded-[2rem] border ${uAns == cAns ? 'border-green-100 bg-green-50' : (uAns ? 'border-red-100 bg-red-50' : 'border-gray-100')}">
+            <p class="font-bold">${i+1}. ${q.questions}</p>
+            <p class="text-sm mt-2 text-green-700 font-bold">সঠিক উত্তর: ${options[cAns-1]}</p>
+            ${q.explanation ? `<p class="text-xs text-gray-500 mt-2 italic">ব্যাখ্যা: ${q.explanation}</p>` : ''}
+          </div>`;
+      }).join('');
     }
-
-    function nextQuestion() {
-      if (currentQuestionIndex < currentExam.questions.length - 1) {
-        loadQuestion(currentQuestionIndex + 1);
-      }
-    }
-
-    function prevQuestion() {
-      if (currentQuestionIndex > 0) {
-        loadQuestion(currentQuestionIndex - 1);
-      }
-    }
-
-    // ==================== সাবমিট ====================
-    function submitExam(auto = false) {
-      if (!auto && !confirm("আপনি কি পরীক্ষা জমা দিতে চান?")) return;
-
-      clearInterval(timerInterval);
-
-      // Result এর জন্য ডাটা সেভ
-      const resultData = {
-        examId: currentExam.examId,
-        answers: answers,
-        timeTaken: 3600 - timeLeft,
-        submittedAt: new Date().toISOString()
-      };
-
-      localStorage.setItem(`result_${currentExam.examId}`, JSON.stringify(resultData));
-      
-      window.location.href = `../result/result.html?examId=${currentExam.examId}`;
-    }
-
-    // লোড হওয়ার সাথে সাথে শুরু
-    window.onload = loadExam;
   </script>
 </body>
 </html>
