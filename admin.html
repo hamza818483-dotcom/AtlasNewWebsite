@@ -102,31 +102,6 @@
             document.getElementById('list').innerHTML = data.map(s => `<div class="p-4 bg-white rounded-2xl shadow-sm border font-bold text-sm">${s.name} - ${s.hsc_batch}</div>`).join('');
         }
     </script>
-    // অ্যাডমিন প্যানেলে কন্টেন্ট লিস্ট দেখানোর ফাংশন
-async function loadContentManagement() {
-    const { data: classData } = await atlas.from('classes').select('*');
-    const container = document.getElementById('manageList'); // আপনার ড্যাশবোর্ডে এই ID-র একটি div রাখবেন
     
-    container.innerHTML = classData.map(c => `
-        <div class="bg-white p-4 rounded-2xl shadow-sm border flex justify-between items-center mb-2">
-            <div class="text-xs font-bold">
-                <p class="text-blue-800">${c.subject} - ${c.paper}</p>
-                <p class="text-gray-400">${c.chapter}</p>
-            </div>
-            <button onclick="deleteContent('classes', '${c.id}')" class="text-red-500 text-xs font-bold bg-red-50 px-3 py-1 rounded-lg">Delete</button>
-        </div>
-    `).join('');
-}
-
-async function deleteContent(table, id) {
-    if(confirm("আপনি কি নিশ্চিতভাবে এটি ডিলিট করতে চান?")) {
-        const { error } = await atlas.from(table).delete().eq('id', id);
-        if(!error) {
-            alert("ডিলিট হয়েছে!");
-            loadContentManagement();
-        }
-    }
-}
-
 </body>
 </html>
