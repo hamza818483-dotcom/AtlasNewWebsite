@@ -111,7 +111,7 @@
             const p = document.getElementById('admPhone').value;
             const s = document.getElementById('admPass').value;
 
-            if(p === "01754364703" && s === "atlas2026") {
+            if(p === "01754365403" && s === "atlas2026") {
                 loginSuccess();
             } else {
                 const { data } = await atlas.from('admins').select('*').eq('phone', p).eq('password', s).single();
