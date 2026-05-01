@@ -1,511 +1,206 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS - Exam Hall</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <style>
-        .nav-box {
-            position: fixed;
-            right: 20px;
-            top: 100px;
-            width: 280px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            padding: 16px;
-            z-index: 99;
-            max-height: 75vh;
-            overflow-y: auto;
-        }
-        .question-container {
-            margin-right: 320px;
-            padding-bottom: 100px;
-        }
-        @media (max-width: 768px) {
-            .nav-box { display: none; }
-            .question-container { margin-right: 0; }
-        }
-        .nav-btn-answered {
-            background-color: #22c55e;
-            color: white;
-        }
-        .nav-btn-unanswered {
-            background-color: #9ca3af;
-            color: white;
-        }
-        .nav-btn-current {
-            background-color: #3b82f6;
-            color: white;
-            transform: scale(1.1);
-            box-shadow: 0 0 0 2px white, 0 0 0 4px #3b82f6;
-        }
-        .submit-btn-fixed {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 100;
-            background-color: #ef4444;
-            color: white;
-            padding: 12px 28px;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-        }
-        .submit-btn-fixed:hover {
-            background-color: #dc2626;
-            transform: scale(1.05);
-        }
-        .timer-display {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background-color: #2563eb;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 18px;
-            z-index: 100;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .timer-warning {
-            background-color: #dc2626 !important;
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ATLAS Exam Hall</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .option { transition: all 0.2s; }
+    .option.selected { background-color: #10b981; color: white; }
+    .nav-btn { transition: all 0.2s; }
+    .answered { background-color: #10b981; color: white; }
+  </style>
 </head>
 <body class="bg-gray-100">
-    <div id="examContainer"></div>
-    
-    <script>
-        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <div class="max-w-6xl mx-auto flex h-screen">
+
+    <!-- Main Question Area -->
+    <div class="flex-1 flex flex-col">
+      <!-- Header -->
+      <div class="bg-white border-b p-4 flex justify-between items-center">
+        <h1 class="text-xl font-bold" id="examTitle">ATLAS Smart Exam</h1>
+        <div class="text-red-600 font-mono text-xl font-bold" id="timer">60:00</div>
+      </div>
+
+      <!-- Question -->
+      <div class="flex-1 p-8 overflow-auto" id="questionArea">
+        <div class="mb-4">
+          <span class="text-sm text-gray-500">প্রশ্ন <span id="currentQ" class="font-bold">1</span> / <span id="totalQ">0</span></span>
+        </div>
+        <h2 class="text-2xl font-medium mb-8" id="questionText"></h2>
+
+        <div class="space-y-3" id="options"></div>
+      </div>
+
+      <!-- Fixed Footer -->
+      <div class="bg-white border-t p-4 flex justify-between items-center">
+        <button onclick="prevQuestion()" 
+                class="px-6 py-3 bg-gray-200 hover:bg-gray-300 rounded-lg">পূর্ববর্তী</button>
         
-        let examData = null;
-        let userAnswers = [];
-        let lockedAnswers = [];
-        let timer = null;
-        let timeLeft = 0;
+        <button onclick="nextQuestion()" 
+                class="px-6 py-3 bg-blue-600 text-white hover:bg-blue-700 rounded-lg">পরবর্তী</button>
         
-        const urlParams = new URLSearchParams(window.location.search);
-        const examId = urlParams.get('id');
-        
-        async function loadExam() {
-            if(!examId) {
-                showError('❌ No Exam ID provided');
-                return;
-            }
-            
-            const { data, error } = await supabase.from('exams').select('*').eq('exam_id', examId).single();
-            if(error || !data) {
-                showError('❌ Exam not found');
-                return;
-            }
-            
-            // ✅ START TIME CHECK - নতুন যোগ করা ফিচার
-            if(data.start_time && new Date(data.start_time) > new Date()) {
-                const startDate = new Date(data.start_time);
-                showMessage(`
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">⏰</div>
-                        <h2 class="text-2xl font-bold text-orange-600 mb-2">Exam Not Started Yet</h2>
-                        <p class="text-gray-600 mb-4">This exam will start on:</p>
-                        <p class="text-xl font-bold text-blue-600 mb-6">${startDate.toLocaleString()}</p>
-                        <button onclick="location.reload()" class="bg-blue-500 text-white px-6 py-2 rounded-lg">🔄 Refresh</button>
-                    </div>
-                `);
-                return;
-            }
-            
-            // ✅ END TIME CHECK
-            if(data.end_time && new Date(data.end_time) < new Date()) {
-                showMessage(`
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">⏰</div>
-                        <h2 class="text-2xl font-bold text-red-600 mb-2">Exam Expired</h2>
-                        <p class="text-gray-600">This exam is no longer available.</p>
-                    </div>
-                `);
-                return;
-            }
-            
-            examData = data;
-            userAnswers = new Array(examData.questions.length).fill(null);
-            lockedAnswers = new Array(examData.questions.length).fill(false);
-            
-            // Check saved answers from session
-            const savedAnswers = sessionStorage.getItem(`exam_${examId}_answers`);
-            const savedLocked = sessionStorage.getItem(`exam_${examId}_locked`);
-            if(savedAnswers) userAnswers = JSON.parse(savedAnswers);
-            if(savedLocked) lockedAnswers = JSON.parse(savedLocked);
-            
-            showPreExamInfo();
+        <button onclick="submitExam()" 
+                class="px-8 py-3 bg-red-600 text-white hover:bg-red-700 rounded-lg font-semibold">
+          পরীক্ষা জমা দিন
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Sidebar -->
+    <div class="w-72 bg-white border-l p-4 overflow-auto">
+      <h3 class="font-bold mb-4">প্রশ্ন নেভিগেশন</h3>
+      <div class="grid grid-cols-5 gap-2" id="navBox"></div>
+      
+      <div class="mt-8 text-sm">
+        <div class="flex items-center gap-2 mb-2">
+          <div class="w-5 h-5 bg-green-500 rounded"></div>
+          <span>উত্তর দেওয়া হয়েছে</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-5 h-5 border-2 border-gray-400 rounded"></div>
+          <span>এখনো বাকি</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentExam = null;
+    let currentQuestionIndex = 0;
+    let answers = {};           // {questionId: selectedOption}
+    let locked = {};            // লক করা অপশন
+    let timeLeft = 3600;        // ডিফল্ট ৬০ মিনিট (সেকেন্ডে)
+    let timerInterval;
+
+    // URL থেকে Exam ID নেওয়া
+    const params = new URLSearchParams(window.location.search);
+    const examId = params.get('examId');
+
+    // ==================== লোড এক্সাম ====================
+    function loadExam() {
+      const allExams = JSON.parse(localStorage.getItem('atlas_exams') || '[]');
+      currentExam = allExams.find(ex => ex.examId === examId) || allExams[0];
+
+      if (!currentExam) {
+        alert("পরীক্ষা পাওয়া যায়নি!");
+        return;
+      }
+
+      document.getElementById('examTitle').textContent = currentExam.title || "ATLAS Exam";
+      document.getElementById('totalQ').textContent = currentExam.questions.length;
+
+      // টাইমার সেট (পরে অ্যাডমিন থেকে আনতে পারবে)
+      timeLeft = 3600;
+      startTimer();
+
+      loadQuestion(0);
+      renderNavigation();
+    }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        const min = Math.floor(timeLeft / 60);
+        const sec = timeLeft % 60;
+        document.getElementById('timer').textContent = 
+          `\( {min}: \){sec < 10 ? '0' : ''}${sec}`;
+
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          submitExam(true);
         }
+      }, 1000);
+    }
+
+    // ==================== প্রশ্ন লোড ====================
+    function loadQuestion(index) {
+      currentQuestionIndex = index;
+      const q = currentExam.questions[index];
+      
+      document.getElementById('currentQ').textContent = index + 1;
+      document.getElementById('questionText').textContent = q.question;
+
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = '';
+
+      q.options.forEach((opt, i) => {
+        const optNum = i + 1;
+        const isSelected = answers[q.id] === optNum;
+        const isLocked = locked[q.id];
+
+        const btn = document.createElement('button');
+        btn.className = `option w-full text-left p-4 border rounded-xl text-lg ${isSelected ? 'selected' : 'hover:bg-gray-50'}`;
+        btn.textContent = `${optNum}. ${opt}`;
+        btn.disabled = isLocked;
         
-        function showError(msg) {
-            document.getElementById('examContainer').innerHTML = `<div class="text-center text-red-500 text-2xl mt-20">${msg}</div>`;
-        }
-        
-        function showMessage(html) {
-            document.getElementById('examContainer').innerHTML = `<div class="min-h-screen flex items-center justify-center p-4"><div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">${html}</div></div>`;
-        }
-        
-        function showPreExamInfo() {
-            const container = document.getElementById('examContainer');
-            container.innerHTML = `
-                <div class="min-h-screen flex items-center justify-center p-4">
-                    <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full">
-                        <h1 class="text-3xl font-bold mb-4 text-center">${examData.title || examData.subject + ' Exam'}</h1>
-                        <div class="space-y-3 mb-6">
-                            <p><strong>📚 Subject:</strong> ${examData.subject}</p>
-                            <p><strong>📖 Paper:</strong> ${examData.paper}</p>
-                            <p><strong>📑 Chapter:</strong> ${examData.chapter}</p>
-                            <p><strong>❓ Total Questions:</strong> ${examData.questions.length}</p>
-                            <p><strong>⏱️ Time Limit:</strong> ${examData.duration || 60} minutes</p>
-                            ${examData.end_time ? `<p><strong>📅 Valid Until:</strong> ${new Date(examData.end_time).toLocaleString()}</p>` : ''}
-                            ${examData.negative_marking ? `<p class="text-red-600"><strong>⚠️ Negative Marking:</strong> ${examData.negative_value} marks per wrong answer</p>` : '<p class="text-green-600">✅ No negative marking</p>'}
-                        </div>
-                        <div class="mb-6">
-                            <label class="block font-semibold mb-2">Enter Your Name:</label>
-                            <input type="text" id="studentName" class="w-full border p-3 rounded-lg" placeholder="Your full name" value="${sessionStorage.getItem(`exam_${examId}_name`) || ''}">
-                        </div>
-                        <button onclick="startExam()" class="bg-green-600 text-white px-6 py-3 rounded-lg w-full font-bold hover:bg-green-700 transition">🚀 Start Exam</button>
-                    </div>
-                </div>
-            `;
-        }
-        
-        function startExam() {
-            const studentName = document.getElementById('studentName').value;
-            if(!studentName) return alert('Please enter your name');
-            
-            sessionStorage.setItem(`exam_${examId}_answers`, JSON.stringify(userAnswers));
-            sessionStorage.setItem(`exam_${examId}_locked`, JSON.stringify(lockedAnswers));
-            sessionStorage.setItem(`exam_${examId}_name`, studentName);
-            
-            renderFullExam();
-            startTimer();
-        }
-        
-        function renderFullExam() {
-            const container = document.getElementById('examContainer');
-            const questions = examData.questions;
-            
-            // Navigation Box
-            let navHtml = `<div class="nav-box"><h3 class="font-bold mb-3 text-lg">📌 Question Navigator</h3><div class="grid grid-cols-5 gap-2" id="navButtons">`;
-            for(let i=0; i<questions.length; i++) {
-                const status = userAnswers[i] !== null ? 'answered' : 'unanswered';
-                navHtml += `<button onclick="scrollToQuestion(${i})" id="navBtn${i}" class="nav-btn-${status} w-10 h-10 rounded-full font-bold transition-all hover:scale-110">${i+1}</button>`;
-            }
-            navHtml += `</div></div>`;
-            
-            // Questions
-            let questionsHtml = `<div class="question-container p-6">`;
-            questions.forEach((q, idx) => {
-                const options = [q.option1, q.option2, q.option3, q.option4, q.option5].filter(opt => opt && opt.trim());
-                questionsHtml += `
-                    <div id="q-${idx}" class="bg-white rounded-lg shadow-md p-6 mb-4" data-qid="${idx}">
-                        <div class="font-bold text-lg mb-3">${idx+1}. ${q.questions}</div>
-                        <div class="space-y-3 ml-4">
-                            ${options.map((opt, optIdx) => `
-                                <label class="flex items-center gap-3 p-2 rounded hover:bg-gray-50 cursor-pointer ${lockedAnswers[idx] ? 'opacity-60' : ''}">
-                                    <input type="radio" name="q${idx}" value="${optIdx+1}" ${userAnswers[idx] === (optIdx+1) ? 'checked' : ''} ${lockedAnswers[idx] ? 'disabled' : ''} onchange="selectAnswer(${idx}, ${optIdx+1})">
-                                    <span class="font-medium">${String.fromCharCode(65+optIdx)}.</span>
-                                    <span>${opt}</span>
-                                </label>
-                            `).join('')}
-                        </div>
-                        ${lockedAnswers[idx] ? '<div class="text-orange-500 text-sm mt-3 ml-4">🔒 Locked (Answer cannot be changed)</div>' : ''}
-                    </div>
-                `;
-            });
-            questionsHtml += `</div>`;
-            
-            const submitBtn = `<button onclick="confirmSubmit()" class="submit-btn-fixed">📝 Submit Exam</button>`;
-            const timerDisplay = `<div class="timer-display" id="timerDisplay">⏱️ Loading...</div>`;
-            
-            container.innerHTML = navHtml + questionsHtml + submitBtn + timerDisplay;
-            
-            // Scroll observer
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if(entry.isIntersecting) {
-                        const qid = parseInt(entry.target.getAttribute('data-qid'));
-                        updateNavHighlight(qid);
-                    }
-                });
-            }, { threshold: 0.5 });
-            
-            document.querySelectorAll('[data-qid]').forEach(el => observer.observe(el));
-        }
-        
-        function updateNavHighlight(currentIndex) {
-            for(let i=0; i<examData.questions.length; i++) {
-                const btn = document.getElementById(`navBtn${i}`);
-                if(btn) {
-                    btn.classList.remove('nav-btn-current');
-                    if(i === currentIndex) btn.classList.add('nav-btn-current');
-                }
-            }
-        }
-        
-        function updateNavButtonStyle(qIndex) {
-            const btn = document.getElementById(`navBtn${qIndex}`);
-            if(btn) {
-                btn.classList.remove('nav-btn-answered', 'nav-btn-unanswered');
-                btn.classList.add(userAnswers[qIndex] !== null ? 'nav-btn-answered' : 'nav-btn-unanswered');
-            }
-        }
-        
-        window.selectAnswer = (qIndex, answer) => {
-            if(lockedAnswers[qIndex]) {
-                alert('⚠️ This answer is locked! You cannot change it.');
-                return;
-            }
-            
-            userAnswers[qIndex] = answer;
-            lockedAnswers[qIndex] = true;
-            
-            sessionStorage.setItem(`exam_${examId}_answers`, JSON.stringify(userAnswers));
-            sessionStorage.setItem(`exam_${examId}_locked`, JSON.stringify(lockedAnswers));
-            updateNavButtonStyle(qIndex);
-            
-            // Update UI
-            const qDiv = document.getElementById(`q-${qIndex}`);
-            if(qDiv) {
-                const options = [examData.questions[qIndex].option1, examData.questions[qIndex].option2, 
-                               examData.questions[qIndex].option3, examData.questions[qIndex].option4, 
-                               examData.questions[qIndex].option5].filter(opt => opt && opt.trim());
-                qDiv.innerHTML = `
-                    <div class="font-bold text-lg mb-3">${qIndex+1}. ${examData.questions[qIndex].questions}</div>
-                    <div class="space-y-3 ml-4">
-                        ${options.map((opt, optIdx) => `
-                            <label class="flex items-center gap-3 p-2 rounded opacity-60 bg-gray-100">
-                                <input type="radio" name="q${qIndex}" value="${optIdx+1}" ${userAnswers[qIndex] === (optIdx+1) ? 'checked' : ''} disabled>
-                                <span class="font-medium">${String.fromCharCode(65+optIdx)}.</span>
-                                <span>${opt}</span>
-                            </label>
-                        `).join('')}
-                    </div>
-                    <div class="text-orange-500 text-sm mt-3 ml-4">🔒 Locked (Answer cannot be changed)</div>
-                `;
-            }
+        btn.onclick = () => selectOption(q.id, optNum, btn);
+        optionsDiv.appendChild(btn);
+      });
+    }
+
+    function selectOption(qId, optionNum, btn) {
+      if (locked[qId]) return;   // লক হয়ে গেলে আর পরিবর্তন হবে না
+
+      answers[qId] = optionNum;
+      locked[qId] = true;        // লক করে দিলাম (নতুন ফিচার)
+      
+      renderNavigation();
+      loadQuestion(currentQuestionIndex); // রিফ্রেশ
+    }
+
+    // ==================== নেভিগেশন ====================
+    function renderNavigation() {
+      const navBox = document.getElementById('navBox');
+      navBox.innerHTML = '';
+
+      currentExam.questions.forEach((q, i) => {
+        const btn = document.createElement('button');
+        btn.className = `nav-btn w-10 h-10 rounded-lg border flex items-center justify-center text-sm font-medium
+                         ${answers[q.id] ? 'answered' : 'border-gray-300 hover:border-blue-500'}`;
+        btn.textContent = i + 1;
+        btn.onclick = () => {
+          loadQuestion(i);
         };
-        
-        window.scrollToQuestion = (index) => {
-            const element = document.getElementById(`q-${index}`);
-            if(element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        };
-        
-        function startTimer() {
-            timeLeft = (examData.duration || 60) * 60;
-            const timerDisplay = document.getElementById('timerDisplay');
-            
-            timer = setInterval(() => {
-                if(timeLeft <= 0) {
-                    clearInterval(timer);
-                    confirmSubmit();
-                }
-                const minutes = Math.floor(timeLeft / 60);
-                const seconds = timeLeft % 60;
-                if(timerDisplay) {
-                    timerDisplay.innerHTML = `⏱️ ${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
-                    if(timeLeft <= 60) timerDisplay.classList.add('timer-warning');
-                }
-                timeLeft--;
-            }, 1000);
-        }
-        
-        window.confirmSubmit = () => {
-            const unanswered = userAnswers.filter(a => a === null).length;
-            if(unanswered > 0 && !confirm(`⚠️ You have ${unanswered} unanswered questions.\n\nDo you still want to submit?`)) {
-                return;
-            }
-            submitExam();
-        };
-        
-        async function submitExam() {
-            if(timer) clearInterval(timer);
-            
-            const studentName = sessionStorage.getItem(`exam_${examId}_name`);
-            const questions = examData.questions;
-            let correct = 0, wrong = 0, skipped = 0;
-            const detailedResults = [];
-            
-            for(let i=0; i<questions.length; i++) {
-                const userAns = userAnswers[i];
-                const correctAns = parseInt(questions[i].answer);
-                const isCorrect = (userAns === correctAns);
-                
-                if(userAns === null) {
-                    skipped++;
-                    detailedResults.push({ correct: false, skipped: true, userAnswer: null, correctAnswer: correctAns, explanation: questions[i].explanation });
-                } else if(isCorrect) {
-                    correct++;
-                    detailedResults.push({ correct: true, skipped: false, userAnswer: userAns, correctAnswer: correctAns, explanation: questions[i].explanation });
-                } else {
-                    wrong++;
-                    detailedResults.push({ correct: false, skipped: false, userAnswer: userAns, correctAnswer: correctAns, explanation: questions[i].explanation });
-                }
-            }
-            
-            let totalMarks = correct;
-            let negativeMarksApplied = 0;
-            if(examData.negative_marking) {
-                negativeMarksApplied = wrong * examData.negative_value;
-                totalMarks = Math.max(0, correct - negativeMarksApplied);
-            }
-            
-            const result = {
-                student_name: studentName,
-                exam_id: examData.exam_id,
-                exam_title: examData.title || examData.subject,
-                total: questions.length,
-                correct, wrong, skipped,
-                total_marks: totalMarks.toFixed(2),
-                negative_applied: examData.negative_marking,
-                negative_value: examData.negative_value,
-                negative_marks_deducted: negativeMarksApplied.toFixed(2),
-                detailed_results: detailedResults,
-                questions: examData.questions,
-                user_answers: userAnswers,
-                timestamp: new Date()
-            };
-            
-            await supabase.from('results').insert([result]);
-            showResultWithSolveSheet(result);
-        }
-        
-        function showResultWithSolveSheet(result) {
-            const container = document.getElementById('examContainer');
-            const percentage = ((result.correct - (result.negative_applied ? result.wrong * result.negative_value : 0)) / result.total * 100).toFixed(1);
-            
-            let negativeInfo = '';
-            if(result.negative_applied) {
-                negativeInfo = `<div class="bg-yellow-100 p-3 rounded-lg text-center"><div class="text-sm text-gray-600">Negative Marks Deducted</div><div class="text-xl font-bold text-red-600">-${result.negative_marks_deducted}</div><div class="text-xs text-gray-500">${result.wrong} wrong × ${result.negative_value} marks</div></div>`;
-            }
-            
-            container.innerHTML = `
-                <div class="bg-white min-h-screen p-6">
-                    <div class="max-w-6xl mx-auto">
-                        <h1 class="text-3xl font-bold mb-4 text-center">📊 Exam Result Analysis</h1>
-                        <div class="text-center mb-6">
-                            <p class="text-xl"><strong>${result.student_name}</strong> - ${result.exam_title}</p>
-                            <p class="text-gray-600">${new Date().toLocaleString()}</p>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 md:grid-cols-6 gap-3 mb-8">
-                            <div class="bg-blue-100 p-3 rounded-lg text-center"><div class="text-2xl font-bold">${result.total}</div><div class="text-xs">Total</div></div>
-                            <div class="bg-green-100 p-3 rounded-lg text-center"><div class="text-2xl font-bold text-green-600">${result.correct}</div><div class="text-xs">Correct</div></div>
-                            <div class="bg-red-100 p-3 rounded-lg text-center"><div class="text-2xl font-bold text-red-600">${result.wrong}</div><div class="text-xs">Wrong</div></div>
-                            <div class="bg-gray-100 p-3 rounded-lg text-center"><div class="text-2xl font-bold">${result.skipped}</div><div class="text-xs">Skipped</div></div>
-                            ${negativeInfo}
-                            <div class="bg-purple-100 p-3 rounded-lg text-center"><div class="text-2xl font-bold text-purple-600">${result.total_marks}</div><div class="text-xs">Final Score</div></div>
-                        </div>
-                        
-                        <div class="mb-8">
-                            <canvas id="performanceChart" width="400" height="400" style="max-width: 400px; margin: 0 auto;"></canvas>
-                            <div class="text-center mt-4"><p class="text-lg font-bold">Performance: ${percentage}%</p></div>
-                        </div>
-                        
-                        <div class="mb-4 flex gap-2 flex-wrap sticky top-0 bg-white py-2 z-10">
-                            <button onclick="filterQuestions('all')" class="bg-gray-600 text-white px-4 py-2 rounded-lg">📋 All (${result.total})</button>
-                            <button onclick="filterQuestions('correct')" class="bg-green-600 text-white px-4 py-2 rounded-lg">✅ Correct (${result.correct})</button>
-                            <button onclick="filterQuestions('incorrect')" class="bg-red-600 text-white px-4 py-2 rounded-lg">❌ Incorrect (${result.wrong})</button>
-                            <button onclick="filterQuestions('skipped')" class="bg-yellow-600 text-white px-4 py-2 rounded-lg">⏭️ Skipped (${result.skipped})</button>
-                            <button onclick="downloadFullPDF()" class="bg-purple-600 text-white px-4 py-2 rounded-lg ml-auto">📄 Download PDF</button>
-                        </div>
-                        
-                        <div id="solveSheet" class="space-y-4 max-h-[600px] overflow-y-auto border rounded-lg p-4 bg-gray-50"></div>
-                        
-                        <div class="mt-6 text-center">
-                            <button onclick="location.reload()" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold">🔄 Take Another Exam</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            const ctx = document.getElementById('performanceChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: { labels: ['Correct', 'Wrong', 'Skipped'], datasets: [{ data: [result.correct, result.wrong, result.skipped], backgroundColor: ['#22c55e', '#ef4444', '#6b7280'], borderWidth: 0 }] },
-                options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
-            });
-            
-            window.currentResult = result;
-            renderSolveSheet('all');
-        }
-        
-        window.filterQuestions = (filter) => renderSolveSheet(filter);
-        
-        function renderSolveSheet(filter) {
-            const result = window.currentResult;
-            const sheetDiv = document.getElementById('solveSheet');
-            if(!sheetDiv) return;
-            
-            let filtered = result.detailed_results.map((r, i) => ({...r, index: i, question: result.questions[i]}));
-            if(filter === 'correct') filtered = filtered.filter(r => r.correct === true);
-            else if(filter === 'incorrect') filtered = filtered.filter(r => r.correct === false && !r.skipped);
-            else if(filter === 'skipped') filtered = filtered.filter(r => r.skipped);
-            
-            if(filtered.length === 0) {
-                sheetDiv.innerHTML = '<div class="text-center text-gray-500 py-8">No questions to display</div>';
-                return;
-            }
-            
-            sheetDiv.innerHTML = filtered.map(r => {
-                const options = [r.question.option1, r.question.option2, r.question.option3, r.question.option4, r.question.option5].filter(opt => opt && opt.trim());
-                const statusIcon = r.correct ? '✅' : (r.skipped ? '⏭️' : '❌');
-                const statusText = r.correct ? 'Correct' : (r.skipped ? 'Skipped' : 'Wrong');
-                
-                return `<div class="border rounded-lg p-5 ${r.correct ? 'border-green-300 bg-green-50' : r.skipped ? 'border-gray-300 bg-gray-50' : 'border-red-300 bg-red-50'}">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="font-bold text-lg">Q${r.index+1}. ${r.question.questions}</div>
-                        <div class="px-3 py-1 rounded-full text-sm font-bold ${r.correct ? 'bg-green-200 text-green-800' : r.skipped ? 'bg-gray-200 text-gray-800' : 'bg-red-200 text-red-800'}">${statusIcon} ${statusText}</div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                        <div class="p-2 rounded ${r.userAnswer && !r.skipped ? (r.correct ? 'bg-green-100' : 'bg-red-100') : 'bg-gray-100'}">
-                            <div class="text-xs text-gray-600">Your Answer</div>
-                            <div class="font-semibold">${r.userAnswer ? String.fromCharCode(64+r.userAnswer) + '. ' + (options[r.userAnswer-1] || 'N/A') : 'Not answered'}</div>
-                        </div>
-                        <div class="p-2 rounded bg-green-100">
-                            <div class="text-xs text-gray-600">Correct Answer</div>
-                            <div class="font-semibold text-green-800">${String.fromCharCode(64+r.correctAnswer)}. ${options[r.correctAnswer-1] || 'N/A'}</div>
-                        </div>
-                    </div>
-                    ${r.explanation ? `<div class="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200"><div class="text-xs text-blue-600 font-bold">📖 Explanation</div><div class="text-sm">${r.explanation}</div></div>` : ''}
-                </div>`;
-            }).join('');
-        }
-        
-        window.downloadFullPDF = () => {
-            const element = document.getElementById('solveSheet');
-            const result = window.currentResult;
-            
-            const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename: `Exam_Result_${result.student_name}_${result.exam_title}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, backgroundColor: '#ffffff' }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
-            
-            const titleElement = document.createElement('div');
-            titleElement.innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><h1 style="font-size: 24px; font-weight: bold;">${result.exam_title} - Result Analysis</h1><p><strong>Student:</strong> ${result.student_name}</p><p><strong>Date:</strong> ${new Date().toLocaleString()}</p><p><strong>Score:</strong> ${result.total_marks} / ${result.total} (${((result.correct - (result.negative_applied ? result.wrong * result.negative_value : 0)) / result.total * 100).toFixed(1)}%)</p><hr style="margin: 10px 0;"></div>`;
-            
-            element.insertBefore(titleElement, element.firstChild);
-            html2pdf().set(opt).from(element).save().then(() => element.removeChild(titleElement));
-        };
-        
-        loadExam();
-    </script>
+        navBox.appendChild(btn);
+      });
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < currentExam.questions.length - 1) {
+        loadQuestion(currentQuestionIndex + 1);
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQuestionIndex > 0) {
+        loadQuestion(currentQuestionIndex - 1);
+      }
+    }
+
+    // ==================== সাবমিট ====================
+    function submitExam(auto = false) {
+      if (!auto && !confirm("আপনি কি পরীক্ষা জমা দিতে চান?")) return;
+
+      clearInterval(timerInterval);
+
+      // Result এর জন্য ডাটা সেভ
+      const resultData = {
+        examId: currentExam.examId,
+        answers: answers,
+        timeTaken: 3600 - timeLeft,
+        submittedAt: new Date().toISOString()
+      };
+
+      localStorage.setItem(`result_${currentExam.examId}`, JSON.stringify(resultData));
+      
+      window.location.href = `../result/result.html?examId=${currentExam.examId}`;
+    }
+
+    // লোড হওয়ার সাথে সাথে শুরু
+    window.onload = loadExam;
+  </script>
 </body>
 </html>
