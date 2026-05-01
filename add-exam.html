@@ -3,104 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS | Admin Exam Creator</title>
+    <title>ATLAS | Advanced Exam Creator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
         body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
-        .input-box { width: 100%; padding: 16px; background: #f8fafc; border-radius: 20px; border: 2px solid transparent; margin-bottom: 12px; font-weight: bold; font-size: 14px; outline: none; transition: 0.3s; }
-        .input-box:focus { border-color: #1e40af; background: #fff; }
-        .btn-active { background-color: #1e40af !important; color: white !important; border-color: #1e40af !important; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .input-box { width: 100%; padding: 14px; background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; font-weight: bold; font-size: 13px; outline: none; transition: 0.3s; }
+        .input-box:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,0.1); }
+        .btn-active { background-color: #1e40af !important; color: white !important; }
+        .toggle-checkbox:checked { right: 0; border-color: #22c55e; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #22c55e; }
     </style>
 </head>
 <body class="pb-20">
 
     <nav class="bg-white p-5 shadow-sm flex items-center space-x-3 sticky top-0 z-50">
-        <button onclick="window.location.href='admin.html'" class="bg-gray-100 px-4 py-2 rounded-xl text-blue-800 font-bold hover:bg-gray-200 transition">❮</button>
-        <span class="font-black text-blue-900 uppercase italic tracking-tighter text-lg">Exam Creator</span>
+        <button onclick="window.location.href='admin.html'" class="bg-gray-100 px-4 py-2 rounded-xl text-blue-800 font-bold">❮</button>
+        <span class="font-black text-blue-900 uppercase italic text-lg">Smart Exam Creator</span>
     </nav>
 
     <div class="p-4 md:p-6 max-w-2xl mx-auto">
-        <div class="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl border border-gray-100">
-            <h2 class="text-2xl font-black text-blue-900 mb-6 flex items-center uppercase italic">
-                <span class="mr-2 text-3xl">📝</span> New Exam Setup
-            </h2>
+        <div class="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-xl border border-gray-100">
+            <h2 class="text-xl font-black text-blue-900 mb-6 uppercase italic flex items-center">⚙️ Exam Settings</h2>
 
-            <div class="space-y-2">
-                <input type="text" id="exSubject" placeholder="Subject (যেমন: Chemistry)" class="input-box">
+            <div class="space-y-3 mb-5">
+                <input list="subList" id="exSubject" placeholder="Subject (যেমন: Biology)" class="input-box">
+                <datalist id="subList"></datalist>
+
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="exPaper" placeholder="Paper (e.g. 1st Paper)" class="input-box">
-                    <input type="text" id="exChapter" placeholder="Chapter (e.g. গুণগত রসায়ন)" class="input-box">
+                    <input list="papList" id="exPaper" placeholder="Paper (e.g. 1st Paper)" class="input-box">
+                    <datalist id="papList"></datalist>
+                    <input list="chapList" id="exChapter" placeholder="Chapter (যেমন: কোষ ও এর গঠন)" class="input-box">
+                    <datalist id="chapList"></datalist>
                 </div>
-                <textarea id="exDesc" placeholder="Exam Instructions / Description (e.g. প্রতি ভুল উত্তরের জন্য ০.২৫ কাটা যাবে)" class="input-box h-24 resize-none"></textarea>
+                <textarea id="exDesc" placeholder="Exam Description & Instructions..." class="input-box h-20 resize-none"></textarea>
             </div>
 
-            <div class="grid grid-cols-2 gap-4 my-4">
-                <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100">
-                    <label class="text-[10px] font-black text-blue-800 uppercase ml-2 tracking-widest">Start Date & Time</label>
-                    <input type="datetime-local" id="exTime" class="w-full bg-transparent border-none outline-none font-bold text-sm mt-1 text-gray-700">
-                </div>
-                <div class="bg-blue-50 p-3 rounded-2xl border border-blue-100">
-                    <label class="text-[10px] font-black text-blue-800 uppercase ml-2 tracking-widest">Duration (Min)</label>
-                    <input type="number" id="exDuration" placeholder="e.g. 25" class="w-full bg-transparent border-none outline-none font-bold text-sm mt-1 text-gray-700">
-                </div>
-            </div>
-
-            <div class="flex space-x-3 mb-6 bg-gray-50 p-2 rounded-3xl">
-                <button onclick="switchMode('csv', this)" class="mode-btn btn-active flex-1 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-wider text-gray-500 transition">CSV Upload</button>
-                <button onclick="switchMode('link', this)" class="mode-btn flex-1 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-wider text-gray-500 transition">External Link</button>
-            </div>
-
-            <div id="csvArea" class="animate-fade-in">
-                <div class="border-2 border-dashed border-blue-200 p-8 rounded-3xl text-center bg-blue-50/50 hover:bg-blue-50 transition cursor-pointer relative">
-                    <input type="file" id="csvFile" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                    <div class="text-4xl mb-2">📁</div>
-                    <p id="fileName" class="text-sm font-black text-blue-900">Tap to upload CSV file</p>
-                    <p class="text-[9px] text-gray-500 mt-3 font-bold uppercase tracking-[0.1em] leading-relaxed">
-                        Format: questions, option(1-4), option5, answer, explanation, type, section<br>
-                        <span class="text-red-500">Note: Use Unicode only (H₂SO₄, x²). Do not use LaTeX.</span>
-                    </p>
+            <div class="bg-blue-50 p-4 rounded-[1.5rem] border border-blue-100 mb-5">
+                <label class="text-[10px] font-black text-blue-800 uppercase tracking-widest block mb-2 text-center">Exam Timeline</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="datetime-local" id="exStart" class="input-box text-xs">
+                    <input type="datetime-local" id="exEnd" class="input-box text-xs">
                 </div>
             </div>
 
-            <div id="linkArea" class="hidden animate-fade-in">
-                <input type="url" id="exLink" placeholder="Paste External Form/Exam Link Here" class="input-box mt-2">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="border p-3 rounded-[1.5rem] flex flex-col justify-center bg-gray-50">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black text-red-600 uppercase">Neg Mark</span>
+                        <input type="checkbox" id="negToggle" onchange="toggleNeg()" class="w-5 h-5 cursor-pointer">
+                    </div>
+                    <input type="number" id="negVal" value="0.25" step="0.01" class="w-full mt-2 border-b text-center font-bold text-red-600 hidden outline-none bg-transparent">
+                </div>
+                <input type="number" id="exDur" placeholder="Duration (Min)" class="input-box text-center text-lg">
             </div>
 
-            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-5 rounded-[2rem] font-black text-lg uppercase tracking-widest shadow-xl shadow-blue-900/20 mt-8 transition-all active:scale-95">
-                Publish Exam
-            </button>
+            <div class="flex space-x-2 mb-5">
+                <button onclick="setMode('csv', this)" class="mode-btn btn-active flex-1 py-3 rounded-2xl font-black text-xs border">CSV Upload</button>
+                <button onclick="setMode('link', this)" class="mode-btn flex-1 py-3 rounded-2xl font-black text-xs border bg-white text-gray-400">Ext Link</button>
+            </div>
+
+            <div id="csvArea" class="border-2 border-dashed border-blue-200 p-8 rounded-[2rem] text-center bg-blue-50/50 relative">
+                <input type="file" id="csvFile" accept=".csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <p id="fileName" class="text-xs font-black text-blue-900">Upload CSV (question, opt1-4, opt5, ans, exp, type, sec)</p>
+            </div>
+            <div id="linkArea" class="hidden"><input type="url" id="exLink" placeholder="Paste Direct Link" class="input-box"></div>
+
+            <button onclick="publishExam()" id="pubBtn" class="w-full bg-blue-900 text-white py-5 rounded-[2rem] font-black uppercase shadow-xl mt-6">Publish & Copy Link</button>
         </div>
 
-        <div class="mt-12">
-            <h3 class="font-black text-gray-400 text-[11px] uppercase tracking-[0.2em] mb-4 ml-4 flex items-center">
-                <span class="w-2 h-2 rounded-full bg-green-500 mr-2"></span> Active Saved Exams
-            </h3>
-            <div id="examList" class="space-y-4">
-                <p class="text-center text-gray-400 font-bold py-5 text-sm italic">লোড হচ্ছে...</p>
-            </div>
+        <div class="mt-10" id="savedExamsArea">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-4 mb-4">Manage Exams</h3>
+            <div id="examList" class="space-y-3"></div>
         </div>
     </div>
 
     <script>
-        // Supabase Configuration
         const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let mode = 'csv';
 
-        // Update File Name Display
-        document.getElementById('csvFile').addEventListener('change', function(e) {
-            if(e.target.files[0]) {
-                document.getElementById('fileName').innerText = "Selected: " + e.target.files[0].name;
-                document.getElementById('fileName').classList.add('text-green-600');
-            }
-        });
+        window.onload = loadData;
 
-        function switchMode(m, btn) {
+        function toggleNeg() { document.getElementById('negVal').classList.toggle('hidden', !document.getElementById('negToggle').checked); }
+
+        document.getElementById('csvFile').addEventListener('change', e => { if(e.target.files[0]) document.getElementById('fileName').innerText = e.target.files[0].name; });
+
+        function setMode(m, btn) {
             mode = m;
             document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('btn-active'));
             btn.classList.add('btn-active');
@@ -110,116 +102,75 @@
 
         async function publishExam() {
             const btn = document.getElementById('pubBtn');
-            btn.innerText = "UPLOADING...";
-            btn.disabled = true;
-
+            btn.innerText = "UPLOADING..."; btn.disabled = true;
             let questions = [];
-            
-            // CSV Validation & Parsing
+
             if(mode === 'csv') {
                 const file = document.getElementById('csvFile').files[0];
-                if(!file) { 
-                    alert("Please select a CSV file first!"); 
-                    btn.innerText = "Publish Exam"; btn.disabled = false; return; 
-                }
-                try {
-                    questions = await processCSV(file);
-                    alert("Upload Successfully!");
-                } catch(err) {
-                    alert("Error reading CSV!");
-                    btn.innerText = "Publish Exam"; btn.disabled = false; return;
-                }
+                if(!file) { alert("CSV সিলেক্ট করো!"); btn.innerText = "Publish"; btn.disabled = false; return; }
+                questions = await processCSV(file);
+                alert("Upload Successfully!");
             }
 
             const examData = {
-                subject: document.getElementById('exSubject').value,
-                paper: document.getElementById('exPaper').value,
-                chapter: document.getElementById('exChapter').value,
-                description: document.getElementById('exDesc').value,
-                start_time: document.getElementById('exTime').value,
-                duration: document.getElementById('exDuration').value,
-                type: mode,
-                external_link: document.getElementById('exLink').value,
+                subject: exSubject.value, paper: exPaper.value, chapter: exChapter.value,
+                description: exDesc.value, start_time: exStart.value, end_time: exEnd.value,
+                duration: exDur.value, type: mode, external_link: exLink.value,
+                neg_mark: negToggle.checked ? parseFloat(negVal.value) : 0,
                 questions: questions
             };
 
             const { data, error } = await atlas.from('exams').insert([examData]).select();
-            
-            if(!error && data) {
-                const examId = data[0].id;
-                // Generate Dynamic Domain Link
-                const generatedLink = window.location.origin + "/exam-hall.html?id=" + examId;
-                
-                alert("Exam Created Successfully!");
-                copyToClipboard(generatedLink);
+            if(!error) {
+                const link = `${window.location.origin}/exam-hall.html?id=${data[0].id}`;
+                navigator.clipboard.writeText(link);
+                alert("Exam Published! Link Copied:\n" + link);
                 location.reload();
-            } else {
-                alert("Error saving exam: " + error.message);
-                btn.innerText = "Publish Exam"; btn.disabled = false;
-            }
+            } else { alert(error.message); btn.innerText = "Publish"; btn.disabled = false; }
         }
 
-        // CSV Parser Logic (Maps to your 10 columns)
         function processCSV(file) {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    // Regular expression to handle commas inside quotes
-                    const rows = e.target.result.split('\n').slice(1);
-                    const list = rows.filter(r => r.trim()).map(r => {
-                        const c = r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
+                    const rows = e.target.result.split('\n').slice(1).filter(r => r.trim());
+                    resolve(rows.map(line => {
+                        const c = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(col => col.replace(/^"|"$/g, '').trim());
                         return { 
-                            question: c[0] || "", 
-                            opt1: c[1] || "", opt2: c[2] || "", opt3: c[3] || "", opt4: c[4] || "", opt5: c[5] || "", 
-                            answer: c[6] || "", 
-                            explanation: c[7] || "", 
-                            type: c[8] || "", 
-                            section: c[9] || "" 
+                            question: c[0], option1: c[1], option2: c[2], option3: c[3], option4: c[4], 
+                            option5: c[5], answer: c[6], explanation: c[7], type: "1", section: "1" 
                         };
-                    });
-                    resolve(list);
+                    }));
                 };
-                reader.onerror = () => reject();
                 reader.readAsText(file);
             });
         }
 
-        async function loadExams() {
-            const { data } = await atlas.from('exams').select('id, subject, chapter, type, created_at').order('created_at', {ascending: false});
-            const listContainer = document.getElementById('examList');
-            
-            if(data && data.length > 0) {
-                listContainer.innerHTML = data.map(ex => `
-                    <div class="bg-white p-5 rounded-[2rem] shadow-sm flex justify-between items-center border border-gray-100 hover:border-blue-200 transition">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-lg">📝</div>
-                            <div>
-                                <p class="font-black text-gray-900 text-sm leading-tight">${ex.subject || 'No Subject'}</p>
-                                <p class="text-[10px] text-gray-400 font-bold mt-1">${ex.chapter || 'No Chapter'}</p>
-                            </div>
+        async function loadData() {
+            const { data } = await atlas.from('exams').select('*').order('created_at', {ascending: false});
+            if(data) {
+                // Fill Datalists
+                const subs = [...new Set(data.map(d => d.subject))];
+                document.getElementById('subList').innerHTML = subs.map(s => `<option value="${s}">`).join('');
+                
+                // Render List
+                document.getElementById('examList').innerHTML = data.map(ex => `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center">
+                        <div>
+                            <p class="font-black text-blue-900 text-sm">${ex.subject}: ${ex.chapter}</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase">${ex.type}</p>
                         </div>
-                        <div class="flex flex-col space-y-2">
-                            <span class="bg-gray-100 text-gray-500 px-3 py-1 rounded-full text-[8px] font-black uppercase text-center">${ex.type === 'csv' ? 'CSV DATA' : 'LINK'}</span>
-                            <button onclick="copyToClipboard('${window.location.origin}/exam-hall.html?id=${ex.id}')" class="bg-blue-800 text-white px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-wider hover:bg-blue-900 active:scale-95 transition">Copy Link</button>
-                        </div>
+                        <button onclick="copyL('${ex.id}')" class="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-[9px] font-black uppercase">Copy Link</button>
                     </div>
                 `).join('');
-            } else {
-                listContainer.innerHTML = '<p class="text-center text-gray-400 font-bold py-5 text-sm italic">No exams published yet.</p>';
             }
         }
 
-        function copyToClipboard(text) {
-            const el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            alert("Exam Link Copied to Clipboard!\n\n" + text);
+        function copyL(id) {
+            const link = `${window.location.origin}/exam-hall.html?id=${id}`;
+            navigator.clipboard.writeText(link);
+            alert("Copied!");
         }
-
-        window.onload = loadExams;
     </script>
 </body>
 </html>
