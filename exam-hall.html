@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | Exam Hall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Hind Siliguri', 'Sora', sans-serif; background: #f0f4f8; margin: 0; }
+
+        /* ===== PRE-EXAM SCREEN ===== */
+        #preExamScreen { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%); min-height: 100vh; }
+        .pre-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); border-radius: 2rem; padding: 2.5rem; max-width: 480px; width: 92%; margin: 0 auto; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .info-label { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { color: white; font-size: 14px; font-weight: 700; }
+        .start-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #16a34a, #15803d); border: none; border-radius: 16px; color: white; font-weight: 800; font-size: 16px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; font-family: 'Sora', sans-serif; }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(22,163,74,0.45); }
+
+        /* ===== REG SCREEN ===== */
+        #regScreen { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); min-height: 100vh; }
+        .reg-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem; padding: 2.5rem; max-width: 440px; width: 90%; margin: 0 auto; }
+        .reg-input { width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; color: white; font-weight: 600; font-size: 14px; outline: none; margin-bottom: 12px; transition: 0.3s; font-family: 'Hind Siliguri', sans-serif; }
+        .reg-input::placeholder { color: rgba(255,255,255,0.4); }
+        .reg-input:focus { border-color: #4ade80; background: rgba(255,255,255,0.12); }
+        .reg-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #16a34a, #15803d); border: none; border-radius: 14px; color: white; font-weight: 800; font-size: 15px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
+        .reg-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(22,163,74,0.4); }
+
+        /* ===== EXAM SCREEN ===== */
+        #examScreen { min-height: 100vh; }
+        .exam-header { background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 14px 18px; position: sticky; top: 0; z-index: 100; }
+        .timer-box { background: rgba(255,255,255,0.12); border-radius: 12px; padding: 8px 18px; font-size: 22px; font-weight: 900; color: white; font-family: 'Sora', monospace; letter-spacing: 2px; }
+        .timer-box.danger { background: rgba(239,68,68,0.35); color: #fca5a5; animation: pulse 0.8s infinite; }
+        .timer-box.warning { background: rgba(245,158,11,0.3); color: #fde68a; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.85;transform:scale(1.02)} }
+
+        /* Question cards - ALL shown at once (scroll style) */
+        .q-card { background: white; border-radius: 1.5rem; padding: 24px; margin: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); border-left: 5px solid #1e40af; transition: 0.2s; }
+        .q-number-badge { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; font-size: 11px; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
+
+        /* Options */
+        .option-btn { width: 100%; text-align: left; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; background: #f8fafc; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; margin-bottom: 8px; line-height: 1.6; display: flex; align-items: center; gap: 10px; }
+        .option-label { width: 28px; height: 28px; border-radius: 8px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; transition: 0.2s; }
+        .option-btn:not(.locked):hover { border-color: #1e40af; background: #eff6ff; transform: translateX(3px); }
+        .option-btn:not(.locked):hover .option-label { background: #1e40af; color: white; }
+        .option-btn.selected { border-color: #1e40af; background: linear-gradient(135deg, #dbeafe, #eff6ff); color: #1e40af; }
+        .option-btn.selected .option-label { background: #1e40af; color: white; }
+        .option-btn.locked { cursor: not-allowed; }
+        .option-btn.locked.selected { border-color: #1d4ed8; background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+        .lock-icon { margin-left: auto; font-size: 14px; }
+
+        /* RIGHT SIDE NAV PANEL */
+        .nav-panel { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 200; }
+        .nav-toggle-btn {
+            width: 44px; height: 44px; background: linear-gradient(135deg,#1e40af,#1d4ed8);
+            border-radius: 12px 0 0 12px; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: -4px 0 20px rgba(30,64,175,0.35); color: white; font-size: 16px;
+            writing-mode: vertical-lr; flex-direction: column; gap: 2px;
+        }
+        .nav-panel-drawer {
+            position: absolute; right: 44px; top: 50%; transform: translateY(-50%);
+            background: white; border-radius: 16px 0 0 16px; padding: 14px 10px;
+            box-shadow: -8px 0 40px rgba(0,0,0,0.15); width: 210px;
+            max-height: 80vh; overflow-y: auto; display: none;
+            border: 1.5px solid #e2e8f0; border-right: none;
+        }
+        .nav-panel-drawer.open { display: block; }
+        .nav-stats-row { display: flex; gap: 6px; margin-bottom: 10px; }
+        .nav-stat-chip { flex: 1; text-align: center; border-radius: 10px; padding: 6px 4px; font-size: 10px; font-weight: 800; }
+        .chip-answered { background: #dbeafe; color: #1e40af; }
+        .chip-skipped { background: #fef3c7; color: #92400e; }
+        .chip-remaining { background: #f1f5f9; color: #475569; }
+        .nav-dots-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+        .nav-dot { width: 28px; height: 28px; border-radius: 7px; border: 2px solid #e2e8f0; background: white; font-size: 10px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .nav-dot.answered { background: linear-gradient(135deg, #1e40af, #1d4ed8); border-color: #1e40af; color: white; }
+        .nav-dot.skipped { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #f59e0b; color: white; }
+        .nav-dot.current { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.3); }
+
+        /* SUBMIT BUTTON - fixed bottom center */
+        .submit-fixed {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 150;
+            display: flex; justify-content: center; padding: 14px 20px;
+            background: linear-gradient(to top, white 70%, transparent);
+            pointer-events: none;
+        }
+        .submit-fixed button {
+            pointer-events: all;
+            background: linear-gradient(135deg, #16a34a, #15803d);
+            color: white; border: none; border-radius: 50px;
+            padding: 16px 48px; font-weight: 900; font-size: 16px;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 8px 28px rgba(22,163,74,0.45);
+            font-family: 'Sora', sans-serif; letter-spacing: 0.5px;
+        }
+        .submit-fixed button:hover { transform: scale(1.04); box-shadow: 0 12px 36px rgba(22,163,74,0.55); }
+
+        .progress-bar { height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22d3ee); border-radius: 2px; transition: width 0.4s ease; }
+
+        /* ===== RESULT SCREEN ===== */
+        #resultScreen { min-height: 100vh; background: #f0f4f8; }
+        .result-header { background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 24px 20px 32px; }
+
+        .score-card { background: white; border-radius: 2rem; padding: 28px; margin: -20px 16px 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.1); position: relative; }
+        .score-ring-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 20px; }
+        .score-ring-svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #e2e8f0; stroke-width: 14; }
+        .ring-fill { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease; }
+        .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-percent-big { font-size: 36px; font-weight: 900; font-family: 'Sora', sans-serif; }
+        .stat-pill { background: #f8fafc; border-radius: 14px; padding: 14px 16px; text-align: center; flex: 1; border: 1.5px solid #e2e8f0; }
+        .marks-table { background: #f8fafc; border-radius: 16px; padding: 18px; border: 1.5px solid #e2e8f0; }
+
+        /* Filter buttons */
+        .filter-btn { padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; border: 2px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; }
+        .filter-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
+
+        /* Review items - FULL solve sheet with ALL options */
+        .review-item { background: white; border-radius: 1.4rem; padding: 18px 20px; margin-bottom: 12px; border-left: 5px solid #e2e8f0; transition: 0.2s; }
+        .review-item.correct-r { border-left-color: #16a34a; }
+        .review-item.wrong-r { border-left-color: #dc2626; }
+        .review-item.skipped-r { border-left-color: #f59e0b; }
+        .review-option { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 12px; margin-bottom: 6px; border: 1.5px solid #e2e8f0; background: #f8fafc; font-size: 13px; font-weight: 600; }
+        .review-option.opt-correct { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
+        .review-option.opt-wrong { border-color: #dc2626; background: #fff1f2; color: #dc2626; }
+        .opt-label { width: 26px; height: 26px; border-radius: 7px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 11px; flex-shrink: 0; }
+        .opt-correct .opt-label { background: #16a34a; color: white; }
+        .opt-wrong .opt-label { background: #dc2626; color: white; }
+
+        /* Buttons */
+        .pdf-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none; border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 14px; cursor: pointer; flex: 1; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
+        .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,0.4); }
+        .retry-btn { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; border: none; border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 14px; cursor: pointer; flex: 1; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
+        .retry-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,64,175,0.4); }
+        .home-btn { display: block; width: 100%; padding: 16px; background: white; border: 2px solid #e2e8f0; border-radius: 14px; font-weight: 800; font-size: 14px; cursor: pointer; text-align: center; color: #475569; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
+        .home-btn:hover { border-color: #1e40af; color: #1e40af; background: #eff6ff; }
+
+        /* Logo */
+        .atlas-logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
+        .atlas-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #16a34a, #15803d); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-style: italic; font-size: 18px; font-family: 'Sora', sans-serif; }
+        .atlas-name { font-weight: 900; font-size: 20px; color: white; font-style: italic; letter-spacing: -1px; font-family: 'Sora', sans-serif; }
+
+        /* Explanation box */
+        .explanation-box { margin-top: 14px; padding: 14px 16px; background: linear-gradient(135deg, #eff6ff, #f0fdf4); border: 1.5px solid #bfdbfe; border-radius: 14px; font-size: 13px; color: #1e40af; font-weight: 600; line-height: 1.7; display: none; }
+        .explanation-box.show { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+        .chart-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e40af; border-radius: 2px; }
+
+        /* Confirm Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; border-radius: 2rem; padding: 2rem; max-width: 360px; width: 90%; text-align: center; animation: popIn 0.3s; }
+        @keyframes popIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #4ade80; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to{transform:rotate(360deg)} }
+
+        /* Question anchor for scroll */
+        .q-anchor { scroll-margin-top: 80px; }
+    </style>
+</head>
+<body>
+
+<div id="preExamScreen" class="hidden flex items-center justify-center min-h-screen p-6">
+    <div class="pre-card text-center w-full">
+        <a href="index.html" class="atlas-logo justify-center mb-8 inline-flex">
+            <div class="atlas-icon">A</div>
+            <span class="atlas-name">ATLAS</span>
+        </a>
+        <div class="mb-2">
+            <span class="text-xs font-black text-white/40 uppercase tracking-widest">Exam Information</span>
+        </div>
+        <h2 id="preExamTitle" class="text-white font-black text-2xl mb-1 leading-tight"></h2>
+        <p id="preExamSubject" class="text-white/50 text-sm font-bold mb-6"></p>
+
+        <div class="space-y-1 mb-8 text-left">
+            <div class="info-row"><span class="info-label">📚 Subject</span><span class="info-value" id="preSubject">—</span></div>
+            <div class="info-row"><span class="info-label">📖 Chapter</span><span class="info-value" id="preChapter">—</span></div>
+            <div class="info-row"><span class="info-label">⏱️ Duration</span><span class="info-value" id="preDuration">—</span></div>
+            <div class="info-row"><span class="info-label">❓ Total Questions</span><span class="info-value" id="preTotalQ">—</span></div>
+            <div class="info-row" id="preNegRow"><span class="info-label">➖ Negative Marking</span><span class="info-value" id="preNeg">—</span></div>
+            <div class="info-row" id="preStartRow" style="display:none;"><span class="info-label">🕐 Start Time</span><span class="info-value" id="preStart">—</span></div>
+        </div>
+
+        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6 text-left">
+            <p class="text-yellow-300 text-xs font-bold leading-relaxed">⚠️ একবার উত্তর দিলে আর পরিবর্তন করা যাবে না। প্রতিটি উত্তর Lock হয়ে যাবে।</p>
+        </div>
+
+        <button class="start-btn" onclick="startExam()">
+            🚀 Exam শুরু করুন →
+        </button>
+        <p class="text-white/30 text-[10px] mt-4 font-bold">Unlimited attempts allowed</p>
+    </div>
+</div>
+
+<div id="regScreen" class="hidden flex items-center justify-center min-h-screen p-6">
+    <div class="reg-card text-center">
+        <a href="index.html" class="atlas-logo justify-center mb-6 inline-flex">
+            <div class="atlas-icon">A</div>
+            <span class="atlas-name">ATLAS</span>
+        </a>
+        <h2 class="text-white font-black text-xl mb-1">প্রথমবার স্বাগতম! 👋</h2>
+        <p class="text-white/50 text-xs font-bold mb-6 leading-relaxed">প্রিয় শিক্ষার্থী, একবার তথ্য দিন। এরপর Unlimited Exam দিতে পারবেন।</p>
+
+        <input class="reg-input" id="regName" placeholder="আপনার নাম কি?" type="text" autocomplete="name">
+        <input class="reg-input" id="regBatch" placeholder="আপনার HSC ব্যাচ কত?" type="text">
+        <input class="reg-input" id="regCollege" placeholder="আপনার কলেজের নাম?" type="text" autocomplete="organization">
+        <input class="reg-input" id="regPhone" placeholder="Contact/WhatsApp Number" type="tel" autocomplete="tel">
+        <input class="reg-input" id="regSocial" placeholder="Telegram/Facebook/Instagram লিংক" type="url">
+
+        <div id="regError" class="hidden text-red-400 text-xs font-bold mb-3 p-3 bg-red-500/10 rounded-xl"></div>
+
+        <button class="reg-btn" onclick="submitRegistration()" id="regBtn">
+            শুরু করি → Exam দিতে যাই
+        </button>
+        <p class="text-white/30 text-[10px] mt-4 font-bold">তথ্য সম্পূর্ণ নিরাপদ ও গোপনীয়।</p>
+    </div>
+</div>
+
+<div id="loadingScreen" class="hidden flex items-center justify-center min-h-screen" style="background: linear-gradient(135deg, #0f172a, #1e3a5f);">
+    <div class="text-center">
+        <div class="spinner mb-4"></div>
+        <p class="text-white/60 font-bold text-sm">Exam লোড হচ্ছে...</p>
+    </div>
+</div>
+
+<div id="examScreen" class="hidden">
+    <div class="exam-header">
+        <div class="flex items-center justify-between mb-2">
+            <a href="index.html" class="atlas-logo" style="text-decoration:none;">
+                <div class="atlas-icon" style="width:34px;height:34px;font-size:16px;">A</div>
+                <span class="atlas-name" style="font-size:17px;">ATLAS</span>
+            </a>
+            <div class="timer-box" id="timerDisplay">00:00</div>
+        </div>
+        <div class="flex items-center justify-between text-white/60 text-xs font-bold mb-2">
+            <span id="subjectLabel" class="truncate mr-2">—</span>
+            <span id="qCounter" class="shrink-0">0 / 0 উত্তর দেওয়া</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill" style="width:0%"></div>
+        </div>
+    </div>
+
+    <div id="questionArea" class="pb-28 pr-12"></div>
+
+    <div class="nav-panel">
+        <button class="nav-toggle-btn" onclick="toggleNavPanel()" id="navToggleBtn" title="Navigation">
+            <span style="font-size:18px;">📋</span>
+        </button>
+        <div class="nav-panel-drawer" id="navDrawer">
+            <div class="text-[11px] font-black text-gray-700 uppercase tracking-wide mb-8px mb-2">Quick Nav</div>
+            <div class="nav-stats-row">
+                <div class="nav-stat-chip chip-answered">
+                    <div id="navAnswered">0</div>
+                    <div>Ans</div>
+                </div>
+                <div class="nav-stat-chip chip-skipped">
+                    <div id="navSkipped">0</div>
+                    <div>Skip</div>
+                </div>
+                <div class="nav-stat-chip chip-remaining">
+                    <div id="navRemaining">0</div>
+                    <div>Baki</div>
+                </div>
+            </div>
+            <div class="nav-dots-grid" id="navDots"></div>
+        </div>
+    </div>
+
+    <div class="submit-fixed">
+        <button onclick="showSubmitModal()">✅ Submit Exam</button>
+    </div>
+</div>
+
+<div id="submitModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <div class="text-4xl mb-3">📋</div>
+        <h3 class="font-black text-gray-800 text-lg mb-4">Submit করবেন?</h3>
+        <div class="bg-gray-50 rounded-2xl p-4 mb-5 text-left space-y-2">
+            <div class="flex justify-between text-sm font-bold">
+                <span class="text-green-600">✅ Answered</span><span id="modalAnswered" class="text-gray-800">0</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold">
+                <span class="text-amber-500">⏭️ Skipped</span><span id="modalSkipped" class="text-gray-800">0</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold">
+                <span class="text-gray-400">❓ Not Visited</span><span id="modalUnanswered" class="text-gray-800">0</span>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="hideSubmitModal()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-600 text-sm">বাতিল</button>
+            <button onclick="submitExam()" class="flex-1 py-3 bg-green-600 rounded-xl font-bold text-white text-sm">Submit করুন ✓</button>
+        </div>
+    </div>
+</div>
+
+<div id="resultScreen" class="hidden">
+    <div class="result-header">
+        <a href="index.html" class="atlas-logo" style="text-decoration:none;">
+            <div class="atlas-icon" style="width:34px;height:34px;font-size:16px;">A</div>
+            <span class="atlas-name" style="font-size:17px;">ATLAS</span>
+        </a>
+        <h2 class="text-white font-black text-2xl mt-5 mb-1">Exam Completed! 🎉</h2>
+        <p id="resultSubjectLabel" class="text-white/50 text-xs font-bold uppercase tracking-widest"></p>
+    </div>
+
+    <div class="px-4 pb-10">
+        <div class="score-card">
+            <div class="score-ring-wrap mb-4">
+                <svg class="score-ring-svg" width="160" height="160" viewBox="0 0 160 160">
+                    <circle class="ring-bg" cx="80" cy="80" r="66"/>
+                    <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="66"
+                        stroke-dasharray="414.69"
+                        stroke-dashoffset="414.69"
+                        stroke="#16a34a"/>
+                </svg>
+                <div class="score-center">
+                    <span class="score-percent-big text-gray-800" id="scorePercent">0%</span>
+                    <span class="text-xs font-bold text-gray-400">Final Score</span>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mb-5">
+                <div class="stat-pill border-l-4 border-green-500">
+                    <p class="text-2xl font-black text-green-600 font-['Sora']" id="resCorrect">0</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase mt-0.5">Correct</p>
+                </div>
+                <div class="stat-pill border-l-4 border-red-500">
+                    <p class="text-2xl font-black text-red-600 font-['Sora']" id="resWrong">0</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase mt-0.5">Wrong</p>
+                </div>
+                <div class="stat-pill border-l-4 border-amber-500">
+                    <p class="text-2xl font-black text-amber-600 font-['Sora']" id="resSkipped">0</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase mt-0.5">Skipped</p>
+                </div>
+            </div>
+
+            <div class="marks-table mb-5">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">মার্কের হিসাব</h4>
+                <div class="space-y-2 text-sm font-bold">
+                    <div class="flex justify-between"><span class="text-gray-500">মোট প্রশ্ন</span><span id="totalQ" class="text-gray-800">0</span></div>
+                    <div class="flex justify-between"><span class="text-green-600">✓ সঠিক (+1 each)</span><span id="markCorrect" class="text-green-700">+0</span></div>
+                    <div class="flex justify-between"><span class="text-red-500">✗ ভুল (−<span id="negMarkLabel">0.25</span> each)</span><span id="markWrong" class="text-red-600">−0</span></div>
+                    <div class="h-px bg-gray-200 my-1"></div>
+                    <div class="flex justify-between text-base"><span class="font-black text-gray-800">নেট মার্ক</span><span id="netMark" class="font-black text-blue-700">0</span></div>
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 text-center">Performance Analysis</h4>
+                <div class="chart-wrap">
+                    <canvas id="resultChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-3 mb-3">
+            <button onclick="downloadPDF()" class="pdf-btn">📄 PDF Download</button>
+            <button onclick="retryExam()" class="retry-btn">🔄 আবার দাও</button>
+        </div>
+        <button onclick="location.href='index.html'" class="home-btn mb-6">🏠 Home এ ফিরে যাও</button>
+
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <h4 class="w-full text-xs font-black text-gray-500 uppercase tracking-widest">সব প্রশ্নের উত্তর দেখো 👇</h4>
+            <button class="filter-btn active" onclick="filterReview('all')" id="fAll">All</button>
+            <button class="filter-btn" onclick="filterReview('correct')" id="fCorrect">✅ Correct</button>
+            <button class="filter-btn" onclick="filterReview('wrong')" id="fWrong">❌ Wrong</button>
+            <button class="filter-btn" onclick="filterReview('skipped')" id="fSkipped">⏭️ Skipped</button>
+        </div>
+
+        <div id="reviewSection" class="space-y-3"></div>
+    </div>
+</div>
+
+<script>
+    // ===== SUPABASE =====
+    const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+    const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let examData = null;
+    let questions = [];
+    let userAnswers = {};
+    let lockedAnswers = new Set();
+    let timerInterval = null;
+    let timeLeft = 0;
+    let studentData = null;
+    let negMark = 0.25;
+    let examStartTime = null;
+    let currentFilter = 'all';
+    let chartInstance = null;
+    let navOpen = false;
+
+    // ===== SCREENS =====
+    function showScreen(id) {
+        ['preExamScreen','regScreen','loadingScreen','examScreen','resultScreen'].forEach(s => {
+            document.getElementById(s).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    // ===== INIT =====
+    window.onload = async () => {
+        const params = new URLSearchParams(window.location.search);
+        const examId = params.get('id');
+        if (!examId) { alert("Exam ID পাওয়া যায়নি!"); return; }
+
+        localStorage.setItem('last_exam_id', examId);
+        showScreen('loadingScreen');
+
+        try {
+            await loadExamData(examId);
+            // Check BOTH keys for backward compatibility
+            const saved = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
+            if (saved) {
+                studentData = JSON.parse(saved);
+                showPreExamScreen();
+            } else {
+                showScreen('regScreen');
+            }
+        } catch(e) {
+            alert("Error: " + e.message);
+        }
+    };
+
+    // ===== LOAD EXAM DATA =====
+    async function loadExamData(examId) {
+        let data;
+        const r1 = await atlas.from('exams').select('*').or(`exam_id.eq.${examId},id.eq.${examId}`).single();
+        if (r1.error || !r1.data) {
+            const r2 = await atlas.from('exams').select('*').eq('id', parseInt(examId)).single();
+            if (r2.error) throw new Error("Exam পাওয়া যায়নি!");
+            data = r2.data;
+        } else {
+            data = r1.data;
+        }
+        examData = data;
+        let qs = examData.questions;
+        if (typeof qs === 'string') qs = JSON.parse(qs);
+        questions = qs || [];
+        negMark = parseFloat(examData.neg_mark) || 0.25;
+        timeLeft = (parseInt(examData.duration) || 20) * 60;
+    }
+
+    // ===== PRE-EXAM SCREEN =====
+    function showPreExamScreen() {
+        document.getElementById('preExamTitle').textContent = examData.title || examData.chapter || 'Exam';
+        document.getElementById('preExamSubject').textContent = [examData.subject, examData.paper, examData.chapter].filter(Boolean).join(' • ');
+        document.getElementById('preSubject').textContent = examData.subject || '—';
+        document.getElementById('preChapter').textContent = [examData.paper, examData.chapter].filter(Boolean).join(' - ') || '—';
+        document.getElementById('preDuration').textContent = `${examData.duration || 20} মিনিট`;
+        document.getElementById('preTotalQ').textContent = `${questions.length} টি প্রশ্ন`;
+        document.getElementById('preNeg').textContent = examData.neg_mark ? `-${examData.neg_mark} প্রতি ভুলে` : '-0.25 প্রতি ভুলে';
+        document.getElementById('negMarkLabel').textContent = negMark;
+        if (examData.start_time) {
+            document.getElementById('preStartRow').style.display = 'flex';
+            document.getElementById('preStart').textContent = examData.start_time;
+        }
+        showScreen('preExamScreen');
+    }
+
+    function startExam() {
+        examStartTime = new Date();
+        showScreen('examScreen');
+        document.getElementById('subjectLabel').textContent = [examData.subject, examData.paper, examData.chapter].filter(Boolean).join(' | ');
+        document.getElementById('resultSubjectLabel').textContent = [examData.subject, examData.chapter].filter(Boolean).join(' | ');
+        renderAllQuestions();
+        renderNavDots();
+        startTimer();
+    }
+
+    // ===== REGISTRATION =====
+    async function submitRegistration() {
+        const btn = document.getElementById('regBtn');
+        const name = document.getElementById('regName').value.trim();
+        const batch = document.getElementById('regBatch').value.trim();
+        const college = document.getElementById('regCollege').value.trim();
+        const phone = document.getElementById('regPhone').value.trim();
+        const social = document.getElementById('regSocial').value.trim();
+
+        if (!name || !phone) { showRegError("নাম এবং ফোন নম্বর অবশ্যই দিতে হবে!"); return; }
+
+        btn.textContent = "রেজিস্ট্রেশন হচ্ছে..."; btn.disabled = true;
+        try {
+            const { data: existing } = await atlas.from('students').select('*').eq('whatsapp', phone).single();
+            let student;
+            if (existing) { student = existing; }
+            else {
+                const { data, error } = await atlas.from('students').insert([{ name, hsc_batch: batch, college, whatsapp: phone, social_link: social }]).select().single();
+                if (error) throw error;
+                student = data;
+            }
+            studentData = student;
+            // Save under BOTH keys for cross-page compatibility
+            const userData = { id: student.id, name: student.name, college: student.college, batch: student.hsc_batch, phone: student.whatsapp };
+            localStorage.setItem('atlas_student', JSON.stringify(student));
+            localStorage.setItem('atlas_user', JSON.stringify(userData));
+            showPreExamScreen();
+        } catch(err) {
+            showRegError("Error: " + err.message);
+            btn.textContent = "শুরু করি → Exam দিতে যাই"; btn.disabled = false;
+        }
+    }
+    function showRegError(msg) {
+        const el = document.getElementById('regError');
+        el.textContent = msg; el.classList.remove('hidden');
+    }
+
+    // ===== TIMER =====
+    function startTimer() {
+        updateTimerDisplay();
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            if (timeLeft <= 0) { clearInterval(timerInterval); autoSubmit(); }
+        }, 1000);
+    }
+    function updateTimerDisplay() {
+        const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+        const s = (timeLeft % 60).toString().padStart(2,'0');
+        const el = document.getElementById('timerDisplay');
+        el.textContent = `${m}:${s}`;
+        el.className = 'timer-box';
+        if (timeLeft <= 60) el.classList.add('danger');
+        else if (timeLeft <= 180) el.classList.add('warning');
+    }
+
+    // ===== RENDER ALL QUESTIONS AT ONCE =====
+    function renderAllQuestions() {
+        const labels = ['A','B','C','D','E'];
+        const html = questions.map((q, index) => {
+            const isLocked = lockedAnswers.has(index);
+            const prevAns = userAnswers[index];
+            const qText = q.questions || q.question || '';
+            // removed hasExp from here
+
+            const optionHTML = [1,2,3,4,5].map(n => {
+                const opt = q[`option${n}`];
+                if (!opt || opt.trim() === '') return '';
+                const isSelected = prevAns === n;
+                let cls = 'option-btn';
+                if (isSelected) cls += ' selected';
+                if (isLocked) cls += ' locked';
+                const lockIcon = (isLocked && isSelected) ? '<span class="lock-icon">🔒</span>' : '';
+                const clickHandler = isLocked ? '' : `onclick="selectAnswer(${index}, ${n})"`;
+                return `<button class="${cls}" id="q${index}_opt${n}" ${clickHandler}>
+                    <span class="option-label">${labels[n-1]}</span>
+                    <span style="flex:1">${opt}</span>
+                    ${lockIcon}
+                </button>`;
+            }).join('');
+
+            return `<div class="q-card q-anchor" id="qcard${index}">
+                <div class="flex items-center justify-between mb-4">
+                    <span class="q-number-badge">Q. ${index + 1} / ${questions.length} ${isLocked ? '🔒' : ''}</span>
+                </div>
+                <p class="text-gray-800 font-semibold text-sm leading-relaxed mb-4">${qText}</p>
+                <div id="opts${index}">${optionHTML}</div>
+            </div>`; // Removed toggleExplanation button and expBox div from here
+        }).join('');
+
+        document.getElementById('questionArea').innerHTML = html;
+        updateQCounter();
+    }
+
+    // Removed toggleExplanation function
+
+    function selectAnswer(qIndex, num) {
+        if (lockedAnswers.has(qIndex)) return;
+        userAnswers[qIndex] = num;
+        lockedAnswers.add(qIndex);
+
+        // Update only that question's options (no full re-render)
+        const labels = ['A','B','C','D','E'];
+        const q = questions[qIndex];
+        [1,2,3,4,5].forEach(n => {
+            const btn = document.getElementById(`q${qIndex}_opt${n}`);
+            if (!btn) return;
+            btn.className = 'option-btn locked';
+            if (n === num) btn.className += ' selected';
+            btn.onclick = null;
+            // Update lock icon
+            const lockSpan = btn.querySelector('.lock-icon');
+            if (n === num) {
+                if (!lockSpan) { const span = document.createElement('span'); span.className = 'lock-icon'; span.textContent = '🔒'; btn.appendChild(span); }
+            }
+        });
+        // Update question badge
+        const badge = document.querySelector(`#qcard${qIndex} .q-number-badge`);
+        if (badge) badge.innerHTML = `Q. ${qIndex + 1} / ${questions.length} 🔒`;
+
+        updateQCounter();
+        updateNavDots();
+    }
+
+    function updateQCounter() {
+        const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== 'skipped').length;
+        document.getElementById('qCounter').textContent = `${answered} / ${questions.length} উত্তর দেওয়া`;
+        document.getElementById('progressFill').style.width = `${(answered / questions.length) * 100}%`;
+    }
+
+    // ===== NAV PANEL =====
+    function toggleNavPanel() {
+        navOpen = !navOpen;
+        document.getElementById('navDrawer').classList.toggle('open', navOpen);
+    }
+
+    function renderNavDots() {
+        const container = document.getElementById('navDots');
+        container.innerHTML = questions.map((_, i) =>
+            `<div class="nav-dot" id="dot${i}" onclick="scrollToQ(${i})">${i+1}</div>`
+        ).join('');
+        updateNavDots();
+    }
+
+    function updateNavDots() {
+        let answered = 0, skipped = 0;
+        questions.forEach((_, i) => {
+            const dot = document.getElementById('dot'+i);
+            if (!dot) return;
+            dot.className = 'nav-dot';
+            if (userAnswers[i] === 'skipped') { dot.classList.add('skipped'); skipped++; }
+            else if (userAnswers[i] !== undefined) { dot.classList.add('answered'); answered++; }
+        });
+        const remaining = questions.length - answered - skipped;
+        if (document.getElementById('navAnswered')) {
+            document.getElementById('navAnswered').textContent = answered;
+            document.getElementById('navSkipped').textContent = skipped;
+            document.getElementById('navRemaining').textContent = remaining;
+        }
+    }
+
+    function scrollToQ(index) {
+        const el = document.getElementById(`qcard${index}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (navOpen) toggleNavPanel();
+    }
+
+    // ===== SUBMIT MODAL =====
+    function showSubmitModal() {
+        const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== 'skipped').length;
+        const skipped = Object.keys(userAnswers).filter(k => userAnswers[k] === 'skipped').length;
+        const unanswered = questions.length - Object.keys(userAnswers).length;
+        document.getElementById('modalAnswered').textContent = answered;
+        document.getElementById('modalSkipped').textContent = skipped + unanswered;
+        document.getElementById('modalUnanswered').textContent = unanswered;
+        document.getElementById('submitModal').classList.remove('hidden');
+    }
+    function hideSubmitModal() {
+        document.getElementById('submitModal').classList.add('hidden');
+    }
+    function autoSubmit() {
+        alert("⏰ সময় শেষ! Exam Auto-Submit হচ্ছে...");
+        submitExam();
+    }
+
+    // ===== SUBMIT =====
+    async function submitExam() {
+        hideSubmitModal();
+        clearInterval(timerInterval);
+        const timeTaken = Math.floor((new Date() - examStartTime) / 1000);
+        let correct = 0, wrong = 0, skipped = 0;
+
+        questions.forEach((q, i) => {
+            const ans = userAnswers[i];
+            const correctAns = parseInt(q.answer);
+            if (ans === 'skipped' || ans === undefined) skipped++;
+            else if (parseInt(ans) === correctAns) correct++;
+            else wrong++;
+        });
+
+        const netMarkVal = correct - (wrong * negMark);
+        const total = questions.length;
+        const percent = Math.round((Math.max(0, netMarkVal) / total) * 100);
+
+        try {
+            const studentId = studentData?.id;
+            if (studentId) {
+                await atlas.from('exam_results').insert([{
+                    student_id: studentId,
+                    exam_id: examData.exam_id || examData.id,
+                    subject: examData.subject,
+                    chapter: examData.chapter,
+                    correct, wrong, skipped,
+                    net_mark: netMarkVal,
+                    total_questions: total,
+                    percent,
+                    time_taken: timeTaken,
+                    answers: userAnswers
+                }]);
+            }
+        } catch(e) { console.log("Save error:", e); }
+
+        showResult(correct, wrong, skipped, netMarkVal, total, percent);
+    }
+
+    // ===== RESULT =====
+    function showResult(correct, wrong, skipped, netMarkVal, total, percent) {
+        showScreen('resultScreen');
+
+        document.getElementById('resCorrect').textContent = correct;
+        document.getElementById('resWrong').textContent = wrong;
+        document.getElementById('resSkipped').textContent = skipped;
+        document.getElementById('scorePercent').textContent = percent + '%';
+        document.getElementById('totalQ').textContent = total;
+        document.getElementById('markCorrect').textContent = '+' + correct;
+        document.getElementById('markWrong').textContent = '−' + (wrong * negMark).toFixed(2);
+        document.getElementById('netMark').textContent = netMarkVal.toFixed(2);
+
+        const color = percent >= 70 ? '#16a34a' : percent >= 40 ? '#f59e0b' : '#dc2626';
+        const ring = document.getElementById('ringFill');
+        ring.style.stroke = color;
+        const circumference = 2 * Math.PI * 66;
+        const offset = circumference - (percent / 100) * circumference;
+        setTimeout(() => { ring.style.strokeDashoffset = offset; }, 200);
+        document.getElementById('scorePercent').style.color = color;
+
+        if (chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('resultChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Correct', 'Wrong', 'Skipped'],
+                datasets: [{
+                    data: [correct, wrong, skipped || 0.001],
+                    backgroundColor: ['#16a34a','#dc2626','#f59e0b'],
+                    borderWidth: 0, hoverOffset: 8
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: { legend: { position: 'bottom', labels: { font: { size: 11, weight: 'bold' }, padding: 14, color: '#475569' } } },
+                animation: { animateRotate: true, duration: 1000 }
+            }
+        });
+
+        renderReview();
+        window.scrollTo(0, 0);
+    }
+
+    // ===== REVIEW - FULL SOLVE SHEET with ALL OPTIONS =====
+    function filterReview(type) {
+        currentFilter = type;
+        ['all','correct','wrong','skipped'].forEach(t => {
+            document.getElementById('f' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('active');
+        });
+        document.getElementById('f' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+        renderReview();
+    }
+
+    function renderReview() {
+        const container = document.getElementById('reviewSection');
+        const labels = ['A','B','C','D','E'];
+
+        const items = questions.map((q, i) => {
+            const userAns = userAnswers[i];
+            const correctAns = parseInt(q.answer);
+            let status, statusClass, statusIcon;
+
+            if (userAns === 'skipped' || userAns === undefined) {
+                status = 'Skipped'; statusClass = 'skipped-r'; statusIcon = '⏭️';
+            } else if (parseInt(userAns) === correctAns) {
+                status = 'Correct'; statusClass = 'correct-r'; statusIcon = '✅';
+            } else {
+                status = 'Wrong'; statusClass = 'wrong-r'; statusIcon = '❌';
+            }
+
+            if (currentFilter !== 'all') {
+                if (currentFilter === 'correct' && status !== 'Correct') return '';
+                if (currentFilter === 'wrong' && status !== 'Wrong') return '';
+                if (currentFilter === 'skipped' && status !== 'Skipped') return '';
+            }
+
+            // ALL options with correct/wrong marking
+            const allOptions = [1,2,3,4,5].map(n => {
+                const opt = q[`option${n}`];
+                if (!opt || opt.trim() === '') return '';
+                const isCorrect = n === correctAns;
+                const isUserWrong = (userAns && userAns !== 'skipped' && parseInt(userAns) === n && n !== correctAns);
+                let cls = 'review-option';
+                let lCls = 'opt-label';
+                let marker = '';
+                if (isCorrect) { cls += ' opt-correct'; lCls += ' opt-correct'; marker = ' ✓'; }
+                if (isUserWrong) { cls += ' opt-wrong'; lCls += ' opt-wrong'; marker = ' ✗'; }
+                return `<div class="${cls}">
+                    <span class="${lCls}" style="${isCorrect ? 'background:#16a34a;color:white;' : isUserWrong ? 'background:#dc2626;color:white;' : ''}">${labels[n-1]}</span>
+                    <span style="flex:1">${opt}${marker}</span>
+                </div>`;
+            }).join('');
+
+            const qText = q.questions || q.question || '';
+
+            return `<div class="review-item ${statusClass}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] font-black bg-gray-100 px-3 py-1 rounded-full text-gray-600">Q.${i+1}</span>
+                    <span class="text-[10px] font-black px-3 py-1 rounded-full ${
+                        status==='Correct'?'bg-green-100 text-green-700':
+                        status==='Wrong'?'bg-red-100 text-red-700':
+                        'bg-amber-100 text-amber-700'}">${statusIcon} ${status}</span>
+                </div>
+                <p class="text-sm font-semibold text-gray-800 mb-3 leading-relaxed">${qText}</p>
+                <div class="space-y-1 mb-2">${allOptions}</div>
+                ${q.explanation ? `<div class="mt-3 p-3 bg-blue-50 rounded-xl text-blue-700 text-xs font-semibold border border-blue-100 leading-relaxed">💡 ${q.explanation}</div>` : ''}
+            </div>`;
+        }).join('');
+
+        container.innerHTML = items || `<div class="text-center py-8 text-gray-400 font-bold">কোনো প্রশ্ন নেই এই ফিল্টারে।</div>`;
+    }
+
+    // ===== RETRY =====
+    function retryExam() {
+        userAnswers = {};
+        lockedAnswers = new Set();
+        chartInstance = null;
+        timeLeft = (parseInt(examData.duration) || 20) * 60;
+        showPreExamScreen();
+    }
+
+    // ===== PDF DOWNLOAD - HTML-based (Unicode safe, no garbled text) =====
+    function downloadPDF() {
+        const labels = ['A','B','C','D','E'];
+        const studentName = studentData?.name || studentData?.whatsapp || 'N/A';
+        const correct = parseInt(document.getElementById('resCorrect').textContent);
+        const wrong = parseInt(document.getElementById('resWrong').textContent);
+        const skipped = parseInt(document.getElementById('resSkipped').textContent);
+        const score = document.getElementById('netMark').textContent;
+
+        let questionsHTML = '';
+        questions.forEach((q, i) => {
+            const userAns = userAnswers[i];
+            const correctAns = parseInt(q.answer);
+            const isCorrect = parseInt(userAns) === correctAns;
+            const isSkipped = userAns === 'skipped' || userAns === undefined;
+
+            const borderColor = isCorrect ? '#16a34a' : isSkipped ? '#f59e0b' : '#dc2626';
+            const bgColor = isCorrect ? '#f0fdf4' : isSkipped ? '#fffbeb' : '#fff1f2';
+            const statusIcon = isCorrect ? '✅' : isSkipped ? '⏭️' : '❌';
+
+            const allOpts = [1,2,3,4,5].map(n => {
+                const opt = q[`option${n}`];
+                if (!opt || opt.trim() === '') return '';
+                const isCor = n === correctAns;
+                const isWrg = userAns && userAns !== 'skipped' && parseInt(userAns) === n && !isCor;
+                return `<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;border-radius:8px;margin-bottom:4px;
+                    background:${isCor?'#dcfce7':isWrg?'#fee2e2':'#f8fafc'};border:1.5px solid ${isCor?'#16a34a':isWrg?'#dc2626':'#e2e8f0'};">
+                    <span style="min-width:20px;height:20px;border-radius:5px;background:${isCor?'#16a34a':isWrg?'#dc2626':'#e2e8f0'};
+                        color:${isCor||isWrg?'white':'#475569'};font-weight:900;font-size:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${labels[n-1]}</span>
+                    <span style="font-size:12px;color:${isCor?'#15803d':isWrg?'#dc2626':'#475569'};font-weight:${isCor?'700':'500'};">${opt}${isCor?' ✓':isWrg?' ✗':''}</span>
+                </div>`;
+            }).join('');
+
+            const explanation = q.explanation ? `<div style="margin-top:8px;padding:8px 12px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;font-size:11px;color:#1e40af;font-weight:600;line-height:1.6;">💡 ${q.explanation}</div>` : '';
+
+            questionsHTML += `<div style="margin-bottom:16px;padding:14px 16px;border-radius:14px;background:${bgColor};border-left:4px solid ${borderColor};page-break-inside:avoid;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                    <span style="font-size:11px;font-weight:900;color:#64748b;background:white;padding:2px 10px;border-radius:20px;">Q.${i+1}</span>
+                    <span style="font-size:11px;font-weight:800;">${statusIcon}</span>
+                </div>
+                <p style="font-size:13px;font-weight:700;color:#1e293b;margin:0 0 10px 0;line-height:1.6;">${q.questions || q.question || ''}</p>
+                <div>${allOpts}</div>
+                ${explanation}
+            </div>`;
+        });
+
+        const htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ATLAS Exam Solve Sheet</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+    * { box-sizing: border-box; }
+    body { font-family: 'Hind Siliguri', Arial, sans-serif; background: white; margin: 0; padding: 0; color: #1e293b; }
+    @media print {
+        body { margin: 0; }
+        .no-print { display: none; }
+        .page-break { page-break-before: always; }
+    }
+    .header { background: linear-gradient(135deg,#1e40af,#1d4ed8); padding: 20px 28px; color: white; }
+    .student-bar { background: #f1f5f9; padding: 10px 28px; font-size: 12px; font-weight: 700; color: #475569; border-bottom: 2px solid #e2e8f0; }
+    .content { padding: 20px 28px; column-count: 2; column-gap: 20px; }
+    @media (max-width: 600px) { .content { column-count: 1; } }
+    .print-btn { position: fixed; top: 16px; right: 16px; background: #1e40af; color: white; border: none; border-radius: 12px; padding: 12px 24px; font-weight: 800; font-size: 14px; cursor: pointer; z-index: 999; box-shadow: 0 4px 16px rgba(30,64,175,0.4); }
+    .print-btn:hover { background: #1d4ed8; }
+</style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">🖨️ Print / Save PDF</button>
+<div class="header">
+    <div style="font-size:22px;font-weight:900;font-style:italic;margin-bottom:4px;">ATLAS — Exam Solve Sheet</div>
+    <div style="font-size:12px;opacity:0.75;">${[examData.subject, examData.paper, examData.chapter].filter(Boolean).join(' | ')} &nbsp;|&nbsp; Score: ${score}</div>
+</div>
+<div class="student-bar">
+    Student: ${studentName} &nbsp;|&nbsp; ✅ Correct: ${correct} &nbsp;|&nbsp; ❌ Wrong: ${wrong} &nbsp;|&nbsp; ⏭️ Skipped: ${skipped} &nbsp;|&nbsp; Total: ${questions.length}
+</div>
+<div class="content">
+    ${questionsHTML}
+</div>
+</body>
+</html>`;
+
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, '_blank');
+        if (!win) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ATLAS_${examData.subject || 'Exam'}_Solve.html`;
+            a.click();
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+</script>
+</body>
+</html>
