@@ -29,6 +29,7 @@
     </style>
 </head>
 <body>
+    <!-- Navbar -->
     <nav class="bg-white px-5 py-4 flex items-center justify-between nav-shadow sticky top-0 z-50">
         <a href="index.html" class="flex items-center space-x-2">
             <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS Logo" class="w-9 h-9 object-contain" onerror="this.style.display='none'">
@@ -41,16 +42,19 @@
 
     <div class="max-w-xl mx-auto px-4 pb-16 pt-6">
 
+        <!-- Hero -->
         <div class="mb-6">
             <h1 class="logo-font text-2xl font-black text-gray-900 leading-snug">আস্সালামু আলাইকুম! 👋</h1>
             <p class="text-gray-500 text-sm mt-1.5">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্ম।</p>
         </div>
 
+        <!-- Countdown Cards -->
         <div id="countdownSection" class="mb-6 space-y-4 hidden">
             <div class="section-title">⏰ Upcoming Events</div>
-            <div id="countdownCards" class="space-y-4"></div>
+            <div id="countdownCards"></div>
         </div>
 
+        <!-- Main Navigation Grid -->
         <div class="section-title">Quick Access</div>
         <div class="grid grid-cols-2 gap-3 mb-6">
             <div class="card p-5 flex items-center space-x-3" onclick="handleNav('classes.html')">
@@ -71,8 +75,10 @@
             </div>
         </div>
 
+        <!-- Dynamic Buttons from Owner -->
         <div id="dynBtns" class="mb-6 space-y-3"></div>
 
+        <!-- Student Profile Quick Card -->
         <div id="studentCard" class="hidden mb-6 card p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="logo-font font-black text-gray-800 text-sm uppercase tracking-wide">My Profile</div>
@@ -128,9 +134,10 @@
         }
 
         function handleNav(url) {
+            // Most pages need registration
             const publicPages = ['reviews.html', 'courses.html'];
             const raw = localStorage.getItem('atlas_user');
-            if(!raw && !publicPages.some(p => url.includes(p))) {
+            if(!raw && !publicPages.includes(url)) {
                 localStorage.setItem('atlas_redirect', url);
                 window.location.href = 'register.html';
                 return;
@@ -139,27 +146,22 @@
         }
 
         async function loadDynButtons() {
-            // home_buttons টেবিল থেকে ডাইনামিক বাটন লোড
-            const { data } = await db.from('home_buttons').select('*').eq('is_active', true).order('created_at', {ascending: false});
+            const { data } = await db.from('home_buttons').select('*').order('created_at', {ascending: false});
             if(data && data.length > 0) {
                 const container = document.getElementById('dynBtns');
                 data.forEach(btn => {
                     const div = document.createElement('div');
                     div.className = 'card p-5 flex items-center space-x-3';
-                    div.onclick = () => {
-                        if(btn.type === 'external') window.open(btn.link, '_blank');
-                        else handleNav(btn.link);
-                    };
+                    div.onclick = () => handleNav(btn.link || '#');
                     div.innerHTML = `
-                        <div class="icon-box" style="background:${btn.color || '#eff6ff'}">${btn.icon || '🚀'}</div>
-                        <div><div class="font-bold text-gray-800 text-[15px]">${btn.title}</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">দেখো</div></div>`;
+                        <div class="icon-box bg-blue-50">${btn.icon || '🚀'}</div>
+                        <div><div class="font-bold text-gray-800 text-[15px]">${btn.name}</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">দেখো</div></div>`;
                     container.appendChild(div);
                 });
             }
         }
 
         async function loadCountdowns() {
-            // countdown_cards টেবিল থেকে একটিভ টাইমার লোড
             const { data } = await db.from('countdown_cards').select('*').eq('active', true).order('end_time');
             if(data && data.length > 0) {
                 document.getElementById('countdownSection').classList.remove('hidden');
@@ -189,7 +191,6 @@
                 const diff = end - now;
                 if(diff <= 0) {
                     ['d','h','m','s'].forEach(u => { const el = document.getElementById(u+'_'+id); if(el) el.textContent='00'; });
-                    clearInterval(timers[id]);
                     return;
                 }
                 const d = Math.floor(diff/(1000*60*60*24));
@@ -197,16 +198,10 @@
                 const m = Math.floor((diff%(1000*60*60))/(1000*60));
                 const s = Math.floor((diff%60000)/1000);
                 const fmt = n => String(n).padStart(2,'0');
-                
-                const dEl = document.getElementById('d_'+id);
-                const hEl = document.getElementById('h_'+id);
-                const mEl = document.getElementById('m_'+id);
-                const sEl = document.getElementById('s_'+id);
-                
-                if(dEl) dEl.textContent = fmt(d);
-                if(hEl) hEl.textContent = fmt(h);
-                if(mEl) mEl.textContent = fmt(m);
-                if(sEl) sEl.textContent = fmt(s);
+                ['d','h','m','s'].forEach((u,i) => {
+                    const el = document.getElementById(u+'_'+id);
+                    if(el) el.textContent = fmt([d,h,m,s][i]);
+                });
             }
             tick();
             timers[id] = setInterval(tick, 1000);
