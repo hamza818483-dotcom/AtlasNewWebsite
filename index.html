@@ -17,7 +17,7 @@
         .card:hover { transform:translateY(-4px); border-color:#bfdbfe; box-shadow:0 12px 40px rgba(30,64,175,0.1); }
         .card:active { transform:scale(0.98); }
         .icon-box { border-radius:18px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
-        .countdown-card { background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 50%,#1e3a8a 100%); border-radius:28px; padding:24px; color:white; position:relative; overflow:hidden; }
+        .countdown-card { background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 50%,#1e3a8a 100%); border-radius:28px; padding:24px; color:white; position:relative; overflow:hidden; margin-bottom: 12px; }
         .countdown-card::before { content:''; position:absolute; top:-50%;right:-30%;width:200px;height:200px;background:rgba(255,255,255,0.05);border-radius:50%; }
         .countdown-num { font-family:'Sora',sans-serif; font-size:32px; font-weight:900; line-height:1; }
         .countdown-label { font-size:10px; font-weight:700; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em; }
@@ -29,7 +29,6 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="bg-white px-5 py-4 flex items-center justify-between nav-shadow sticky top-0 z-50">
         <a href="index.html" class="flex items-center space-x-2">
             <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS Logo" class="w-9 h-9 object-contain" onerror="this.style.display='none'">
@@ -42,19 +41,16 @@
 
     <div class="max-w-xl mx-auto px-4 pb-16 pt-6">
 
-        <!-- Hero -->
         <div class="mb-6">
             <h1 class="logo-font text-2xl font-black text-gray-900 leading-snug">আস্সালামু আলাইকুম! 👋</h1>
             <p class="text-gray-500 text-sm mt-1.5">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্ম।</p>
         </div>
 
-        <!-- Countdown Cards -->
         <div id="countdownSection" class="mb-6 space-y-4 hidden">
             <div class="section-title">⏰ Upcoming Events</div>
             <div id="countdownCards"></div>
         </div>
 
-        <!-- Main Navigation Grid -->
         <div class="section-title">Quick Access</div>
         <div class="grid grid-cols-2 gap-3 mb-6">
             <div class="card p-5 flex items-center space-x-3" onclick="handleNav('classes.html')">
@@ -75,10 +71,13 @@
             </div>
         </div>
 
-        <!-- Dynamic Buttons from Owner -->
+        <div id="recentExamsSection" class="mb-6 space-y-3 hidden">
+            <div class="section-title">📝 Recent Free Exams</div>
+            <div id="recentExamsList" class="space-y-3"></div>
+        </div>
+
         <div id="dynBtns" class="mb-6 space-y-3"></div>
 
-        <!-- Student Profile Quick Card -->
         <div id="studentCard" class="hidden mb-6 card p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="logo-font font-black text-gray-800 text-sm uppercase tracking-wide">My Profile</div>
@@ -109,6 +108,7 @@
             loadProfile();
             await loadDynButtons();
             await loadCountdowns();
+            await loadRecentExams(); // New logic connected
         };
 
         function loadProfile() {
@@ -128,16 +128,38 @@
             }
         }
 
+        async function loadRecentExams() {
+            // Fetch latest 3 exams to show on home
+            const { data, error } = await db.from('exams').select('*').order('created_at', { ascending: false }).limit(3);
+            if(data && data.length > 0) {
+                const section = document.getElementById('recentExamsSection');
+                const list = document.getElementById('recentExamsList');
+                section.classList.remove('hidden');
+                data.forEach(ex => {
+                    const div = document.createElement('div');
+                    div.className = 'card p-5 flex items-center space-x-3';
+                    div.onclick = () => handleNav(`exam-hall.html?id=${ex.exam_id}`);
+                    div.innerHTML = `
+                        <div class="icon-box bg-green-50 text-xl">📝</div>
+                        <div class="flex-1">
+                            <div class="font-bold text-gray-800 text-[14px] leading-tight">${ex.subject}: ${ex.chapter}</div>
+                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">${ex.duration} Mins • Live Now</div>
+                        </div>
+                        <div class="text-blue-600 text-lg font-black">→</div>`;
+                    list.appendChild(div);
+                });
+            }
+        }
+
         function goRegister() {
             localStorage.setItem('atlas_redirect', 'index.html');
             window.location.href = 'register.html';
         }
 
         function handleNav(url) {
-            // Most pages need registration
             const publicPages = ['reviews.html', 'courses.html'];
             const raw = localStorage.getItem('atlas_user');
-            if(!raw && !publicPages.includes(url)) {
+            if(!raw && !publicPages.some(p => url.includes(p))) {
                 localStorage.setItem('atlas_redirect', url);
                 window.location.href = 'register.html';
                 return;
