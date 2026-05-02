@@ -7,15 +7,26 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700;800&family=Inter:wght@400;600;700;800;900&display=swap');
         * { box-sizing: border-box; }
-        body { font-family: 'Hind Siliguri', 'Inter', sans-serif; background: #f0f4f8; margin: 0; }
+        body { font-family: 'Hind Siliguri', 'Sora', sans-serif; background: #f0f4f8; margin: 0; }
 
-        /* ===== REGISTRATION SCREEN ===== */
+        /* ===== PRE-EXAM SCREEN ===== */
+        #preExamScreen { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #0f172a 100%); min-height: 100vh; }
+        .pre-card { background: rgba(255,255,255,0.06); backdrop-filter: blur(24px); border: 1px solid rgba(255,255,255,0.12); border-radius: 2rem; padding: 2.5rem; max-width: 480px; width: 92%; margin: 0 auto; }
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+        .info-label { color: rgba(255,255,255,0.5); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { color: white; font-size: 14px; font-weight: 700; }
+        .start-btn { width: 100%; padding: 18px; background: linear-gradient(135deg, #16a34a, #15803d); border: none; border-radius: 16px; color: white; font-weight: 800; font-size: 16px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; font-family: 'Sora', sans-serif; }
+        .start-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(22,163,74,0.45); }
+        .start-btn:active { transform: translateY(0); }
+
+        /* ===== REG SCREEN ===== */
         #regScreen { background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); min-height: 100vh; }
         .reg-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 2rem; padding: 2.5rem; max-width: 440px; width: 90%; margin: 0 auto; }
-        .reg-input { width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; color: white; font-weight: 600; font-size: 14px; outline: none; margin-bottom: 12px; transition: 0.3s; }
+        .reg-input { width: 100%; padding: 14px 18px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; color: white; font-weight: 600; font-size: 14px; outline: none; margin-bottom: 12px; transition: 0.3s; font-family: 'Hind Siliguri', sans-serif; }
         .reg-input::placeholder { color: rgba(255,255,255,0.4); }
         .reg-input:focus { border-color: #4ade80; background: rgba(255,255,255,0.12); }
         .reg-btn { width: 100%; padding: 16px; background: linear-gradient(135deg, #16a34a, #15803d); border: none; border-radius: 14px; color: white; font-weight: 800; font-size: 15px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; transition: 0.3s; }
@@ -23,72 +34,150 @@
 
         /* ===== EXAM SCREEN ===== */
         #examScreen { min-height: 100vh; }
-        .exam-header { background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 16px 20px; position: sticky; top: 0; z-index: 100; }
-        .timer-box { background: rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 16px; font-size: 20px; font-weight: 800; color: white; font-family: 'Inter', monospace; }
-        .timer-box.danger { background: rgba(239,68,68,0.3); color: #fca5a5; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
-        
-        .q-card { background: white; border-radius: 1.5rem; padding: 24px; margin: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.06); border-left: 4px solid #1e40af; }
-        .q-card img.qimg { max-width: 100%; border-radius: 10px; margin: 8px 0; }
-        
-        .option-btn { width: 100%; text-align: left; padding: 14px 18px; border-radius: 12px; border: 2px solid #e2e8f0; background: #f8fafc; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; margin-bottom: 8px; line-height: 1.5; }
-        .option-btn:hover { border-color: #1e40af; background: #eff6ff; }
-        .option-btn.selected { border-color: #1e40af; background: #dbeafe; color: #1e40af; }
-        .option-btn.correct { border-color: #16a34a; background: #dcfce7; color: #15803d; }
-        .option-btn.wrong { border-color: #dc2626; background: #fee2e2; color: #dc2626; }
-        .option-btn.skipped-show { border-color: #d97706; background: #fef3c7; }
-        
-        .nav-dots { display: flex; flex-wrap: wrap; gap: 6px; padding: 16px; }
-        .nav-dot { width: 32px; height: 32px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; font-size: 11px; font-weight: 700; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
-        .nav-dot.answered { background: #1e40af; border-color: #1e40af; color: white; }
-        .nav-dot.skipped { background: #f59e0b; border-color: #f59e0b; color: white; }
+        .exam-header { background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 14px 18px; position: sticky; top: 0; z-index: 100; }
+        .timer-box { background: rgba(255,255,255,0.12); border-radius: 12px; padding: 8px 18px; font-size: 22px; font-weight: 900; color: white; font-family: 'Sora', monospace; letter-spacing: 2px; }
+        .timer-box.danger { background: rgba(239,68,68,0.35); color: #fca5a5; animation: pulse 0.8s infinite; }
+        .timer-box.warning { background: rgba(245,158,11,0.3); color: #fde68a; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.85;transform:scale(1.02)} }
+
+        .q-card { background: white; border-radius: 1.5rem; padding: 24px; margin: 14px; box-shadow: 0 4px 24px rgba(0,0,0,0.07); border-left: 5px solid #1e40af; transition: 0.2s; }
+        .q-number-badge { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; font-size: 11px; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
+
+        /* Options - LOCKED after selection */
+        .option-btn { width: 100%; text-align: left; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; background: #f8fafc; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; margin-bottom: 8px; line-height: 1.6; display: flex; align-items: center; gap: 10px; }
+        .option-label { width: 28px; height: 28px; border-radius: 8px; background: #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 12px; flex-shrink: 0; transition: 0.2s; }
+        .option-btn:not(.locked):hover { border-color: #1e40af; background: #eff6ff; transform: translateX(3px); }
+        .option-btn:not(.locked):hover .option-label { background: #1e40af; color: white; }
+        .option-btn.selected { border-color: #1e40af; background: linear-gradient(135deg, #dbeafe, #eff6ff); color: #1e40af; }
+        .option-btn.selected .option-label { background: #1e40af; color: white; }
+        .option-btn.locked { cursor: not-allowed; }
+        .option-btn.locked.selected { border-color: #1d4ed8; background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
+        .lock-icon { margin-left: auto; font-size: 14px; }
+        .option-btn.correct { border-color: #16a34a !important; background: linear-gradient(135deg, #dcfce7, #f0fdf4) !important; color: #15803d !important; }
+        .option-btn.correct .option-label { background: #16a34a !important; color: white !important; }
+        .option-btn.wrong { border-color: #dc2626 !important; background: linear-gradient(135deg, #fee2e2, #fef2f2) !important; color: #dc2626 !important; }
+        .option-btn.wrong .option-label { background: #dc2626 !important; color: white !important; }
+
+        .nav-dots { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 16px; }
+        .nav-dot { width: 34px; height: 34px; border-radius: 8px; border: 2px solid #e2e8f0; background: white; font-size: 11px; font-weight: 800; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; }
+        .nav-dot.answered { background: linear-gradient(135deg, #1e40af, #1d4ed8); border-color: #1e40af; color: white; }
+        .nav-dot.skipped { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #f59e0b; color: white; }
         .nav-dot.current { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.3); }
-        
-        .submit-btn { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; border: none; border-radius: 14px; padding: 16px 32px; font-weight: 800; font-size: 15px; cursor: pointer; letter-spacing: 1px; transition: 0.3s; }
-        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(30,64,175,0.4); }
+
+        .bottom-action { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 10px 14px; box-shadow: 0 -4px 24px rgba(0,0,0,0.1); z-index: 50; display: flex; gap: 8px; }
+        .btn-nav { flex: 1; padding: 12px 8px; border-radius: 12px; border: none; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.2s; font-family: 'Hind Siliguri', sans-serif; }
+        .btn-prev { background: #f1f5f9; color: #475569; }
+        .btn-skip { background: #fffbeb; border: 1.5px solid #fbbf24; color: #d97706; }
+        .btn-next { background: #1e3a5f; color: white; }
+        .btn-submit-fixed { background: linear-gradient(135deg, #16a34a, #15803d); color: white; }
+
+        .progress-bar { height: 3px; background: rgba(255,255,255,0.15); border-radius: 2px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22d3ee); border-radius: 2px; transition: width 0.4s ease; }
 
         /* ===== RESULT SCREEN ===== */
-        #resultScreen { min-height: 100vh; }
-        .score-ring { width: 160px; height: 160px; border-radius: 50%; background: conic-gradient(#16a34a 0%, #e2e8f0 0%); display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative; }
-        .score-inner { width: 130px; height: 130px; border-radius: 50%; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .stat-card { background: white; border-radius: 1.2rem; padding: 16px 20px; text-align: center; flex: 1; }
-        
-        .review-item { background: white; border-radius: 1.2rem; padding: 16px 20px; margin-bottom: 12px; border-left: 4px solid #e2e8f0; }
+        #resultScreen { min-height: 100vh; background: #f0f4f8; }
+        .result-header { background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 24px 20px 32px; }
+
+        /* Score Card */
+        .score-card { background: white; border-radius: 2rem; padding: 28px; margin: -20px 16px 16px; box-shadow: 0 8px 40px rgba(0,0,0,0.1); position: relative; }
+        .score-ring-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 20px; }
+        .score-ring-svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #e2e8f0; stroke-width: 14; }
+        .ring-fill { fill: none; stroke-width: 14; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease; }
+        .score-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .score-percent-big { font-size: 36px; font-weight: 900; font-family: 'Sora', sans-serif; }
+        .stat-pill { background: #f8fafc; border-radius: 14px; padding: 14px 16px; text-align: center; flex: 1; border: 1.5px solid #e2e8f0; }
+        .marks-table { background: #f8fafc; border-radius: 16px; padding: 18px; border: 1.5px solid #e2e8f0; }
+
+        /* Filter buttons */
+        .filter-btn { padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; border: 2px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; }
+        .filter-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
+
+        /* Review items */
+        .review-item { background: white; border-radius: 1.4rem; padding: 18px 20px; margin-bottom: 12px; border-left: 5px solid #e2e8f0; transition: 0.2s; }
         .review-item.correct-r { border-left-color: #16a34a; }
         .review-item.wrong-r { border-left-color: #dc2626; }
         .review-item.skipped-r { border-left-color: #f59e0b; }
-        
-        .pdf-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none; border-radius: 12px; padding: 14px 24px; font-weight: 800; font-size: 13px; cursor: pointer; letter-spacing: 0.5px; }
+
+        /* Buttons */
+        .pdf-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none; border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 14px; cursor: pointer; flex: 1; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
+        .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,0.4); }
+        .retry-btn { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; border: none; border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 14px; cursor: pointer; flex: 1; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
+        .retry-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,64,175,0.4); }
+        .home-btn { display: block; width: 100%; padding: 16px; background: white; border: 2px solid #e2e8f0; border-radius: 14px; font-weight: 800; font-size: 14px; cursor: pointer; text-align: center; color: #475569; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
+        .home-btn:hover { border-color: #1e40af; color: #1e40af; background: #eff6ff; }
 
         /* Logo */
-        .atlas-logo { display: flex; align-items: center; gap: 8px; cursor: pointer; text-decoration: none; }
-        .atlas-logo img { height: 36px; }
-        .atlas-logo span { font-weight: 900; font-size: 20px; color: white; font-style: italic; letter-spacing: -1px; }
+        .atlas-logo { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; }
+        .atlas-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #16a34a, #15803d); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-weight: 900; color: white; font-style: italic; font-size: 18px; font-family: 'Sora', sans-serif; }
+        .atlas-name { font-weight: 900; font-size: 20px; color: white; font-style: italic; letter-spacing: -1px; font-family: 'Sora', sans-serif; }
 
-        /* Progress bar */
-        .progress-bar { height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; }
-        .progress-fill { height: 100%; background: #4ade80; border-radius: 2px; transition: width 0.3s; }
+        /* Explanation box */
+        .explanation-box { margin-top: 14px; padding: 14px 16px; background: linear-gradient(135deg, #eff6ff, #f0fdf4); border: 1.5px solid #bfdbfe; border-radius: 14px; font-size: 13px; color: #1e40af; font-weight: 600; line-height: 1.7; display: none; }
+        .explanation-box.show { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+        /* Chart container */
+        .chart-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto; }
 
         /* Scrollbar */
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #1e40af; border-radius: 2px; }
 
-        /* Mobile bottom nav */
-        .bottom-action { position: fixed; bottom: 0; left: 0; right: 0; background: white; padding: 12px 16px; box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 50; display: flex; gap: 10px; }
+        /* Confirm Modal */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; border-radius: 2rem; padding: 2rem; max-width: 360px; width: 90%; text-align: center; animation: popIn 0.3s; }
+        @keyframes popIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+
+        /* Loading spinner */
+        .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.2); border-top-color: #4ade80; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+        @keyframes spin { to{transform:rotate(360deg)} }
     </style>
 </head>
 <body>
 
+<!-- ========== PRE-EXAM SCREEN ========== -->
+<div id="preExamScreen" class="hidden flex items-center justify-center min-h-screen p-6">
+    <div class="pre-card text-center w-full">
+        <a href="index.html" class="atlas-logo justify-center mb-8 inline-flex">
+            <div class="atlas-icon">A</div>
+            <span class="atlas-name">ATLAS</span>
+        </a>
+        <div class="mb-2">
+            <span class="text-xs font-black text-white/40 uppercase tracking-widest">Exam Information</span>
+        </div>
+        <h2 id="preExamTitle" class="text-white font-black text-2xl mb-1 leading-tight"></h2>
+        <p id="preExamSubject" class="text-white/50 text-sm font-bold mb-6"></p>
+
+        <div class="space-y-1 mb-8 text-left">
+            <div class="info-row"><span class="info-label">📚 Subject</span><span class="info-value" id="preSubject">—</span></div>
+            <div class="info-row"><span class="info-label">📖 Chapter</span><span class="info-value" id="preChapter">—</span></div>
+            <div class="info-row"><span class="info-label">⏱️ Duration</span><span class="info-value" id="preDuration">—</span></div>
+            <div class="info-row"><span class="info-label">❓ Total Questions</span><span class="info-value" id="preTotalQ">—</span></div>
+            <div class="info-row" id="preNegRow"><span class="info-label">➖ Negative Marking</span><span class="info-value" id="preNeg">—</span></div>
+            <div class="info-row" id="preStartRow" style="display:none;"><span class="info-label">🕐 Start Time</span><span class="info-value" id="preStart">—</span></div>
+        </div>
+
+        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6 text-left">
+            <p class="text-yellow-300 text-xs font-bold leading-relaxed">⚠️ একবার উত্তর দিলে আর পরিবর্তন করা যাবে না। প্রতিটি উত্তর Lock হয়ে যাবে।</p>
+        </div>
+
+        <button class="start-btn" onclick="startExam()">
+            🚀 Exam শুরু করুন →
+        </button>
+        <p class="text-white/30 text-[10px] mt-4 font-bold">Unlimited attempts allowed</p>
+    </div>
+</div>
+
 <!-- ========== REGISTRATION SCREEN ========== -->
-<div id="regScreen" class="flex items-center justify-center min-h-screen p-6">
+<div id="regScreen" class="hidden flex items-center justify-center min-h-screen p-6">
     <div class="reg-card text-center">
         <a href="index.html" class="atlas-logo justify-center mb-6 inline-flex">
-            <img src="https://i.ibb.co/output__1_.png" onerror="this.style.display='none'" alt="ATLAS">
-            <span>ATLAS</span>
+            <div class="atlas-icon">A</div>
+            <span class="atlas-name">ATLAS</span>
         </a>
         <h2 class="text-white font-black text-xl mb-1">প্রথমবার স্বাগতম! 👋</h2>
-        <p class="text-white/50 text-xs font-bold mb-6 leading-relaxed">প্রিয় শিক্ষার্থী, প্রথমবারের মতো নিচের তথ্যগুলো দিন। এরপর থেকে Unlimited Use করতে পারবেন।</p>
+        <p class="text-white/50 text-xs font-bold mb-6 leading-relaxed">প্রিয় শিক্ষার্থী, একবার তথ্য দিন। এরপর Unlimited Exam দিতে পারবেন।</p>
 
         <input class="reg-input" id="regName" placeholder="আপনার নাম কি?" type="text" autocomplete="name">
         <input class="reg-input" id="regBatch" placeholder="আপনার HSC ব্যাচ কত?" type="text">
@@ -105,115 +194,175 @@
     </div>
 </div>
 
+<!-- ========== LOADING SCREEN ========== -->
+<div id="loadingScreen" class="hidden flex items-center justify-center min-h-screen" style="background: linear-gradient(135deg, #0f172a, #1e3a5f);">
+    <div class="text-center">
+        <div class="spinner mb-4"></div>
+        <p class="text-white/60 font-bold text-sm">Exam লোড হচ্ছে...</p>
+    </div>
+</div>
+
 <!-- ========== EXAM SCREEN ========== -->
 <div id="examScreen" class="hidden">
-    <!-- Header -->
+    <!-- Sticky Header -->
     <div class="exam-header">
-        <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center justify-between mb-2">
             <a href="index.html" class="atlas-logo" style="text-decoration:none;">
-                <div class="w-9 h-9 bg-green-500 rounded-xl flex items-center justify-center font-black text-white italic text-lg">A</div>
-                <span class="text-white font-black italic text-lg">ATLAS</span>
+                <div class="atlas-icon" style="width:34px;height:34px;font-size:16px;">A</div>
+                <span class="atlas-name" style="font-size:17px;">ATLAS</span>
             </a>
             <div class="timer-box" id="timerDisplay">00:00</div>
         </div>
-        <div class="flex items-center justify-between text-white/70 text-xs font-bold mb-2">
-            <span id="subjectLabel">---</span>
-            <span id="qCounter">0 / 0</span>
+        <div class="flex items-center justify-between text-white/60 text-xs font-bold mb-2">
+            <span id="subjectLabel" class="truncate mr-2">—</span>
+            <span id="qCounter" class="shrink-0">0 / 0</span>
         </div>
         <div class="progress-bar">
             <div class="progress-fill" id="progressFill" style="width:0%"></div>
         </div>
     </div>
 
-    <!-- Question Navigation Dots -->
-    <div class="bg-white border-b border-gray-100">
+    <!-- Navigation Dots Panel -->
+    <div class="bg-white border-b border-gray-100 shadow-sm">
         <div class="nav-dots" id="navDots"></div>
-        <div class="flex gap-3 px-4 pb-3 text-[10px] font-bold">
-            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-blue-700 rounded inline-block"></span> Answered</span>
-            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-amber-500 rounded inline-block"></span> Skipped</span>
-            <span class="flex items-center gap-1"><span class="w-3 h-3 bg-gray-200 rounded inline-block"></span> Not Visited</span>
+        <div class="flex flex-wrap gap-4 px-4 pb-3">
+            <span class="flex items-center gap-1.5 text-[10px] font-black text-gray-500">
+                <span class="w-3.5 h-3.5 rounded-sm bg-gradient-to-br from-blue-700 to-blue-800 inline-block"></span> Answered
+            </span>
+            <span class="flex items-center gap-1.5 text-[10px] font-black text-gray-500">
+                <span class="w-3.5 h-3.5 rounded-sm bg-amber-400 inline-block"></span> Skipped
+            </span>
+            <span class="flex items-center gap-1.5 text-[10px] font-black text-gray-500">
+                <span class="w-3.5 h-3.5 rounded-sm border-2 border-gray-200 inline-block"></span> Not Visited
+            </span>
         </div>
     </div>
 
-    <!-- Question Display -->
+    <!-- Question Display Area -->
     <div id="questionArea" class="pb-36"></div>
 
-    <!-- Bottom Navigation -->
+    <!-- Bottom Navigation Bar -->
     <div class="bottom-action">
-        <button onclick="prevQuestion()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-700 text-sm">← Previous</button>
-        <button onclick="skipQuestion()" class="flex-1 py-3 bg-amber-50 border border-amber-200 rounded-xl font-bold text-amber-700 text-sm">Skip</button>
-        <button onclick="nextQuestion()" class="flex-1 py-3 bg-blue-900 rounded-xl font-bold text-white text-sm">Next →</button>
-        <button onclick="confirmSubmit()" class="flex-1 py-3 bg-green-600 rounded-xl font-bold text-white text-sm">Submit ✓</button>
+        <button onclick="prevQuestion()" class="btn-nav btn-prev">← Prev</button>
+        <button onclick="skipQuestion()" class="btn-nav btn-skip">⏭ Skip</button>
+        <button onclick="nextQuestion()" class="btn-nav btn-next">Next →</button>
+        <button onclick="showSubmitModal()" class="btn-nav btn-submit-fixed">Submit ✓</button>
+    </div>
+</div>
+
+<!-- ========== SUBMIT MODAL ========== -->
+<div id="submitModal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <div class="text-4xl mb-3">📋</div>
+        <h3 class="font-black text-gray-800 text-lg mb-4">Submit করবেন?</h3>
+        <div class="bg-gray-50 rounded-2xl p-4 mb-5 text-left space-y-2">
+            <div class="flex justify-between text-sm font-bold">
+                <span class="text-green-600">✅ Answered</span><span id="modalAnswered" class="text-gray-800">0</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold">
+                <span class="text-amber-500">⏭️ Skipped</span><span id="modalSkipped" class="text-gray-800">0</span>
+            </div>
+            <div class="flex justify-between text-sm font-bold">
+                <span class="text-gray-400">❓ Not Visited</span><span id="modalUnanswered" class="text-gray-800">0</span>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="hideSubmitModal()" class="flex-1 py-3 bg-gray-100 rounded-xl font-bold text-gray-600 text-sm">বাতিল</button>
+            <button onclick="submitExam()" class="flex-1 py-3 bg-green-600 rounded-xl font-bold text-white text-sm">Submit করুন ✓</button>
+        </div>
     </div>
 </div>
 
 <!-- ========== RESULT SCREEN ========== -->
 <div id="resultScreen" class="hidden">
     <!-- Result Header -->
-    <div style="background: linear-gradient(135deg, #0f172a, #1e3a5f); padding: 20px;">
+    <div class="result-header">
         <a href="index.html" class="atlas-logo" style="text-decoration:none;">
-            <div class="w-9 h-9 bg-green-500 rounded-xl flex items-center justify-center font-black text-white italic text-lg">A</div>
-            <span class="text-white font-black italic text-lg">ATLAS</span>
+            <div class="atlas-icon" style="width:34px;height:34px;font-size:16px;">A</div>
+            <span class="atlas-name" style="font-size:17px;">ATLAS</span>
         </a>
-        <h2 class="text-white font-black text-xl mt-4 mb-1">Exam Completed! 🎉</h2>
-        <p id="resultSubjectLabel" class="text-white/60 text-xs font-bold uppercase tracking-widest"></p>
+        <h2 class="text-white font-black text-2xl mt-5 mb-1">Exam Completed! 🎉</h2>
+        <p id="resultSubjectLabel" class="text-white/50 text-xs font-bold uppercase tracking-widest"></p>
     </div>
 
-    <!-- Score Section -->
-    <div class="p-6">
-        <!-- Score Ring -->
-        <div class="text-center mb-6">
-            <div class="score-ring" id="scoreRing">
-                <div class="score-inner">
-                    <span class="text-3xl font-black text-gray-800" id="scorePercent">0%</span>
-                    <span class="text-xs font-bold text-gray-500">Score</span>
+    <div class="px-4 pb-10">
+        <!-- SCORE CARD -->
+        <div class="score-card">
+            <!-- SVG Ring -->
+            <div class="score-ring-wrap mb-4">
+                <svg class="score-ring-svg" width="160" height="160" viewBox="0 0 160 160">
+                    <circle class="ring-bg" cx="80" cy="80" r="66"/>
+                    <circle class="ring-fill" id="ringFill" cx="80" cy="80" r="66"
+                        stroke-dasharray="414.69"
+                        stroke-dashoffset="414.69"
+                        stroke="#16a34a"/>
+                </svg>
+                <div class="score-center">
+                    <span class="score-percent-big text-gray-800" id="scorePercent">0%</span>
+                    <span class="text-xs font-bold text-gray-400">Final Score</span>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="flex gap-3 mb-5">
+                <div class="stat-pill border-l-4 border-green-500">
+                    <p class="text-2xl font-black text-green-600 font-['Sora']" id="resCorrect">0</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase mt-0.5">Correct</p>
+                </div>
+                <div class="stat-pill border-l-4 border-red-500">
+                    <p class="text-2xl font-black text-red-600 font-['Sora']" id="resWrong">0</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase mt-0.5">Wrong</p>
+                </div>
+                <div class="stat-pill border-l-4 border-amber-500">
+                    <p class="text-2xl font-black text-amber-600 font-['Sora']" id="resSkipped">0</p>
+                    <p class="text-[10px] font-black text-gray-400 uppercase mt-0.5">Skipped</p>
+                </div>
+            </div>
+
+            <!-- Marks Breakdown -->
+            <div class="marks-table mb-5">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3">মার্কের হিসাব</h4>
+                <div class="space-y-2 text-sm font-bold">
+                    <div class="flex justify-between"><span class="text-gray-500">মোট প্রশ্ন</span><span id="totalQ" class="text-gray-800">0</span></div>
+                    <div class="flex justify-between"><span class="text-green-600">✓ সঠিক (+1 each)</span><span id="markCorrect" class="text-green-700">+0</span></div>
+                    <div class="flex justify-between"><span class="text-red-500">✗ ভুল (−<span id="negMarkLabel">0.25</span> each)</span><span id="markWrong" class="text-red-600">−0</span></div>
+                    <div class="h-px bg-gray-200 my-1"></div>
+                    <div class="flex justify-between text-base"><span class="font-black text-gray-800">নেট মার্ক</span><span id="netMark" class="font-black text-blue-700">0</span></div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="mb-2">
+                <h4 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 text-center">Performance Analysis</h4>
+                <div class="chart-wrap">
+                    <canvas id="resultChart"></canvas>
                 </div>
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="flex gap-3 mb-4">
-            <div class="stat-card border-l-4 border-green-500">
-                <p class="text-2xl font-black text-green-600" id="resCorrect">0</p>
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Correct</p>
-            </div>
-            <div class="stat-card border-l-4 border-red-500">
-                <p class="text-2xl font-black text-red-600" id="resWrong">0</p>
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Wrong</p>
-            </div>
-            <div class="stat-card border-l-4 border-amber-500">
-                <p class="text-2xl font-black text-amber-600" id="resSkipped">0</p>
-                <p class="text-[10px] font-bold text-gray-400 uppercase">Skipped</p>
-            </div>
-        </div>
-
-        <!-- Marks Detail -->
-        <div class="bg-white rounded-2xl p-5 mb-4 border border-gray-100">
-            <h3 class="font-black text-gray-800 mb-4 uppercase text-sm tracking-wider">মার্কের হিসাব</h3>
-            <div class="space-y-2 text-sm font-bold">
-                <div class="flex justify-between"><span class="text-gray-600">মোট প্রশ্ন</span><span id="totalQ" class="text-gray-800">0</span></div>
-                <div class="flex justify-between"><span class="text-green-600">সঠিক (+1)</span><span id="markCorrect" class="text-green-700">+0</span></div>
-                <div class="flex justify-between"><span class="text-red-500">ভুল (-0.25)</span><span id="markWrong" class="text-red-600">-0</span></div>
-                <div class="h-px bg-gray-100 my-2"></div>
-                <div class="flex justify-between text-base"><span class="font-black text-gray-800">নেট মার্ক</span><span id="netMark" class="font-black text-blue-700">0</span></div>
-            </div>
-        </div>
-
         <!-- Action Buttons -->
-        <div class="flex gap-3 mb-6">
-            <button onclick="downloadPDF()" class="pdf-btn flex-1">📄 PDF Download</button>
-            <button onclick="location.reload()" class="flex-1 py-3 bg-blue-900 text-white rounded-xl font-bold text-sm">🔄 Retry</button>
+        <div class="flex gap-3 mb-3">
+            <button onclick="downloadPDF()" class="pdf-btn">📄 PDF Download</button>
+            <button onclick="retryExam()" class="retry-btn">🔄 আবার দাও</button>
         </div>
-        <button onclick="location.href='index.html'" class="w-full py-4 bg-gray-100 rounded-xl font-bold text-gray-700 mb-6">← Home এ ফিরে যাও</button>
+        <button onclick="location.href='index.html'" class="home-btn mb-6">🏠 Home এ ফিরে যাও</button>
 
-        <!-- Answer Review Section -->
-        <h3 class="font-black text-gray-800 mb-4 uppercase text-sm tracking-wider">প্রশ্নের উত্তর দেখো 👇</h3>
-        <div id="reviewSection" class="space-y-3 pb-10"></div>
+        <!-- Smart Filter -->
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <h4 class="w-full text-xs font-black text-gray-500 uppercase tracking-widest">প্রশ্নের উত্তর দেখো 👇</h4>
+            <button class="filter-btn active" onclick="filterReview('all')" id="fAll">All</button>
+            <button class="filter-btn" onclick="filterReview('correct')" id="fCorrect">✅ Correct</button>
+            <button class="filter-btn" onclick="filterReview('wrong')" id="fWrong">❌ Wrong</button>
+            <button class="filter-btn" onclick="filterReview('skipped')" id="fSkipped">⏭️ Skipped</button>
+        </div>
+
+        <!-- Review Section -->
+        <div id="reviewSection" class="space-y-3"></div>
     </div>
 </div>
 
 <script>
-    // ===== SUPABASE SETUP =====
+    // ===== SUPABASE =====
     const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
     const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -222,12 +371,23 @@
     let examData = null;
     let questions = [];
     let currentQ = 0;
-    let userAnswers = {}; // {index: answer_number or 'skipped'}
+    let userAnswers = {}; // {index: answerNum or 'skipped'}
+    let lockedAnswers = new Set(); // indices that are locked
     let timerInterval = null;
     let timeLeft = 0;
     let studentData = null;
     let negMark = 0.25;
     let examStartTime = null;
+    let currentFilter = 'all';
+    let chartInstance = null;
+
+    // ===== SCREENS =====
+    function showScreen(id) {
+        ['preExamScreen','regScreen','loadingScreen','examScreen','resultScreen'].forEach(s => {
+            document.getElementById(s).classList.add('hidden');
+        });
+        document.getElementById(id).classList.remove('hidden');
+    }
 
     // ===== INIT =====
     window.onload = async () => {
@@ -235,22 +395,68 @@
         const examId = params.get('id');
         if (!examId) { alert("Exam ID পাওয়া যায়নি!"); return; }
 
-        // Check existing student
-        const saved = localStorage.getItem('atlas_student');
-        if (saved) {
-            studentData = JSON.parse(saved);
-            localStorage.setItem('last_exam_id', examId);
-            await loadExam(examId);
-        } else {
-            localStorage.setItem('last_exam_id', examId);
-            showRegScreen();
+        localStorage.setItem('last_exam_id', examId);
+        showScreen('loadingScreen');
+
+        // Load exam data first (for pre-exam screen)
+        try {
+            await loadExamData(examId);
+            const saved = localStorage.getItem('atlas_student');
+            if (saved) {
+                studentData = JSON.parse(saved);
+                showPreExamScreen();
+            } else {
+                showScreen('regScreen');
+            }
+        } catch(e) {
+            alert("Error: " + e.message);
         }
     };
 
-    function showRegScreen() {
-        document.getElementById('regScreen').classList.remove('hidden');
-        document.getElementById('examScreen').classList.add('hidden');
-        document.getElementById('resultScreen').classList.add('hidden');
+    // ===== LOAD EXAM DATA (metadata only) =====
+    async function loadExamData(examId) {
+        let data, error;
+        const r1 = await atlas.from('exams').select('*').or(`exam_id.eq.${examId},id.eq.${examId}`).single();
+        if (r1.error || !r1.data) {
+            const r2 = await atlas.from('exams').select('*').eq('id', parseInt(examId)).single();
+            if (r2.error) throw new Error("Exam পাওয়া যায়নি!");
+            data = r2.data;
+        } else {
+            data = r1.data;
+        }
+        examData = data;
+        let qs = examData.questions;
+        if (typeof qs === 'string') qs = JSON.parse(qs);
+        questions = qs || [];
+        negMark = parseFloat(examData.neg_mark) || 0.25;
+        timeLeft = (parseInt(examData.duration) || 20) * 60;
+    }
+
+    // ===== PRE-EXAM SCREEN =====
+    function showPreExamScreen() {
+        document.getElementById('preExamTitle').textContent = examData.title || examData.chapter || 'Exam';
+        document.getElementById('preExamSubject').textContent = [examData.subject, examData.paper, examData.chapter].filter(Boolean).join(' • ');
+        document.getElementById('preSubject').textContent = examData.subject || '—';
+        document.getElementById('preChapter').textContent = [examData.paper, examData.chapter].filter(Boolean).join(' - ') || '—';
+        document.getElementById('preDuration').textContent = `${examData.duration || 20} মিনিট`;
+        document.getElementById('preTotalQ').textContent = `${questions.length} টি প্রশ্ন`;
+        document.getElementById('preNeg').textContent = examData.neg_mark ? `-${examData.neg_mark} প্রতি ভুলে` : '-0.25 প্রতি ভুলে';
+        document.getElementById('negMarkLabel').textContent = negMark;
+        if (examData.start_time) {
+            document.getElementById('preStartRow').style.display = 'flex';
+            document.getElementById('preStart').textContent = examData.start_time;
+        }
+        showScreen('preExamScreen');
+    }
+
+    function startExam() {
+        examStartTime = new Date();
+        showScreen('examScreen');
+        document.getElementById('subjectLabel').textContent = [examData.subject, examData.paper, examData.chapter].filter(Boolean).join(' | ');
+        document.getElementById('resultSubjectLabel').textContent = [examData.subject, examData.chapter].filter(Boolean).join(' | ');
+        renderNavDots();
+        showQuestion(0);
+        startTimer();
     }
 
     // ===== REGISTRATION =====
@@ -262,87 +468,29 @@
         const phone = document.getElementById('regPhone').value.trim();
         const social = document.getElementById('regSocial').value.trim();
 
-        if (!name || !phone) {
-            showRegError("নাম এবং ফোন নম্বর অবশ্যই দিতে হবে!");
-            return;
-        }
+        if (!name || !phone) { showRegError("নাম এবং ফোন নম্বর অবশ্যই দিতে হবে!"); return; }
 
-        btn.textContent = "রেজিস্ট্রেশন হচ্ছে...";
-        btn.disabled = true;
-
+        btn.textContent = "রেজিস্ট্রেশন হচ্ছে..."; btn.disabled = true;
         try {
-            // Check if phone exists
             const { data: existing } = await atlas.from('students').select('*').eq('whatsapp', phone).single();
-            
             let student;
-            if (existing) {
-                student = existing;
-            } else {
-                const { data, error } = await atlas.from('students').insert([{
-                    name, hsc_batch: batch, college, whatsapp: phone, social_link: social
-                }]).select().single();
+            if (existing) { student = existing; }
+            else {
+                const { data, error } = await atlas.from('students').insert([{ name, hsc_batch: batch, college, whatsapp: phone, social_link: social }]).select().single();
                 if (error) throw error;
                 student = data;
             }
-
             studentData = student;
             localStorage.setItem('atlas_student', JSON.stringify(student));
-
-            const examId = localStorage.getItem('last_exam_id');
-            await loadExam(examId);
-        } catch (err) {
+            showPreExamScreen();
+        } catch(err) {
             showRegError("Error: " + err.message);
-            btn.textContent = "শুরু করি → Exam দিতে যাই";
-            btn.disabled = false;
+            btn.textContent = "শুরু করি → Exam দিতে যাই"; btn.disabled = false;
         }
     }
-
     function showRegError(msg) {
         const el = document.getElementById('regError');
-        el.textContent = msg;
-        el.classList.remove('hidden');
-    }
-
-    // ===== LOAD EXAM =====
-    async function loadExam(examId) {
-        try {
-            const { data, error } = await atlas.from('exams')
-                .select('*')
-                .or(`exam_id.eq.${examId},id.eq.${examId}`)
-                .single();
-
-            if (error || !data) {
-                // Try by id as integer
-                const { data: d2, error: e2 } = await atlas.from('exams').select('*').eq('id', parseInt(examId)).single();
-                if (e2) throw new Error("Exam পাওয়া যায়নি!");
-                examData = d2;
-            } else {
-                examData = data;
-            }
-
-            // Parse questions
-            let qs = examData.questions;
-            if (typeof qs === 'string') qs = JSON.parse(qs);
-            questions = qs || [];
-            negMark = parseFloat(examData.neg_mark) || 0.25;
-            timeLeft = (parseInt(examData.duration) || 20) * 60;
-            examStartTime = new Date();
-
-            // Show exam
-            document.getElementById('regScreen').classList.add('hidden');
-            document.getElementById('examScreen').classList.remove('hidden');
-            document.getElementById('resultScreen').classList.add('hidden');
-
-            // Set labels
-            document.getElementById('subjectLabel').textContent = `${examData.subject || ''} | ${examData.paper || ''} | ${examData.chapter || ''}`;
-            document.getElementById('resultSubjectLabel').textContent = `${examData.subject || ''} | ${examData.chapter || ''}`;
-
-            renderNavDots();
-            showQuestion(0);
-            startTimer();
-        } catch (err) {
-            alert("Exam Load Error: " + err.message);
-        }
+        el.textContent = msg; el.classList.remove('hidden');
     }
 
     // ===== TIMER =====
@@ -351,20 +499,17 @@
         timerInterval = setInterval(() => {
             timeLeft--;
             updateTimerDisplay();
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                autoSubmit();
-            }
+            if (timeLeft <= 0) { clearInterval(timerInterval); autoSubmit(); }
         }, 1000);
     }
-
     function updateTimerDisplay() {
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        const s = (timeLeft % 60).toString().padStart(2, '0');
+        const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+        const s = (timeLeft % 60).toString().padStart(2,'0');
         const el = document.getElementById('timerDisplay');
         el.textContent = `${m}:${s}`;
+        el.className = 'timer-box';
         if (timeLeft <= 60) el.classList.add('danger');
-        else el.classList.remove('danger');
+        else if (timeLeft <= 180) el.classList.add('warning');
     }
 
     // ===== QUESTION RENDER =====
@@ -372,71 +517,82 @@
         if (index < 0 || index >= questions.length) return;
         currentQ = index;
         const q = questions[index];
+        const isLocked = lockedAnswers.has(index);
+        const prevAns = userAnswers[index];
+        const labels = ['A','B','C','D','E'];
 
-        // Build option key text (handles image options)
-        const getOptionHTML = (opt, num) => {
+        const optionHTML = [1,2,3,4,5].map(n => {
+            const opt = q[`option${n}`];
             if (!opt || opt.trim() === '') return '';
-            return `<button class="option-btn" id="opt${num}" onclick="selectAnswer(${num})">${opt}</button>`;
-        };
+            const isSelected = prevAns === n;
+            let cls = 'option-btn';
+            if (isSelected) cls += ' selected';
+            if (isLocked) cls += ' locked';
+            const lockIcon = (isLocked && isSelected) ? '<span class="lock-icon">🔒</span>' : '';
+            const clickHandler = isLocked ? '' : `onclick="selectAnswer(${n})"`;
+            return `<button class="${cls}" id="opt${n}" ${clickHandler}>
+                <span class="option-label">${labels[n-1]}</span>
+                <span style="flex:1">${opt}</span>
+                ${lockIcon}
+            </button>`;
+        }).join('');
 
-        const options = [1,2,3,4,5].map(n => getOptionHTML(q[`option${n}`], n)).join('');
-
-        // Question text
-        let qText = q.questions || q.question || '';
+        const sectionBadge = q.section ? `<span class="text-gray-400 text-[10px] font-bold uppercase">Section ${q.section}</span>` : '';
+        const qText = q.questions || q.question || '';
+        const hasExp = q.explanation && q.explanation.trim() !== '';
 
         document.getElementById('questionArea').innerHTML = `
             <div class="q-card">
-                <div class="flex justify-between items-center mb-3">
-                    <span class="bg-blue-900 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase">Q. ${index + 1} / ${questions.length}</span>
-                    <span class="text-gray-400 text-[10px] font-bold uppercase">${q.section ? 'Section ' + q.section : ''}</span>
+                <div class="flex items-center justify-between mb-4">
+                    <span class="q-number-badge">
+                        Q. ${index + 1} / ${questions.length}
+                        ${isLocked ? ' 🔒' : ''}
+                    </span>
+                    ${sectionBadge}
                 </div>
-                <p class="text-gray-800 font-semibold text-sm leading-relaxed mb-5">${qText}</p>
-                <div id="optionArea">${options}</div>
-                ${q.explanation ? `<div id="explanationBox" class="hidden mt-4 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-800 font-semibold leading-relaxed">💡 ${q.explanation}</div>` : ''}
+                <p class="text-gray-800 font-semibold text-sm leading-relaxed mb-4">${qText}</p>
+                <div id="optionArea">${optionHTML}</div>
+                ${hasExp ? `
+                <button onclick="toggleExplanation()" class="mt-3 text-xs font-black text-blue-600 bg-blue-50 px-4 py-2 rounded-xl border border-blue-100 w-full text-center transition-all hover:bg-blue-100">
+                    💡 Explanation দেখুন
+                </button>
+                <div id="explanationBox" class="explanation-box">
+                    💡 ${q.explanation}
+                </div>` : ''}
             </div>`;
 
-        // Apply previous answer styling
-        const prevAns = userAnswers[index];
-        if (prevAns !== undefined && prevAns !== 'skipped') {
-            highlightOption(prevAns, 'selected');
-        }
-
-        // Update counter & progress
         document.getElementById('qCounter').textContent = `${index + 1} / ${questions.length}`;
-        document.getElementById('progressFill').style.width = `${((index + 1) / questions.length) * 100}%`;
+        document.getElementById('progressFill').style.width = `${((Object.keys(userAnswers).length) / questions.length) * 100}%`;
         updateNavDots();
+        document.getElementById('questionArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function toggleExplanation() {
+        const box = document.getElementById('explanationBox');
+        box.classList.toggle('show');
     }
 
     function selectAnswer(num) {
+        if (lockedAnswers.has(currentQ)) return; // already locked
         userAnswers[currentQ] = num;
-        clearOptionStyles();
-        highlightOption(num, 'selected');
+        lockedAnswers.add(currentQ); // LOCK IT
+        
+        // Re-render with locked state
+        showQuestion(currentQ);
         updateNavDots();
-    }
-
-    function highlightOption(num, cls) {
-        const el = document.getElementById('opt' + num);
-        if (el) el.classList.add(cls);
-    }
-
-    function clearOptionStyles() {
-        [1,2,3,4,5].forEach(n => {
-            const el = document.getElementById('opt' + n);
-            if (el) el.className = 'option-btn';
-        });
     }
 
     // ===== NAV DOTS =====
     function renderNavDots() {
         const container = document.getElementById('navDots');
-        container.innerHTML = questions.map((_, i) => `
-            <div class="nav-dot" id="dot${i}" onclick="showQuestion(${i})">${i + 1}</div>
-        `).join('');
+        container.innerHTML = questions.map((_, i) =>
+            `<div class="nav-dot" id="dot${i}" onclick="showQuestion(${i})">${i+1}</div>`
+        ).join('');
+        updateNavDots();
     }
-
     function updateNavDots() {
         questions.forEach((_, i) => {
-            const dot = document.getElementById('dot' + i);
+            const dot = document.getElementById('dot'+i);
             if (!dot) return;
             dot.className = 'nav-dot';
             if (i === currentQ) dot.classList.add('current');
@@ -449,33 +605,37 @@
     function prevQuestion() { if (currentQ > 0) showQuestion(currentQ - 1); }
     function nextQuestion() { if (currentQ < questions.length - 1) showQuestion(currentQ + 1); }
     function skipQuestion() {
-        userAnswers[currentQ] = 'skipped';
-        updateNavDots();
+        if (!lockedAnswers.has(currentQ)) {
+            userAnswers[currentQ] = 'skipped';
+            updateNavDots();
+        }
         if (currentQ < questions.length - 1) showQuestion(currentQ + 1);
     }
 
-    // ===== SUBMIT =====
-    function confirmSubmit() {
+    // ===== SUBMIT MODAL =====
+    function showSubmitModal() {
         const answered = Object.keys(userAnswers).filter(k => userAnswers[k] !== 'skipped').length;
         const skipped = Object.keys(userAnswers).filter(k => userAnswers[k] === 'skipped').length;
         const unanswered = questions.length - Object.keys(userAnswers).length;
-
-        if (confirm(`Submit করবেন?\n✅ উত্তর দিয়েছেন: ${answered}\n⏭️ Skip করেছেন: ${skipped}\n❓ উত্তর দেননি: ${unanswered}\n\nSubmit করতে OK চাপুন।`)) {
-            submitExam();
-        }
+        document.getElementById('modalAnswered').textContent = answered;
+        document.getElementById('modalSkipped').textContent = skipped;
+        document.getElementById('modalUnanswered').textContent = unanswered;
+        document.getElementById('submitModal').classList.remove('hidden');
     }
-
+    function hideSubmitModal() {
+        document.getElementById('submitModal').classList.add('hidden');
+    }
     function autoSubmit() {
         alert("⏰ সময় শেষ! Exam Auto-Submit হচ্ছে...");
         submitExam();
     }
 
+    // ===== SUBMIT =====
     async function submitExam() {
+        hideSubmitModal();
         clearInterval(timerInterval);
-
-        // Calculate results
-        let correct = 0, wrong = 0, skipped = 0;
         const timeTaken = Math.floor((new Date() - examStartTime) / 1000);
+        let correct = 0, wrong = 0, skipped = 0;
 
         questions.forEach((q, i) => {
             const ans = userAnswers[i];
@@ -485,9 +645,9 @@
             else wrong++;
         });
 
-        const netMark = correct - (wrong * negMark);
-        const totalPossible = questions.length;
-        const percent = Math.round((Math.max(0, netMark) / totalPossible) * 100);
+        const netMarkVal = correct - (wrong * negMark);
+        const total = questions.length;
+        const percent = Math.round((Math.max(0, netMarkVal) / total) * 100);
 
         // Save to Supabase
         try {
@@ -498,45 +658,88 @@
                     subject: examData.subject,
                     chapter: examData.chapter,
                     correct, wrong, skipped,
-                    net_mark: netMark,
-                    total_questions: totalPossible,
+                    net_mark: netMarkVal,
+                    total_questions: total,
                     percent,
                     time_taken: timeTaken,
                     answers: userAnswers
                 }]);
             }
-        } catch (e) { console.log("Save error:", e); }
+        } catch(e) { console.log("Save error:", e); }
 
-        showResult(correct, wrong, skipped, netMark, totalPossible, percent);
+        showResult(correct, wrong, skipped, netMarkVal, total, percent);
     }
 
     // ===== RESULT =====
-    function showResult(correct, wrong, skipped, netMark, total, percent) {
-        document.getElementById('examScreen').classList.add('hidden');
-        document.getElementById('resultScreen').classList.remove('hidden');
+    function showResult(correct, wrong, skipped, netMarkVal, total, percent) {
+        showScreen('resultScreen');
 
+        // Stats
         document.getElementById('resCorrect').textContent = correct;
         document.getElementById('resWrong').textContent = wrong;
         document.getElementById('resSkipped').textContent = skipped;
         document.getElementById('scorePercent').textContent = percent + '%';
         document.getElementById('totalQ').textContent = total;
         document.getElementById('markCorrect').textContent = '+' + correct;
-        document.getElementById('markWrong').textContent = '-' + (wrong * negMark).toFixed(2);
-        document.getElementById('netMark').textContent = netMark.toFixed(2);
+        document.getElementById('markWrong').textContent = '−' + (wrong * negMark).toFixed(2);
+        document.getElementById('netMark').textContent = netMarkVal.toFixed(2);
 
-        // Score ring color
+        // Score ring animation
         const color = percent >= 70 ? '#16a34a' : percent >= 40 ? '#f59e0b' : '#dc2626';
-        document.getElementById('scoreRing').style.background = 
-            `conic-gradient(${color} ${percent * 3.6}deg, #e2e8f0 0deg)`;
+        const ring = document.getElementById('ringFill');
+        ring.style.stroke = color;
+        const circumference = 2 * Math.PI * 66; // r=66
+        const offset = circumference - (percent / 100) * circumference;
+        setTimeout(() => { ring.style.strokeDashoffset = offset; }, 200);
 
-        // Render review
+        // Percent color
+        document.getElementById('scorePercent').style.color = color;
+
+        // Pie Chart
+        if (chartInstance) chartInstance.destroy();
+        const ctx = document.getElementById('resultChart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Correct', 'Wrong', 'Skipped'],
+                datasets: [{
+                    data: [correct, wrong, skipped || 0.001],
+                    backgroundColor: ['#16a34a','#dc2626','#f59e0b'],
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { font: { size: 11, weight: 'bold' }, padding: 14, color: '#475569' }
+                    }
+                },
+                animation: { animateRotate: true, duration: 1000 }
+            }
+        });
+
         renderReview();
         window.scrollTo(0, 0);
     }
 
+    // ===== REVIEW =====
+    function filterReview(type) {
+        currentFilter = type;
+        ['all','correct','wrong','skipped'].forEach(t => {
+            document.getElementById('f' + t.charAt(0).toUpperCase() + t.slice(1)).classList.remove('active');
+        });
+        document.getElementById('f' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('active');
+        renderReview();
+    }
+
     function renderReview() {
         const container = document.getElementById('reviewSection');
-        container.innerHTML = questions.map((q, i) => {
+        const labels = ['A','B','C','D','E'];
+
+        const items = questions.map((q, i) => {
             const userAns = userAnswers[i];
             const correctAns = parseInt(q.answer);
             let status, statusClass, statusIcon;
@@ -549,31 +752,55 @@
                 status = 'Wrong'; statusClass = 'wrong-r'; statusIcon = '❌';
             }
 
-            const getOpt = (n) => q[`option${n}`] || '';
+            if (currentFilter !== 'all') {
+                if (currentFilter === 'correct' && status !== 'Correct') return '';
+                if (currentFilter === 'wrong' && status !== 'Wrong') return '';
+                if (currentFilter === 'skipped' && status !== 'Skipped') return '';
+            }
+
+            const getOpt = n => q[`option${n}`] || '';
             const correctText = getOpt(correctAns);
-            const userText = (userAns && userAns !== 'skipped') ? getOpt(parseInt(userAns)) : '---';
+            const correctLabel = labels[correctAns - 1] || '';
+            const userText = (userAns && userAns !== 'skipped') ? getOpt(parseInt(userAns)) : '—';
+            const userLabel = (userAns && userAns !== 'skipped') ? (labels[parseInt(userAns)-1] || '') : '';
+            const showUserAns = userAns && userAns !== 'skipped' && parseInt(userAns) !== correctAns;
 
             return `
                 <div class="review-item ${statusClass}">
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                        <span class="text-[10px] font-black bg-gray-100 px-2 py-1 rounded-full">Q.${i+1}</span>
-                        <span class="text-[10px] font-black">${statusIcon} ${status}</span>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[10px] font-black bg-gray-100 px-3 py-1 rounded-full text-gray-600">Q.${i+1}</span>
+                        <span class="text-[10px] font-black px-3 py-1 rounded-full ${
+                            status==='Correct'?'bg-green-100 text-green-700':
+                            status==='Wrong'?'bg-red-100 text-red-700':
+                            'bg-amber-100 text-amber-700'}">${statusIcon} ${status}</span>
                     </div>
                     <p class="text-sm font-semibold text-gray-800 mb-3 leading-relaxed">${q.questions || q.question || ''}</p>
-                    <div class="space-y-1 text-xs font-bold">
-                        <div class="flex gap-2 items-start">
-                            <span class="text-green-600 shrink-0">✓ সঠিক:</span>
+                    <div class="space-y-2 text-xs font-bold">
+                        <div class="flex gap-2 items-start p-2 bg-green-50 rounded-xl">
+                            <span class="w-5 h-5 bg-green-600 text-white rounded-md flex items-center justify-center shrink-0 text-[10px] font-black">${correctLabel}</span>
                             <span class="text-green-700">${correctText}</span>
                         </div>
-                        ${userAns !== 'skipped' && userAns !== undefined && parseInt(userAns) !== correctAns ? `
-                        <div class="flex gap-2 items-start">
-                            <span class="text-red-500 shrink-0">✗ তোমার:</span>
+                        ${showUserAns ? `
+                        <div class="flex gap-2 items-start p-2 bg-red-50 rounded-xl">
+                            <span class="w-5 h-5 bg-red-500 text-white rounded-md flex items-center justify-center shrink-0 text-[10px] font-black">${userLabel}</span>
                             <span class="text-red-600">${userText}</span>
                         </div>` : ''}
-                        ${q.explanation ? `<div class="mt-2 p-3 bg-blue-50 rounded-xl text-blue-700 leading-relaxed font-semibold">💡 ${q.explanation}</div>` : ''}
+                        ${q.explanation ? `<div class="p-3 bg-blue-50 rounded-xl text-blue-700 leading-relaxed font-semibold border border-blue-100">💡 ${q.explanation}</div>` : ''}
                     </div>
                 </div>`;
         }).join('');
+
+        container.innerHTML = items || `<div class="text-center py-8 text-gray-400 font-bold">কোনো প্রশ্ন নেই এই ফিল্টারে।</div>`;
+    }
+
+    // ===== RETRY =====
+    function retryExam() {
+        userAnswers = {};
+        lockedAnswers = new Set();
+        currentQ = 0;
+        chartInstance = null;
+        timeLeft = (parseInt(examData.duration) || 20) * 60;
+        showPreExamScreen();
     }
 
     // ===== PDF DOWNLOAD =====
@@ -585,68 +812,84 @@
 
         // Header
         doc.setFillColor(30, 64, 175);
-        doc.rect(0, 0, W, 30, 'F');
+        doc.rect(0, 0, W, 32, 'F');
         doc.setTextColor(255, 255, 255);
         doc.setFontSize(18);
         doc.setFont(undefined, 'bold');
-        doc.text('ATLAS - Exam Solve Sheet', margin, 18);
+        doc.text('ATLAS — Exam Solve Sheet', margin, 16);
         doc.setFontSize(9);
-        doc.text(`Subject: ${examData.subject || ''} | Chapter: ${examData.chapter || ''}`, margin, 26);
+        doc.text(`${examData.subject || ''} | ${examData.chapter || ''} | Score: ${document.getElementById('netMark').textContent}`, margin, 27);
 
-        y = 40;
-        doc.setTextColor(0, 0, 0);
-        doc.setFontSize(11);
+        y = 42;
+        // Student info bar
+        doc.setFillColor(241, 245, 249);
+        doc.rect(margin, y - 5, W - margin*2, 14, 'F');
+        doc.setTextColor(71, 85, 105);
+        doc.setFontSize(9);
         doc.setFont(undefined, 'bold');
-        doc.text(`Student: ${studentData?.name || 'N/A'} | Score: ${document.getElementById('netMark').textContent} | Correct: ${document.getElementById('resCorrect').textContent} | Wrong: ${document.getElementById('resWrong').textContent}`, margin, y);
+        doc.text(`Student: ${studentData?.name || 'N/A'} | Correct: ${document.getElementById('resCorrect').textContent} | Wrong: ${document.getElementById('resWrong').textContent} | Skipped: ${document.getElementById('resSkipped').textContent}`, margin + 3, y + 2);
+        y += 16;
 
-        y += 10;
-        doc.setLineWidth(0.3);
-        doc.line(margin, y, W - margin, y);
-        y += 8;
+        const labels = ['A','B','C','D','E'];
 
         questions.forEach((q, i) => {
             if (y > 270) { doc.addPage(); y = 20; }
 
             const userAns = userAnswers[i];
             const correctAns = parseInt(q.answer);
-            let statusColor = [100, 100, 100];
-            if (userAns === 'skipped' || userAns === undefined) statusColor = [217, 119, 6];
-            else if (parseInt(userAns) === correctAns) statusColor = [22, 163, 74];
-            else statusColor = [220, 38, 38];
+            let isCorrect = parseInt(userAns) === correctAns;
+            let isSkipped = userAns === 'skipped' || userAns === undefined;
+
+            // Status color
+            let statusColor = isCorrect ? [22,163,74] : isSkipped ? [217,119,6] : [220,38,38];
+
+            // Question background
+            doc.setFillColor(isCorrect ? 240 : isSkipped ? 255 : 255, isCorrect ? 253 : isSkipped ? 251 : 242, isCorrect ? 244 : isSkipped ? 235 : 242);
+            doc.rect(margin - 2, y - 4, W - margin*2 + 4, 6, 'F');
 
             doc.setFontSize(9);
             doc.setFont(undefined, 'bold');
             doc.setTextColor(...statusColor);
-            
             const qText = `Q${i+1}. ${(q.questions || q.question || '').substring(0, 120)}`;
-            const lines = doc.splitTextToSize(qText, W - margin * 2);
-            doc.text(lines, margin, y);
-            y += lines.length * 5 + 2;
+            const qLines = doc.splitTextToSize(qText, W - margin*2);
+            doc.text(qLines, margin, y);
+            y += qLines.length * 5 + 2;
 
+            // Correct answer
             doc.setTextColor(22, 163, 74);
             doc.setFont(undefined, 'normal');
-            const correctOpt = `✓ Correct: ${q['option'+correctAns] || ''}`.substring(0, 100);
-            doc.text(doc.splitTextToSize(correctOpt, W - margin * 2 - 5), margin + 5, y);
-            y += 6;
+            doc.setFontSize(8.5);
+            const correctOpt = `✓ [${labels[correctAns-1] || ''}] ${(q['option'+correctAns] || '').substring(0, 100)}`;
+            const cLines = doc.splitTextToSize(correctOpt, W - margin*2 - 8);
+            doc.text(cLines, margin + 8, y);
+            y += cLines.length * 4.5 + 1;
 
+            // Explanation
             if (q.explanation) {
                 doc.setTextColor(30, 64, 175);
-                const expLines = doc.splitTextToSize(`💡 ${q.explanation.substring(0, 150)}`, W - margin * 2 - 5);
-                doc.text(expLines, margin + 5, y);
+                doc.setFontSize(8);
+                const expLines = doc.splitTextToSize(`💡 ${q.explanation.substring(0, 180)}`, W - margin*2 - 8);
+                doc.text(expLines, margin + 8, y);
                 y += expLines.length * 4 + 2;
             }
 
-            doc.setTextColor(220, 220, 220);
+            // Divider
+            doc.setDrawColor(225, 231, 239);
+            doc.setLineWidth(0.2);
             doc.line(margin, y + 1, W - margin, y + 1);
             y += 6;
         });
 
         // Footer
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text('Generated by ATLAS | atlasmediprep.vercel.app', margin, 290);
+        const pageCount = doc.getNumberOfPages();
+        for (let p = 1; p <= pageCount; p++) {
+            doc.setPage(p);
+            doc.setFontSize(7.5);
+            doc.setTextColor(180);
+            doc.text(`ATLAS | atlasmediprep.vercel.app  —  Page ${p} of ${pageCount}`, margin, 292);
+        }
 
-        doc.save(`ATLAS_Exam_${examData.subject || 'exam'}_${examData.chapter || ''}.pdf`);
+        doc.save(`ATLAS_${examData.subject || 'Exam'}_${examData.chapter || ''}_Solve.pdf`);
     }
 </script>
 </body>
