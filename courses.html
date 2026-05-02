@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | All Courses</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
+        .logo-font { font-family: 'Sora', sans-serif; }
+        .course-card {
+            background: white; border-radius: 24px; border: 1.5px solid #f1f5f9;
+            overflow: hidden; transition: all 0.28s cubic-bezier(.4,0,.2,1); cursor: pointer;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+        }
+        .course-card:hover { transform: translateY(-5px); border-color: #bfdbfe; box-shadow: 0 16px 48px rgba(30,64,175,0.13); }
+        .course-card:active { transform: scale(0.98); }
+        .top-bar { height: 5px; }
+        .enroll-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, #1e40af, #1d4ed8);
+            color: white; font-weight: 800; font-size: 13px; border-radius: 14px;
+            text-decoration: none; letter-spacing: 0.05em; transition: 0.2s; border: none; cursor: pointer;
+        }
+        .enroll-btn:hover { background: linear-gradient(135deg, #1d4ed8, #2563eb); transform: scale(1.02); }
+        .hero-section {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%);
+            padding: 32px 20px 36px; position: relative; overflow: hidden;
+        }
+        .hero-section::before { content:''; position:absolute; top:-60px; right:-40px; width:250px; height:250px; background:rgba(59,130,246,0.15); border-radius:50%; }
+        .hero-section::after { content:''; position:absolute; bottom:-80px; left:-60px; width:200px; height:200px; background:rgba(124,58,237,0.1); border-radius:50%; }
+        .skeleton { background: linear-gradient(90deg,#f1f5f9 25%,#e2e8f0 50%,#f1f5f9 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:20px; }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .feature-tag { display:inline-block; padding:4px 12px; border-radius:20px; font-size:10px; font-weight:800; letter-spacing:0.05em; }
+        .badge-new { background:#fef3c7; color:#92400e; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; }
+        .badge-hot { background:#fee2e2; color:#991b1b; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; }
+        .empty-state { text-align:center; padding:80px 20px; }
+    </style>
+</head>
+<body class="pb-16">
+
+    <!-- Navbar -->
+    <nav class="bg-white px-5 py-4 flex items-center gap-3 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
+        <a href="index.html" style="text-decoration:none;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#16a34a,#15803d);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-style:italic;font-family:'Sora',sans-serif;font-size:16px;">A</div>
+        </a>
+        <div>
+            <div class="logo-font font-black text-blue-900 text-base">All Courses</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">সব কোর্স দেখো</div>
+        </div>
+        <div class="ml-auto">
+            <span id="courseCount" class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-xl"></span>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="hero-section relative z-10">
+        <div class="max-w-xl mx-auto">
+            <div class="text-blue-300 text-[11px] font-black uppercase tracking-widest mb-2 relative z-10">ATLAS Courses</div>
+            <h1 class="logo-font text-2xl font-black text-white mb-2 relative z-10">সেরা প্রস্তুতির কোর্স 🎓</h1>
+            <p class="text-blue-200 text-sm leading-relaxed relative z-10 mb-4">মেডিকেল ও ভার্সিটি প্রস্তুতির জন্য বাছাই করা কোর্সসমূহ।</p>
+            <div class="flex gap-3 relative z-10 flex-wrap">
+                <div class="bg-white/10 backdrop-blur rounded-xl px-4 py-2 text-center">
+                    <div class="text-white font-black text-lg logo-font" id="heroCount">—</div>
+                    <div class="text-blue-200 text-[10px] font-bold">Courses</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur rounded-xl px-4 py-2 text-center">
+                    <div class="text-white font-black text-lg logo-font">🔥</div>
+                    <div class="text-blue-200 text-[10px] font-bold">Premium</div>
+                </div>
+                <div class="bg-white/10 backdrop-blur rounded-xl px-4 py-2 text-center">
+                    <div class="text-white font-black text-lg logo-font">✅</div>
+                    <div class="text-blue-200 text-[10px] font-bold">Verified</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course List -->
+    <div class="max-w-xl mx-auto px-4 pt-6">
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-4">Available Courses</div>
+        <div id="courseList" class="space-y-4">
+            <div class="skeleton h-44"></div>
+            <div class="skeleton h-44"></div>
+            <div class="skeleton h-44"></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const courseIcons = ['🧬','🔬','⚗️','🧪','📐','📊','🏥','💊','🫀','🧠','🦷','👁️'];
+        const colorSchemes = [
+            { top:'linear-gradient(90deg,#1e40af,#3b82f6)', icon:'from-blue-500 to-blue-700', tagBg:'#eff6ff', tagColor:'#1e40af' },
+            { top:'linear-gradient(90deg,#7c3aed,#a78bfa)', icon:'from-purple-500 to-purple-700', tagBg:'#fdf4ff', tagColor:'#7c3aed' },
+            { top:'linear-gradient(90deg,#16a34a,#4ade80)', icon:'from-green-500 to-green-700', tagBg:'#f0fdf4', tagColor:'#16a34a' },
+            { top:'linear-gradient(90deg,#c2410c,#fb923c)', icon:'from-orange-500 to-orange-600', tagBg:'#fff7ed', tagColor:'#c2410c' },
+            { top:'linear-gradient(90deg,#e11d48,#fb7185)', icon:'from-rose-500 to-rose-700', tagBg:'#fff1f2', tagColor:'#e11d48' },
+            { top:'linear-gradient(90deg,#0891b2,#38bdf8)', icon:'from-cyan-500 to-cyan-700', tagBg:'#ecfeff', tagColor:'#0e7490' },
+        ];
+
+        window.onload = async () => {
+            const { data, error } = await db.from('courses').select('*').order('created_at', { ascending: false });
+            const container = document.getElementById('courseList');
+            const countEl = document.getElementById('courseCount');
+            const heroCount = document.getElementById('heroCount');
+
+            if(!data || data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="text-5xl mb-4">📚</div>
+                        <h3 class="logo-font font-black text-gray-700 text-lg mb-2">এখনো কোনো কোর্স নেই</h3>
+                        <p class="text-gray-400 text-sm">শীঘ্রই নতুন কোর্স আসছে!</p>
+                    </div>`;
+                countEl.textContent = '০ টি';
+                heroCount.textContent = '0';
+                return;
+            }
+
+            countEl.textContent = data.length + ' টি';
+            heroCount.textContent = data.length;
+
+            container.innerHTML = data.map((course, i) => {
+                const icon = courseIcons[i % courseIcons.length];
+                const cs = colorSchemes[i % colorSchemes.length];
+                const features = course.features ? course.features.split(',').map(f => f.trim()).filter(Boolean) : [];
+                const isNew = i === 0;
+                const isHot = course.is_popular;
+
+                return `
+                <div class="course-card" onclick="window.open('${course.link || '#'}', '_blank')">
+                    <div class="top-bar" style="background:${cs.top}"></div>
+                    <div class="p-5">
+                        <div class="flex items-start gap-4 mb-4">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${cs.icon} flex items-center justify-center text-2xl flex-shrink-0 shadow-lg">
+                                ${icon}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-1">
+                                    <h3 class="logo-font font-black text-gray-900 text-[17px] leading-snug">${course.name || 'Course'}</h3>
+                                    ${isNew ? '<span class="badge-new">🆕 New</span>' : ''}
+                                    ${isHot ? '<span class="badge-hot">🔥 Hot</span>' : ''}
+                                </div>
+                                ${course.description ? `<p class="text-gray-500 text-xs leading-relaxed line-clamp-2">${course.description}</p>` : ''}
+                            </div>
+                        </div>
+
+                        ${features.length > 0 ? `
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            ${features.map(f => `<span class="feature-tag" style="background:${cs.tagBg};color:${cs.tagColor};">${f}</span>`).join('')}
+                        </div>` : ''}
+
+                        ${course.price ? `
+                        <div class="flex items-center justify-between mb-4 bg-gray-50 rounded-xl p-3">
+                            <span class="text-xs font-bold text-gray-500">মূল্য</span>
+                            <span class="font-black text-blue-900 text-base logo-font">${course.price}</span>
+                        </div>` : ''}
+
+                        <button class="enroll-btn" onclick="event.stopPropagation(); window.open('${course.link || '#'}', '_blank')">
+                            কোর্সে যোগ দাও →
+                        </button>
+                    </div>
+                </div>`;
+            }).join('');
+        };
+    </script>
+</body>
+</html>
