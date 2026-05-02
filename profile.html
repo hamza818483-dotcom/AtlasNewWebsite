@@ -88,6 +88,13 @@
         </div>
 
         <!-- Exam History -->
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-4">
+            <button id="tabExam" onclick="switchTab('exam')" class="flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all">📝 Exam History</button>
+            <button id="tabClass" onclick="switchTab('class')" class="flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all">📚 Class History</button>
+        </div>
+
+        <div id="examHistorySection">
         <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Exam History</div>
         <div id="historyList" class="space-y-3">
             <div class="text-center py-10 text-gray-400 font-bold">
@@ -96,6 +103,20 @@
             </div>
         </div>
     </div>
+
+            </div> <!-- end examHistorySection -->
+        
+        <!-- Class History Section -->
+        <div id="classHistorySection" class="hidden">
+            <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Class History</div>
+            <div id="classHistoryList" class="space-y-3">
+                <div class="text-center py-10 text-gray-400 font-bold">
+                    <div class="text-4xl mb-3">📚</div>
+                    <p>লোড হচ্ছে...</p>
+                </div>
+            </div>
+        </div>
+    </div> <!-- end max-w-xl -->
 
     <!-- Detail Bottom Sheet -->
     <div class="detail-modal" id="detailModal">
@@ -138,10 +159,17 @@
         let studentId = null;
 
         window.onload = async () => {
-            const raw = localStorage.getItem('atlas_user');
+            const raw = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
             if(!raw) { window.location.href = 'register.html'; return; }
-
-            const user = JSON.parse(raw);
+            
+            const rawData = JSON.parse(raw);
+            const user = {
+                id: rawData.id,
+                name: rawData.name,
+                college: rawData.college,
+                batch: rawData.batch || rawData.hsc_batch,
+                phone: rawData.phone || rawData.whatsapp
+            };
             studentId = user.id;
 
             // Fill profile UI
@@ -308,11 +336,62 @@
 
         function logout() {
             if(confirm('Logout করতে চাও?')) {
-                localStorage.removeItem('atlas_user');
+                localStorage.removeItem('atlas_user'); localStorage.removeItem('atlas_student');
                 window.location.href = 'index.html';
             }
         }
 
+
+        let currentTab = 'exam';
+        function switchTab(tab) {
+            currentTab = tab;
+            if (tab === 'exam') {
+                document.getElementById('examHistorySection').classList.remove('hidden');
+                document.getElementById('classHistorySection').classList.add('hidden');
+                document.getElementById('tabExam').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+                document.getElementById('tabClass').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            } else {
+                document.getElementById('examHistorySection').classList.add('hidden');
+                document.getElementById('classHistorySection').classList.remove('hidden');
+                document.getElementById('tabExam').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+                document.getElementById('tabClass').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+                loadClassHistory();
+            }
+        }
+
+        let classHistoryLoaded = false;
+        async function loadClassHistory() {
+            if (classHistoryLoaded) return;
+            if (!studentId) return;
+            classHistoryLoaded = true;
+            const container = document.getElementById('classHistoryList');
+            try {
+                const { data } = await db.from('class_history').select('*').eq('student_id', studentId).order('last_accessed', { ascending: false });
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div class="text-center py-12"><div class="text-5xl mb-4">📚</div><div class="logo-font font-black text-gray-600 text-base mb-2">এখনো কোনো Class দেখোনি</div><p class="text-gray-400 text-sm">Class দেখলে এখানে history জমা হবে।</p><a href="classes.html" class="inline-block mt-4 bg-blue-900 text-white px-6 py-3 rounded-xl font-bold text-sm">Classes দেখো →</a></div>`;
+                    return;
+                }
+                container.innerHTML = data.map(cls => {
+                    const date = cls.last_accessed ? new Date(cls.last_accessed).toLocaleDateString('bn-BD', { day:'numeric', month:'short', year:'numeric' }) : '—';
+                    return `<div class="history-item"><div class="p-5">
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-black text-gray-800 text-sm">${cls.title || 'Class'}</div>
+                                <div class="flex gap-2 flex-wrap mt-1">
+                                    ${cls.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${cls.subject}</span>` : ''}
+                                    ${cls.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${cls.paper}</span>` : ''}
+                                    ${cls.chapter ? `<span style="font-size:10px;font-weight:800;color:#92400e;background:#fef9c3;border-radius:10px;padding:2px 8px;">${cls.chapter}</span>` : ''}
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;">🕐 ${date}</span>
+                                </div>
+                            </div>
+                            ${cls.link ? `<a href="${cls.link}" target="_blank" class="text-xs font-black text-blue-600 bg-blue-50 px-3 py-2 rounded-xl hover:bg-blue-100 shrink-0">দেখো →</a>` : ''}
+                        </div>
+                    </div></div>`;
+                }).join('');
+            } catch(e) {
+                container.innerHTML = `<div class="text-center py-8 text-gray-400 font-bold">Class history লোড করা যায়নি।</div>`;
+            }
+        }
         document.getElementById('detailModal').addEventListener('click', function(e) {
             if(e.target === this) closeDetail();
         });
