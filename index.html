@@ -17,7 +17,7 @@
         .card:hover { transform:translateY(-4px); border-color:#bfdbfe; box-shadow:0 12px 40px rgba(30,64,175,0.1); }
         .card:active { transform:scale(0.98); }
         .icon-box { border-radius:18px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
-        .countdown-card { background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 50%,#1e3a8a 100%); border-radius:28px; padding:24px; color:white; position:relative; overflow:hidden; margin-bottom: 12px; }
+        .countdown-card { background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 50%,#1e3a8a 100%); border-radius:28px; padding:24px; color:white; position:relative; overflow:hidden; }
         .countdown-card::before { content:''; position:absolute; top:-50%;right:-30%;width:200px;height:200px;background:rgba(255,255,255,0.05);border-radius:50%; }
         .countdown-num { font-family:'Sora',sans-serif; font-size:32px; font-weight:900; line-height:1; }
         .countdown-label { font-size:10px; font-weight:700; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em; }
@@ -25,6 +25,7 @@
         .profile-chip { background:white; border:1.5px solid #e2e8f0; border-radius:50px; padding:6px 16px 6px 8px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:0.2s; }
         .profile-chip:hover { border-color:#bfdbfe; }
         .avatar { width:32px;height:32px;background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px; }
+        .badge { background:#eff6ff; color:#1e40af; border-radius:20px; padding:3px 10px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; }
     </style>
 </head>
 <body>
@@ -39,6 +40,7 @@
     </nav>
 
     <div class="max-w-xl mx-auto px-4 pb-16 pt-6">
+
         <div class="mb-6">
             <h1 class="logo-font text-2xl font-black text-gray-900 leading-snug">আস্সালামু আলাইকুম! 👋</h1>
             <p class="text-gray-500 text-sm mt-1.5">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্ম।</p>
@@ -46,7 +48,7 @@
 
         <div id="countdownSection" class="mb-6 space-y-4 hidden">
             <div class="section-title">⏰ Upcoming Events</div>
-            <div id="countdownCards"></div>
+            <div id="countdownCards" class="space-y-4"></div>
         </div>
 
         <div class="section-title">Quick Access</div>
@@ -78,7 +80,10 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="avatar text-lg" id="profileAvatar">A</div>
-                <div><div class="font-bold text-gray-800" id="profileName">—</div><div class="text-xs text-gray-400" id="profileCollege">—</div></div>
+                <div>
+                    <div class="font-bold text-gray-800" id="profileName">—</div>
+                    <div class="text-xs text-gray-400" id="profileCollege">—</div>
+                </div>
             </div>
         </div>
 
@@ -100,15 +105,51 @@
             await loadCountdowns();
         };
 
+        function loadProfile() {
+            const raw = localStorage.getItem('atlas_user');
+            const profileArea = document.getElementById('profileArea');
+            if(raw) {
+                const user = JSON.parse(raw);
+                document.getElementById('studentCard').classList.remove('hidden');
+                document.getElementById('profileName').textContent = user.name || '—';
+                document.getElementById('profileCollege').textContent = user.college || '—';
+                document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+                profileArea.innerHTML = `
+                    <div class="profile-chip" onclick="window.location.href='profile.html'">
+                        <div class="avatar">${(user.name||'A')[0].toUpperCase()}</div>
+                        <span class="text-xs font-bold text-gray-700">${user.name || 'Profile'}</span>
+                    </div>`;
+            }
+        }
+
+        function goRegister() {
+            localStorage.setItem('atlas_redirect', 'index.html');
+            window.location.href = 'register.html';
+        }
+
+        function handleNav(url) {
+            const publicPages = ['reviews.html', 'courses.html'];
+            const raw = localStorage.getItem('atlas_user');
+            if(!raw && !publicPages.some(p => url.includes(p))) {
+                localStorage.setItem('atlas_redirect', url);
+                window.location.href = 'register.html';
+                return;
+            }
+            window.location.href = url;
+        }
+
         async function loadDynButtons() {
-            // exams, classes, countdown_cards ছাড়াও যদি 'home_buttons' টেবিলে ডাটা থাকে তবে তা লোড করবে
+            // home_buttons টেবিল থেকে ডাইনামিক বাটন লোড
             const { data } = await db.from('home_buttons').select('*').eq('is_active', true).order('created_at', {ascending: false});
-            if(data) {
+            if(data && data.length > 0) {
                 const container = document.getElementById('dynBtns');
                 data.forEach(btn => {
                     const div = document.createElement('div');
                     div.className = 'card p-5 flex items-center space-x-3';
-                    div.onclick = () => handleNav(btn.link || '#');
+                    div.onclick = () => {
+                        if(btn.type === 'external') window.open(btn.link, '_blank');
+                        else handleNav(btn.link);
+                    };
                     div.innerHTML = `
                         <div class="icon-box" style="background:${btn.color || '#eff6ff'}">${btn.icon || '🚀'}</div>
                         <div><div class="font-bold text-gray-800 text-[15px]">${btn.title}</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">দেখো</div></div>`;
@@ -118,6 +159,7 @@
         }
 
         async function loadCountdowns() {
+            // countdown_cards টেবিল থেকে একটিভ টাইমার লোড
             const { data } = await db.from('countdown_cards').select('*').eq('active', true).order('end_time');
             if(data && data.length > 0) {
                 document.getElementById('countdownSection').classList.remove('hidden');
@@ -155,38 +197,19 @@
                 const m = Math.floor((diff%(1000*60*60))/(1000*60));
                 const s = Math.floor((diff%60000)/1000);
                 const fmt = n => String(n).padStart(2,'0');
-                ['d','h','m','s'].forEach((u,i) => {
-                    const el = document.getElementById(u+'_'+id);
-                    if(el) el.textContent = fmt([d,h,m,s][i]);
-                });
+                
+                const dEl = document.getElementById('d_'+id);
+                const hEl = document.getElementById('h_'+id);
+                const mEl = document.getElementById('m_'+id);
+                const sEl = document.getElementById('s_'+id);
+                
+                if(dEl) dEl.textContent = fmt(d);
+                if(hEl) hEl.textContent = fmt(h);
+                if(mEl) mEl.textContent = fmt(m);
+                if(sEl) sEl.textContent = fmt(s);
             }
             tick();
             timers[id] = setInterval(tick, 1000);
-        }
-
-        function loadProfile() {
-            const raw = localStorage.getItem('atlas_user');
-            if(raw) {
-                const user = JSON.parse(raw);
-                document.getElementById('studentCard').classList.remove('hidden');
-                document.getElementById('profileName').textContent = user.name || '—';
-                document.getElementById('profileCollege').textContent = user.college || '—';
-                document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
-                document.getElementById('profileArea').innerHTML = `
-                    <div class="profile-chip" onclick="window.location.href='profile.html'">
-                        <div class="avatar">${(user.name||'A')[0].toUpperCase()}</div>
-                        <span class="text-xs font-bold text-gray-700">${user.name || 'Profile'}</span>
-                    </div>`;
-            }
-        }
-
-        function goRegister() { window.location.href = 'register.html'; }
-        function handleNav(url) {
-            const user = localStorage.getItem('atlas_user');
-            if(!user && !['reviews.html', 'courses.html'].includes(url)) {
-                localStorage.setItem('atlas_redirect', url);
-                window.location.href = 'register.html';
-            } else { window.location.href = url; }
         }
     </script>
 </body>
