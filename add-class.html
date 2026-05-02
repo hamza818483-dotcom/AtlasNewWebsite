@@ -7,117 +7,156 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
         .logo-font { font-family: 'Sora', sans-serif; }
         .card { background: white; border-radius: 28px; border: 1.5px solid #f1f5f9; }
-        .input-style {
-            width: 100%; padding: 12px 16px; border-radius: 14px;
-            border: 1.5px solid #e2e8f0; font-family: 'Hind Siliguri', sans-serif;
-            font-size: 14px; font-weight: 600; outline: none; transition: 0.2s; background: white;
-        }
+        .input-style { width: 100%; padding: 12px 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; font-family: 'Hind Siliguri', sans-serif; font-size: 14px; font-weight: 600; outline: none; transition: 0.2s; background: white; }
         .input-style:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; display: block; }
-        /* Select2 style */
-        .select2-container .select2-selection--single {
-            height: 48px; border-radius: 14px; border: 1.5px solid #e2e8f0;
-            display: flex; align-items: center;
-        }
-        .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 46px; padding-left: 16px; font-family: 'Hind Siliguri'; font-weight: 600; color: #374151;
-        }
+        .select2-container .select2-selection--single { height: 48px; border-radius: 14px; border: 1.5px solid #e2e8f0; display: flex; align-items: center; }
+        .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: 46px; padding-left: 16px; font-family: 'Hind Siliguri'; font-weight: 600; color: #374151; }
         .select2-container--default .select2-selection--single .select2-selection__arrow { height: 46px; right: 10px; }
         .select2-container--default.select2-container--focus .select2-selection--single { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); outline: none; }
         .class-row { background: white; border-radius: 20px; border: 1.5px solid #f1f5f9; padding: 16px 20px; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
         .class-row:hover { border-color: #fecaca; }
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(4px); }
         .modal-overlay.open { display: flex; }
-        .modal { background: white; border-radius: 24px; padding: 28px; width: 100%; max-width: 480px; }
-        .yt-thumb { width: 80px; height: 52px; border-radius: 10px; object-fit: cover; flex-shrink: 0; background: #fee2e2; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+        .modal { background: white; border-radius: 24px; padding: 28px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; }
+        .tab-btn { flex: 1; padding: 10px; border-radius: 12px; font-size: 12px; font-weight: 800; border: none; cursor: pointer; transition: 0.2s; background: #f1f5f9; color: #64748b; }
+        .tab-btn.active { background: #1e40af; color: white; }
+        .section-panel { display: none; }
+        .section-panel.active { display: block; }
     </style>
 </head>
 <body class="pb-20">
 
     <!-- Navbar -->
     <nav class="bg-white px-5 py-4 flex items-center gap-3 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
-        <a href="index.html"><img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'"></a>
+        <a href="index.html">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#16a34a,#15803d);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-style:italic;font-family:'Sora',sans-serif;font-size:16px;">A</div>
+        </a>
         <div>
-            <div class="logo-font font-black text-blue-900 text-base">Add Class</div>
-            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Admin Panel</div>
+            <div class="logo-font font-black text-blue-900 text-base">Admin Panel</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">Class + Timer Manager</div>
         </div>
         <div class="ml-auto">
             <a href="admin.html" class="text-xs font-bold text-blue-600 border border-blue-200 rounded-xl px-3 py-2">← Admin</a>
         </div>
     </nav>
 
-    <div class="max-w-xl mx-auto px-4 pt-6 pb-16">
-
-        <!-- Add Class Form -->
-        <div class="card shadow-xl p-6 mb-8">
-            <h2 class="logo-font font-black text-blue-900 text-lg mb-6">📺 নতুন Class Add করো</h2>
-
-            <!-- Subject / Paper / Chapter -->
-            <div class="grid grid-cols-1 gap-4 mb-5">
-                <div>
-                    <label class="label">Subject *</label>
-                    <select id="subject" class="subject-suggest" style="width:100%"></select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="label">Paper</label>
-                        <select id="paper" class="input-style">
-                            <option value="">— Paper নেই —</option>
-                            <option value="1st paper">১ম পত্র</option>
-                            <option value="2nd paper">২য় পত্র</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="label">Chapter *</label>
-                        <select id="chapter" class="chapter-suggest" style="width:100%"></select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- YouTube Link -->
-            <div class="mb-5">
-                <label class="label">YouTube Link *</label>
-                <input type="url" id="ytLink" class="input-style" placeholder="https://youtube.com/watch?v=...">
-            </div>
-
-            <!-- Preview -->
-            <div id="ytPreview" class="hidden mb-5 bg-red-50 rounded-2xl p-4 flex items-center gap-4">
-                <div style="width:120px;height:68px;border-radius:12px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">▶</div>
-                <div>
-                    <div class="text-xs text-gray-400 font-bold mb-1">YouTube Preview</div>
-                    <a id="ytPreviewLink" href="#" target="_blank" class="text-sm font-bold text-red-700 underline break-all">Link দেখো</a>
-                </div>
-            </div>
-
-            <!-- Add Button -->
-            <button onclick="addClass()" id="addBtn" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-red-700 transition-colors text-sm">
-                📺 Class Add করো
-            </button>
+    <!-- Tabs -->
+    <div class="max-w-xl mx-auto px-4 pt-5">
+        <div class="flex gap-2 mb-5">
+            <button class="tab-btn active" onclick="switchTab('class', this)">📺 Add Class</button>
+            <button class="tab-btn" onclick="switchTab('timer', this)">⏰ Countdown Timer</button>
         </div>
 
-        <!-- Status -->
-        <div id="status" class="hidden p-4 mb-5 rounded-2xl text-center font-bold text-sm"></div>
+        <!-- ============ CLASS TAB ============ -->
+        <div id="classPanel" class="section-panel active">
+            <div class="card shadow-xl p-6 mb-6">
+                <h2 class="logo-font font-black text-blue-900 text-lg mb-5">📺 নতুন Class Add করো</h2>
 
-        <!-- Class List -->
-        <div>
-            <div class="logo-font font-black text-gray-700 text-sm uppercase tracking-wide mb-4">সব Class — <span id="classCount" class="text-red-600">লোড হচ্ছে...</span></div>
-            <div id="classList" class="space-y-3"></div>
+                <div class="grid grid-cols-1 gap-4 mb-4">
+                    <div>
+                        <label class="label">Subject *</label>
+                        <select id="subject" class="subject-suggest" style="width:100%"></select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="label">Paper</label>
+                            <select id="paper" class="input-style">
+                                <option value="">— Paper নেই —</option>
+                                <option value="1st paper">১ম পত্র</option>
+                                <option value="2nd paper">২য় পত্র</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="label">Chapter *</label>
+                            <select id="chapter" class="chapter-suggest" style="width:100%"></select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="label">Class Title (optional)</label>
+                        <input type="text" id="classTitle" class="input-style" placeholder="যেমন: Thermodynamics Lecture 1">
+                    </div>
+                    <div>
+                        <label class="label">YouTube / Video Link *</label>
+                        <input type="url" id="ytLink" class="input-style" placeholder="https://youtube.com/watch?v=...">
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div id="ytPreview" class="hidden mb-4 bg-red-50 rounded-2xl p-4 flex items-center gap-4">
+                    <div style="width:90px;height:58px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">▶</div>
+                    <div>
+                        <div class="text-xs text-gray-400 font-bold mb-1">YouTube Preview</div>
+                        <a id="ytPreviewLink" href="#" target="_blank" class="text-sm font-bold text-red-700 underline break-all">Link দেখো</a>
+                    </div>
+                </div>
+
+                <button onclick="addClass()" id="addBtn" class="w-full bg-gradient-to-r from-red-600 to-red-700 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl text-sm transition-all hover:from-red-700 hover:to-red-800">
+                    📺 Class Add করো
+                </button>
+            </div>
+
+            <div id="classStatus" class="hidden p-4 mb-4 rounded-2xl text-center font-bold text-sm"></div>
+
+            <!-- Class List -->
+            <div>
+                <div class="logo-font font-black text-gray-700 text-sm uppercase tracking-wide mb-3">সব Class — <span id="classCount" class="text-red-600">লোড হচ্ছে...</span></div>
+                <div id="classList" class="space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- ============ TIMER TAB ============ -->
+        <div id="timerPanel" class="section-panel">
+            <div class="card shadow-xl p-6 mb-6">
+                <h2 class="logo-font font-black text-blue-900 text-lg mb-5">⏰ নতুন Countdown Add করো</h2>
+
+                <div class="space-y-4 mb-4">
+                    <div>
+                        <label class="label">Title *</label>
+                        <input type="text" id="cdTitle" class="input-style" placeholder="যেমন: HSC 2026 Final Exam">
+                    </div>
+                    <div>
+                        <label class="label">Description (optional)</label>
+                        <input type="text" id="cdDesc" class="input-style" placeholder="ছোট বিবরণ">
+                    </div>
+                    <div>
+                        <label class="label">End Date & Time *</label>
+                        <input type="datetime-local" id="cdEndTime" class="input-style">
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" id="cdActive" checked class="w-5 h-5 accent-blue-700 cursor-pointer">
+                        <label for="cdActive" class="text-sm font-bold text-gray-700 cursor-pointer">Active (Homepage এ দেখাবে)</label>
+                    </div>
+                </div>
+
+                <button onclick="addCountdown()" id="cdBtn" class="w-full bg-gradient-to-r from-blue-700 to-blue-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl text-sm">
+                    ⏰ Countdown Add করো
+                </button>
+            </div>
+
+            <div id="timerStatus" class="hidden p-4 mb-4 rounded-2xl text-center font-bold text-sm"></div>
+
+            <!-- Timer List -->
+            <div>
+                <div class="logo-font font-black text-gray-700 text-sm uppercase tracking-wide mb-3">সব Countdown — <span id="cdCount" class="text-blue-600">লোড হচ্ছে...</span></div>
+                <div id="cdList" class="space-y-3"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Edit Modal -->
+    <!-- Edit Class Modal -->
     <div class="modal-overlay" id="editModal">
         <div class="modal">
             <h3 class="logo-font font-black text-blue-900 text-lg mb-5">✏️ Class Edit করো</h3>
             <input type="hidden" id="editClassId">
-            <div class="grid grid-cols-1 gap-4 mb-5">
+            <div class="space-y-4 mb-5">
                 <div>
                     <label class="label">Subject</label>
                     <input type="text" id="editSubject" class="input-style">
@@ -137,13 +176,47 @@
                     </div>
                 </div>
                 <div>
+                    <label class="label">Class Title</label>
+                    <input type="text" id="editTitle" class="input-style">
+                </div>
+                <div>
                     <label class="label">YouTube Link</label>
                     <input type="url" id="editLink" class="input-style">
                 </div>
             </div>
             <div class="flex gap-3">
-                <button onclick="saveEdit()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-black text-sm hover:bg-blue-800 transition-colors">✅ Save</button>
-                <button onclick="closeModal()" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-black text-sm hover:bg-gray-200 transition-colors">বাতিল</button>
+                <button onclick="saveClassEdit()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-black text-sm hover:bg-blue-800">✅ Save</button>
+                <button onclick="closeModal('editModal')" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-black text-sm">বাতিল</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Countdown Modal -->
+    <div class="modal-overlay" id="editCdModal">
+        <div class="modal">
+            <h3 class="logo-font font-black text-blue-900 text-lg mb-5">✏️ Countdown Edit করো</h3>
+            <input type="hidden" id="editCdId">
+            <div class="space-y-4 mb-5">
+                <div>
+                    <label class="label">Title</label>
+                    <input type="text" id="editCdTitle" class="input-style">
+                </div>
+                <div>
+                    <label class="label">Description</label>
+                    <input type="text" id="editCdDesc" class="input-style">
+                </div>
+                <div>
+                    <label class="label">End Date & Time</label>
+                    <input type="datetime-local" id="editCdEndTime" class="input-style">
+                </div>
+                <div class="flex items-center gap-3">
+                    <input type="checkbox" id="editCdActive" class="w-5 h-5 accent-blue-700 cursor-pointer">
+                    <label for="editCdActive" class="text-sm font-bold text-gray-700">Active</label>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveCdEdit()" class="flex-1 bg-blue-900 text-white py-3 rounded-xl font-black text-sm hover:bg-blue-800">✅ Save</button>
+                <button onclick="closeModal('editCdModal')" class="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl font-black text-sm">বাতিল</button>
             </div>
         </div>
     </div>
@@ -153,132 +226,103 @@
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
         const atlas = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+        function switchTab(tab, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(tab + 'Panel').classList.add('active');
+        }
+
         $(document).ready(function() {
             loadMetaData();
+            loadCountdowns();
 
-            // YouTube link preview
             $('#ytLink').on('input', function() {
                 const val = $(this).val().trim();
                 if(val.includes('youtube.com') || val.includes('youtu.be')) {
                     $('#ytPreviewLink').attr('href', val).text(val.length > 50 ? val.substring(0,50)+'...' : val);
                     $('#ytPreview').removeClass('hidden');
-                } else {
-                    $('#ytPreview').addClass('hidden');
-                }
+                } else { $('#ytPreview').addClass('hidden'); }
             });
         });
 
         async function loadMetaData() {
             try {
-                // Load from both classes and exams for suggestions
                 const [classRes, examRes] = await Promise.all([
                     atlas.from('classes').select('subject, paper, chapter'),
                     atlas.from('exams').select('subject, paper, chapter')
                 ]);
-
                 const allData = [...(classRes.data||[]), ...(examRes.data||[])];
                 const getUnique = (k) => [...new Set(allData.map(e => e[k]).filter(Boolean))];
 
-                $('.subject-suggest').select2({
-                    tags: true, placeholder: 'Subject লিখো বা বেছে নাও',
-                    data: getUnique('subject').map(v => ({id: v, text: v}))
-                });
-                $('.chapter-suggest').select2({
-                    tags: true, placeholder: 'Chapter লিখো বা বেছে নাও',
-                    data: getUnique('chapter').map(v => ({id: v, text: v}))
-                });
-
+                $('.subject-suggest').select2({ tags: true, placeholder: 'Subject লিখো বা বেছে নাও', data: getUnique('subject').map(v => ({id:v,text:v})) });
+                $('.chapter-suggest').select2({ tags: true, placeholder: 'Chapter লিখো বা বেছে নাও', data: getUnique('chapter').map(v => ({id:v,text:v})) });
                 renderClasses();
-            } catch(err) {
-                console.error('Meta Load Error:', err.message);
-                renderClasses();
-            }
+            } catch(err) { renderClasses(); }
         }
 
-        function showStatus(msg, ok) {
-            const s = $('#status');
-            s.removeClass('hidden bg-green-100 text-green-800 bg-red-100 text-red-800');
-            s.addClass(ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800');
-            s.text(msg).removeClass('hidden');
-            setTimeout(() => s.addClass('hidden'), 4000);
+        function showStatus(elId, msg, ok) {
+            const s = document.getElementById(elId);
+            s.className = `p-4 mb-4 rounded-2xl text-center font-bold text-sm ${ok ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+            s.textContent = msg;
+            setTimeout(() => s.classList.add('hidden'), 4000);
         }
 
         async function addClass() {
-            const btn = $('#addBtn');
+            const btn = document.getElementById('addBtn');
             const sub = $('#subject').val();
             const chap = $('#chapter').val();
             const link = $('#ytLink').val().trim();
+            const title = $('#classTitle').val().trim();
 
-            if(!sub || !chap || !link) {
-                showStatus('❌ Subject, Chapter এবং YouTube Link দরকার!', false);
-                return;
-            }
+            if(!sub || !chap || !link) { showStatus('classStatus', '❌ Subject, Chapter এবং Link দরকার!', false); return; }
+            if(!link.includes('youtube.com') && !link.includes('youtu.be')) { showStatus('classStatus', '❌ সঠিক YouTube Link দাও', false); return; }
 
-            if(!link.includes('youtube.com') && !link.includes('youtu.be')) {
-                showStatus('❌ সঠিক YouTube Link দাও', false);
-                return;
-            }
-
+            btn.textContent = '⏳ যোগ হচ্ছে...'; btn.disabled = true;
             try {
-                btn.text('⏳ যোগ করা হচ্ছে...').prop('disabled', true);
-
-                const { error } = await atlas.from('classes').insert([{
-                    subject: sub,
-                    paper: $('#paper').val() || null,
-                    chapter: chap,
-                    link: link
-                }]);
-
+                const { error } = await atlas.from('classes').insert([{ subject: sub, paper: $('#paper').val()||null, chapter: chap, title: title||null, link }]);
                 if(error) throw error;
-
-                showStatus('✅ Class সফলভাবে যোগ হয়েছে!', true);
-
-                // Reset
+                showStatus('classStatus', '✅ Class সফলভাবে যোগ হয়েছে!', true);
                 $('#subject').val(null).trigger('change');
                 $('#chapter').val(null).trigger('change');
-                $('#paper').val('');
-                $('#ytLink').val('');
+                $('#paper').val(''); $('#ytLink').val(''); $('#classTitle').val('');
                 $('#ytPreview').addClass('hidden');
-
                 renderClasses();
-
-            } catch(err) {
-                showStatus('❌ Error: ' + err.message, false);
-            } finally {
-                btn.text('📺 Class Add করো').prop('disabled', false);
-            }
+            } catch(err) { showStatus('classStatus', '❌ Error: ' + err.message, false); }
+            finally { btn.textContent = '📺 Class Add করো'; btn.disabled = false; }
         }
 
         async function renderClasses() {
             const { data } = await atlas.from('classes').select('*').order('created_at', {ascending: false});
             const list = data || [];
-            $('#classCount').text(list.length + ' টি');
-
+            document.getElementById('classCount').textContent = list.length + ' টি';
             if(list.length === 0) {
-                $('#classList').html('<div class="text-center py-10 text-gray-400 font-bold">কোনো Class নেই। উপরে Add করো।</div>');
+                document.getElementById('classList').innerHTML = '<div class="text-center py-8 text-gray-400 font-bold">কোনো Class নেই।</div>';
                 return;
             }
-
-            $('#classList').html(list.map(cls => {
+            document.getElementById('classList').innerHTML = list.map(cls => {
                 const ytId = extractYTId(cls.link || '');
-                const thumb = ytId ? `<img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" alt="" style="width:80px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;">` : `<div style="width:80px;height:52px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📺</div>`;
+                const thumb = ytId
+                    ? `<img src="https://img.youtube.com/vi/${ytId}/mqdefault.jpg" style="width:76px;height:50px;border-radius:10px;object-fit:cover;flex-shrink:0;">`
+                    : `<div style="width:76px;height:50px;border-radius:10px;background:#fee2e2;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📺</div>`;
                 return `
                 <div class="class-row">
                     ${thumb}
                     <div class="flex-1 min-w-0">
-                        <div class="font-black text-gray-800 text-sm truncate">${cls.chapter || 'Class'}</div>
+                        <div class="font-black text-gray-800 text-sm truncate">${cls.title || cls.chapter || 'Class'}</div>
+                        <div class="text-xs text-gray-500 truncate">${cls.chapter || ''}</div>
                         <div class="flex gap-2 flex-wrap mt-1">
                             ${cls.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${cls.subject}</span>` : ''}
                             ${cls.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${cls.paper}</span>` : ''}
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <a href="${cls.link||'#'}" target="_blank" class="bg-red-100 text-red-700 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-red-200 transition-colors">▶ Watch</a>
-                        <button onclick="openEdit(${JSON.stringify(cls).replace(/"/g,'&quot;')})" class="bg-yellow-100 text-yellow-800 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-yellow-200 transition-colors">Edit</button>
-                        <button onclick="deleteClass(${cls.id})" class="bg-red-100 text-red-600 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-red-200 transition-colors">Del</button>
+                        <a href="${cls.link||'#'}" target="_blank" class="bg-red-100 text-red-700 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-red-200">▶</a>
+                        <button onclick='openClassEdit(${JSON.stringify(cls).replace(/'/g,"&#39;")})' class="bg-yellow-100 text-yellow-800 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-yellow-200">Edit</button>
+                        <button onclick="deleteClass(${cls.id})" class="bg-red-100 text-red-600 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-red-200">Del</button>
                     </div>
                 </div>`;
-            }).join(''));
+            }).join('');
         }
 
         function extractYTId(url) {
@@ -286,33 +330,31 @@
             return m ? m[1] : null;
         }
 
-        function openEdit(cls) {
-            $('#editClassId').val(cls.id);
-            $('#editSubject').val(cls.subject || '');
-            $('#editPaper').val(cls.paper || '');
-            $('#editChapter').val(cls.chapter || '');
-            $('#editLink').val(cls.link || '');
-            $('#editModal').addClass('open');
+        function openClassEdit(cls) {
+            document.getElementById('editClassId').value = cls.id;
+            document.getElementById('editSubject').value = cls.subject || '';
+            document.getElementById('editPaper').value = cls.paper || '';
+            document.getElementById('editChapter').value = cls.chapter || '';
+            document.getElementById('editTitle').value = cls.title || '';
+            document.getElementById('editLink').value = cls.link || '';
+            document.getElementById('editModal').classList.add('open');
         }
 
-        function closeModal() { $('#editModal').removeClass('open'); }
-
-        async function saveEdit() {
-            const id = $('#editClassId').val();
+        async function saveClassEdit() {
+            const id = document.getElementById('editClassId').value;
             try {
                 const { error } = await atlas.from('classes').update({
-                    subject: $('#editSubject').val(),
-                    paper: $('#editPaper').val() || null,
-                    chapter: $('#editChapter').val(),
-                    link: $('#editLink').val().trim()
+                    subject: document.getElementById('editSubject').value,
+                    paper: document.getElementById('editPaper').value || null,
+                    chapter: document.getElementById('editChapter').value,
+                    title: document.getElementById('editTitle').value || null,
+                    link: document.getElementById('editLink').value.trim()
                 }).eq('id', id);
                 if(error) throw error;
-                closeModal();
-                showStatus('✅ Class Updated!', true);
+                closeModal('editModal');
+                showStatus('classStatus', '✅ Class Updated!', true);
                 renderClasses();
-            } catch(err) {
-                showStatus('❌ Error: ' + err.message, false);
-            }
+            } catch(err) { showStatus('classStatus', '❌ Error: ' + err.message, false); }
         }
 
         async function deleteClass(id) {
@@ -320,14 +362,115 @@
             try {
                 const { error } = await atlas.from('classes').delete().eq('id', id);
                 if(error) throw error;
-                showStatus('✅ Class মুছে গেছে', true);
+                showStatus('classStatus', '✅ Class মুছে গেছে', true);
                 renderClasses();
-            } catch(err) {
-                showStatus('❌ Delete Error: ' + err.message, false);
-            }
+            } catch(err) { showStatus('classStatus', '❌ Error: ' + err.message, false); }
         }
 
-        $('#editModal').on('click', function(e) { if(e.target === this) closeModal(); });
+        // ===== COUNTDOWN =====
+        async function addCountdown() {
+            const btn = document.getElementById('cdBtn');
+            const title = document.getElementById('cdTitle').value.trim();
+            const desc = document.getElementById('cdDesc').value.trim();
+            const endTime = document.getElementById('cdEndTime').value;
+            const isActive = document.getElementById('cdActive').checked;
+
+            if(!title || !endTime) { showStatus('timerStatus', '❌ Title এবং End Time দিতে হবে!', false); return; }
+
+            btn.textContent = '⏳ যোগ হচ্ছে...'; btn.disabled = true;
+            try {
+                const { error } = await atlas.from('countdown_cards').insert([{ title, description: desc||null, end_time: new Date(endTime).toISOString(), active: isActive }]);
+                if(error) throw error;
+                showStatus('timerStatus', '✅ Countdown যোগ হয়েছে!', true);
+                document.getElementById('cdTitle').value = '';
+                document.getElementById('cdDesc').value = '';
+                document.getElementById('cdEndTime').value = '';
+                loadCountdowns();
+            } catch(err) { showStatus('timerStatus', '❌ Error: ' + err.message, false); }
+            finally { btn.textContent = '⏰ Countdown Add করো'; btn.disabled = false; }
+        }
+
+        async function loadCountdowns() {
+            const { data } = await atlas.from('countdown_cards').select('*').order('end_time');
+            const list = data || [];
+            document.getElementById('cdCount').textContent = list.length + ' টি';
+
+            if(list.length === 0) {
+                document.getElementById('cdList').innerHTML = '<div class="text-center py-8 text-gray-400 font-bold">কোনো Countdown নেই।</div>';
+                return;
+            }
+
+            document.getElementById('cdList').innerHTML = list.map(cd => {
+                const endDate = new Date(cd.end_time).toLocaleString('bn-BD');
+                const isActive = cd.active;
+                return `
+                <div class="class-row">
+                    <div style="width:48px;height:48px;background:${isActive?'linear-gradient(135deg,#1e40af,#1d4ed8)':'#e2e8f0'};border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">⏰</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-black text-gray-800 text-sm truncate">${cd.title}</div>
+                        ${cd.description ? `<div class="text-xs text-gray-500 truncate">${cd.description}</div>` : ''}
+                        <div class="text-[10px] text-gray-400 font-bold mt-0.5">${endDate}</div>
+                        <span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;background:${isActive?'#f0fdf4':'#f1f5f9'};color:${isActive?'#16a34a':'#94a3b8'};">${isActive?'✅ Active':'⏸ Inactive'}</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <button onclick="toggleCd(${cd.id}, ${!isActive})" class="bg-${isActive?'yellow':'green'}-100 text-${isActive?'yellow':'green'}-700 text-xs font-black px-3 py-1.5 rounded-xl hover:opacity-80">${isActive?'Hide':'Show'}</button>
+                        <button onclick='openCdEdit(${JSON.stringify(cd).replace(/'/g,"&#39;")})' class="bg-blue-100 text-blue-700 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-blue-200">Edit</button>
+                        <button onclick="deleteCd(${cd.id})" class="bg-red-100 text-red-600 text-xs font-black px-3 py-1.5 rounded-xl hover:bg-red-200">Del</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function toggleCd(id, newActive) {
+            await atlas.from('countdown_cards').update({ active: newActive }).eq('id', id);
+            loadCountdowns();
+        }
+
+        function openCdEdit(cd) {
+            document.getElementById('editCdId').value = cd.id;
+            document.getElementById('editCdTitle').value = cd.title || '';
+            document.getElementById('editCdDesc').value = cd.description || '';
+            // Format datetime-local value
+            if(cd.end_time) {
+                const d = new Date(cd.end_time);
+                const pad = n => String(n).padStart(2,'0');
+                document.getElementById('editCdEndTime').value = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+            }
+            document.getElementById('editCdActive').checked = cd.active;
+            document.getElementById('editCdModal').classList.add('open');
+        }
+
+        async function saveCdEdit() {
+            const id = document.getElementById('editCdId').value;
+            const endTime = document.getElementById('editCdEndTime').value;
+            try {
+                const { error } = await atlas.from('countdown_cards').update({
+                    title: document.getElementById('editCdTitle').value.trim(),
+                    description: document.getElementById('editCdDesc').value.trim() || null,
+                    end_time: endTime ? new Date(endTime).toISOString() : undefined,
+                    active: document.getElementById('editCdActive').checked
+                }).eq('id', id);
+                if(error) throw error;
+                closeModal('editCdModal');
+                showStatus('timerStatus', '✅ Countdown Updated!', true);
+                loadCountdowns();
+            } catch(err) { showStatus('timerStatus', '❌ Error: ' + err.message, false); }
+        }
+
+        async function deleteCd(id) {
+            if(!confirm('⚠️ এই Countdown মুছে ফেলতে চাও?')) return;
+            try {
+                const { error } = await atlas.from('countdown_cards').delete().eq('id', id);
+                if(error) throw error;
+                showStatus('timerStatus', '✅ Countdown মুছে গেছে', true);
+                loadCountdowns();
+            } catch(err) { showStatus('timerStatus', '❌ Error: ' + err.message, false); }
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+        document.getElementById('editModal').addEventListener('click', function(e) { if(e.target===this) closeModal('editModal'); });
+        document.getElementById('editCdModal').addEventListener('click', function(e) { if(e.target===this) closeModal('editCdModal'); });
     </script>
 </body>
 </html>
