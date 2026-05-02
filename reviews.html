@@ -10,35 +10,67 @@
     <style>
         body { font-family: 'Hind Siliguri', sans-serif; background: #f0f4f8; }
         .logo-font { font-family: 'Sora', sans-serif; }
-        .filter-btn { padding: 8px 18px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 2px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; white-space: nowrap; transition: 0.2s; letter-spacing: 0.05em; text-transform: uppercase; }
-        .filter-btn.active { background: #1e40af; color: white; border-color: #1e40af; }
+
+        /* Filter tabs */
+        .filter-btn { padding: 9px 20px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 2px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; white-space: nowrap; transition: 0.2s; letter-spacing: 0.05em; text-transform: uppercase; }
+        .filter-btn.active { background: #1e40af; color: white; border-color: #1e40af; box-shadow: 0 4px 14px rgba(30,64,175,0.3); }
         .filter-btn:hover:not(.active) { border-color: #bfdbfe; color: #1e40af; }
-        .review-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1.5px solid #f1f5f9; transition: 0.2s; }
-        .review-card:hover { box-shadow: 0 8px 30px rgba(30,64,175,0.1); border-color: #bfdbfe; }
-        .category-badge { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
+        .scroll-hidden::-webkit-scrollbar { display: none; }
+
+        /* Review card */
+        .review-card { background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.06); border: 1.5px solid #f1f5f9; transition: 0.25s; animation: fadeUp 0.4s ease; }
+        .review-card:hover { box-shadow: 0 10px 36px rgba(30,64,175,0.1); border-color: #bfdbfe; transform: translateY(-2px); }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+        /* Category badge */
+        .category-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; }
         .cat-Class { background: #eff6ff; color: #1e40af; }
         .cat-Exam { background: #f0fdf4; color: #16a34a; }
         .cat-Mentoring { background: #fdf4ff; color: #7c3aed; }
+        .cat-Course { background: #fff7ed; color: #c2410c; }
         .cat-Service { background: #fff7ed; color: #c2410c; }
-        .avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 16px; color: white; flex-shrink: 0; }
-        .review-img { width: 100%; display: block; max-height: 420px; object-fit: cover; }
-        .star-display { color: #fbbf24; font-size: 14px; letter-spacing: 1px; }
-        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
+
+        /* Avatar */
+        .avatar { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 17px; color: white; flex-shrink: 0; }
+
+        /* Image */
+        .review-img { width: 100%; display: block; max-height: 400px; object-fit: cover; cursor: pointer; transition: 0.2s; }
+        .review-img:hover { opacity: 0.92; }
+        .img-tap-hint { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.55); border-radius: 8px; padding: 4px 10px; color: white; font-size: 10px; font-weight: 700; pointer-events: none; }
+
+        /* Stars */
+        .star-display { color: #fbbf24; font-size: 13px; letter-spacing: 1px; }
+
+        /* Lightbox */
+        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 16px; }
         .lightbox.open { display: flex; }
-        .lightbox img { max-width: 100%; max-height: 90vh; border-radius: 16px; object-fit: contain; }
-        .scroll-hidden::-webkit-scrollbar { display: none; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #94a3b8; }
+        .lightbox-inner { position: relative; max-width: 100%; max-height: 90vh; }
+        .lightbox img { max-width: 100%; max-height: 88vh; border-radius: 16px; object-fit: contain; display: block; }
+        .lightbox-close { position: absolute; top: -14px; right: -14px; width: 32px; height: 32px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.4); font-weight: 900; color: #374151; }
+
+        /* Quote */
+        .quote-mark { font-size: 48px; line-height: 1; color: #e2e8f0; font-family: Georgia, serif; font-weight: 900; leading-trim: both; }
+
+        /* Hero */
+        .hero-section { background: linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1e40af 100%); padding: 28px 20px 32px; position: relative; overflow: hidden; }
+        .hero-section::before { content:''; position:absolute; top:-60px; right:-40px; width:220px; height:220px; background:rgba(59,130,246,0.15); border-radius:50%; }
+
+        /* Stats bar */
+        .stat-item { background: rgba(255,255,255,0.1); backdrop-filter: blur(8px); border-radius: 14px; padding: 10px 16px; text-align: center; }
+
+        /* Empty */
+        .empty-state { text-align: center; padding: 64px 20px; }
     </style>
 </head>
 <body class="pb-10">
 
     <!-- Navbar -->
     <nav class="bg-white px-5 py-4 flex items-center gap-3 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
-        <a href="index.html">
-            <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+        <a href="index.html" style="text-decoration:none;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#16a34a,#15803d);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-style:italic;font-family:'Sora',sans-serif;font-size:16px;">A</div>
         </a>
         <div>
-            <div class="logo-font font-black text-blue-900 text-base">All Reviews</div>
+            <div class="logo-font font-black text-blue-900 text-base">Student Reviews</div>
             <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">স্টুডেন্টদের মতামত</div>
         </div>
         <div class="ml-auto">
@@ -46,30 +78,44 @@
         </div>
     </nav>
 
-    <!-- Category Filters -->
+    <!-- Hero -->
+    <div class="hero-section relative z-10">
+        <div class="max-w-xl mx-auto">
+            <div class="text-yellow-300 text-[11px] font-black uppercase tracking-widest mb-2 relative z-10">Student Feedback</div>
+            <h1 class="logo-font text-2xl font-black text-white mb-3 relative z-10">আমাদের শিক্ষার্থীরা বলে ⭐</h1>
+            <div class="flex gap-3 relative z-10 flex-wrap">
+                <div class="stat-item"><div class="text-white font-black text-lg logo-font" id="heroTotal">—</div><div class="text-blue-200 text-[10px] font-bold">Total</div></div>
+                <div class="stat-item"><div class="text-white font-black text-lg logo-font" id="heroClass">—</div><div class="text-blue-200 text-[10px] font-bold">Class</div></div>
+                <div class="stat-item"><div class="text-white font-black text-lg logo-font" id="heroExam">—</div><div class="text-blue-200 text-[10px] font-bold">Exam</div></div>
+                <div class="stat-item"><div class="text-white font-black text-lg logo-font" id="heroMentor">—</div><div class="text-blue-200 text-[10px] font-bold">Mentoring</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sticky Filter Bar -->
     <div class="bg-white border-b border-gray-100 sticky top-[72px] z-40">
         <div class="flex gap-2 px-4 py-3 overflow-x-auto scroll-hidden">
             <button class="filter-btn active" onclick="filterReviews('All', this)">🌟 All</button>
             <button class="filter-btn" onclick="filterReviews('Class', this)">📺 Class</button>
             <button class="filter-btn" onclick="filterReviews('Exam', this)">📝 Exam</button>
             <button class="filter-btn" onclick="filterReviews('Mentoring', this)">🎯 Mentoring</button>
-            <button class="filter-btn" onclick="filterReviews('Service', this)">🎓 Course</button>
+            <button class="filter-btn" onclick="filterReviews('Course', this)">🎓 Course</button>
         </div>
     </div>
 
     <!-- Review Container -->
     <div class="max-w-xl mx-auto px-4 pt-5 pb-16">
         <div id="reviewContainer" class="space-y-5">
-            <div class="empty-state">
-                <div class="text-4xl mb-3 animate-pulse">⭐</div>
-                <p class="font-bold text-gray-400">লোড হচ্ছে...</p>
-            </div>
+            <div class="empty-state"><div class="text-4xl mb-3 animate-pulse">⭐</div><p class="font-bold text-gray-400">লোড হচ্ছে...</p></div>
         </div>
     </div>
 
     <!-- Lightbox -->
     <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-        <img id="lightboxImg" src="" alt="Review Photo">
+        <div class="lightbox-inner" onclick="event.stopPropagation()">
+            <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+            <img id="lightboxImg" src="" alt="Review Photo">
+        </div>
     </div>
 
     <script>
@@ -78,22 +124,31 @@
         const atlas = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allReviews = [];
-
-        const avatarColors = ['#1e40af','#7c3aed','#16a34a','#dc2626','#c2410c','#0891b2'];
-        const getColor = (name) => avatarColors[(name||'A').charCodeAt(0) % avatarColors.length];
+        const avatarColors = ['#1e40af','#7c3aed','#16a34a','#dc2626','#c2410c','#0891b2','#d97706'];
+        const catIcons = { Class:'📺', Exam:'📝', Mentoring:'🎯', Course:'🎓', Service:'🎓' };
+        const getColor = name => avatarColors[(name||'A').charCodeAt(0) % avatarColors.length];
 
         window.onload = async () => {
-            const { data, error } = await atlas.from('reviews').select('*').order('created_at', { ascending: false });
+            const { data } = await atlas.from('reviews').select('*').order('created_at', { ascending: false });
             if(data) {
                 allReviews = data;
-                displayReviews(allReviews);
+                updateStats(data);
+                displayReviews(data);
             }
         };
 
+        function updateStats(reviews) {
+            document.getElementById('heroTotal').textContent = reviews.length;
+            const count = cat => reviews.filter(r => (r.category || r.type) === cat).length;
+            document.getElementById('heroClass').textContent = count('Class');
+            document.getElementById('heroExam').textContent = count('Exam');
+            document.getElementById('heroMentor').textContent = count('Mentoring');
+        }
+
         function starHTML(rating) {
             if(!rating) return '';
-            const r = Math.round(rating);
-            return '<div class="star-display">' + '★'.repeat(r) + '☆'.repeat(5-r) + '</div>';
+            const r = Math.min(5, Math.round(rating));
+            return `<div class="star-display">${'★'.repeat(r)}${'☆'.repeat(5-r)}</div>`;
         }
 
         function displayReviews(reviews) {
@@ -101,46 +156,48 @@
             document.getElementById('reviewCount').textContent = reviews.length + ' টি Review';
 
             if(reviews.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="text-4xl mb-3">🔍</div><p class="font-bold">কোনো রিভিউ পাওয়া যায়নি</p></div>';
+                container.innerHTML = '<div class="empty-state"><div class="text-4xl mb-3">🔍</div><p class="font-bold text-gray-400">কোনো রিভিউ পাওয়া যায়নি</p></div>';
                 return;
             }
 
-            container.innerHTML = reviews.map(rev => {
-                const initial = (rev.student_name || 'A')[0].toUpperCase();
-                const color = getColor(rev.student_name);
-                const catClass = 'cat-' + (rev.category || 'Class');
-                const hasImage = rev.photo_url && rev.photo_url.trim() !== '';
+            container.innerHTML = reviews.map((rev, idx) => {
+                const name = rev.student_name || rev.name || 'Anonymous';
+                const text = rev.comment || rev.text || '';
+                const cat = rev.category || rev.type || 'Class';
+                const imgUrl = rev.photo_url || rev.image_url || '';
+                const initial = name[0].toUpperCase();
+                const color = getColor(name);
+                const icon = catIcons[cat] || '⭐';
+                const hasImg = imgUrl && imgUrl.trim() !== '';
+                const animDelay = Math.min(idx * 60, 300);
 
                 return `
-                <div class="review-card">
-                    <!-- Header -->
+                <div class="review-card" style="animation-delay:${animDelay}ms">
+                    <!-- Card Header -->
                     <div class="p-5 flex items-center gap-3">
                         <div class="avatar" style="background:${color}">${initial}</div>
                         <div class="flex-1 min-w-0">
-                            <div class="font-black text-gray-900 text-sm">${rev.student_name || 'Anonymous'}</div>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <span class="category-badge ${catClass}">${rev.category || 'Review'}</span>
+                            <div class="font-black text-gray-900 text-sm">${name}</div>
+                            <div class="flex items-center gap-2 mt-1 flex-wrap">
+                                <span class="category-badge cat-${cat}">${icon} ${cat}</span>
                                 ${rev.rating ? starHTML(rev.rating) : ''}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Image (যদি থাকে) -->
-                    ${hasImage ? `
-                    <div class="cursor-pointer relative" onclick="openLightbox('${rev.photo_url}')">
-                        <img src="${rev.photo_url}"
-                             class="review-img"
-                             loading="lazy"
-                             onerror="this.parentElement.style.display='none'"
-                             alt="Review Photo">
-                        <div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.5);border-radius:8px;padding:4px 10px;color:white;font-size:10px;font-weight:700;">🔍 Tap to zoom</div>
+                    <!-- Image -->
+                    ${hasImg ? `
+                    <div class="relative cursor-pointer" onclick="openLightbox('${imgUrl.replace(/'/g,"\\'")}')">
+                        <img src="${imgUrl}" class="review-img" loading="lazy" onerror="this.parentElement.style.display='none'" alt="Review">
+                        <div class="img-tap-hint">🔍 Tap to zoom</div>
                     </div>` : ''}
 
-                    <!-- Comment -->
-                    ${rev.comment ? `
+                    <!-- Text -->
+                    ${text ? `
                     <div class="px-5 py-4">
-                        <p class="text-gray-600 text-sm leading-relaxed" style="font-style:italic;">"${rev.comment}"</p>
-                    </div>` : '<div class="pb-2"></div>'}
+                        <div class="quote-mark leading-none select-none" style="margin-bottom:-8px;">"</div>
+                        <p class="text-gray-600 text-sm leading-relaxed font-semibold pl-3">${text}</p>
+                    </div>` : '<div class="pb-3"></div>'}
                 </div>`;
             }).join('');
         }
@@ -148,7 +205,9 @@
         function filterReviews(category, btn) {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            const filtered = category === 'All' ? allReviews : allReviews.filter(r => r.category === category);
+            const filtered = category === 'All'
+                ? allReviews
+                : allReviews.filter(r => (r.category || r.type) === category);
             displayReviews(filtered);
         }
 
