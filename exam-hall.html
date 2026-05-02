@@ -8,4 +8,4 @@ Student: ${studentName}  |  ✅ Correct: ${correct}  |  ❌ Wrong: ${wrong} 
 
 ${questionsHTML} 
 
-`; const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' }); const url = URL.createObjectURL(blob); const win = window.open(url, '_blank'); if (!win) { const a = document.createElement('a'); a.href = url; a.download = `ATLAS_${examData.subject || 'Exam'}_Solve.html`; a.click(); } setTimeout(() => URL.revokeObjectURL(url), 5000); } 
+`; const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' }); const url = URL.createObjectURL(blob); const win = window.open(url, '_blank'); if (!win) { const a = document.createElement('a'); a.href = url; a.download = `ATLAS_${examData.subject || 'Exam'}_Solve.html`; a.click(); } setTimeout(() => URL.revokeObjectURL(url), 5000); }
