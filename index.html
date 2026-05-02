@@ -25,7 +25,6 @@
         .profile-chip { background:white; border:1.5px solid #e2e8f0; border-radius:50px; padding:6px 16px 6px 8px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:0.2s; }
         .profile-chip:hover { border-color:#bfdbfe; }
         .avatar { width:32px;height:32px;background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px; }
-        .badge { background:#eff6ff; color:#1e40af; border-radius:20px; padding:3px 10px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; }
     </style>
 </head>
 <body>
@@ -40,7 +39,6 @@
     </nav>
 
     <div class="max-w-xl mx-auto px-4 pb-16 pt-6">
-
         <div class="mb-6">
             <h1 class="logo-font text-2xl font-black text-gray-900 leading-snug">আস্সালামু আলাইকুম! 👋</h1>
             <p class="text-gray-500 text-sm mt-1.5">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্ম।</p>
@@ -71,11 +69,6 @@
             </div>
         </div>
 
-        <div id="recentExamsSection" class="mb-6 space-y-3 hidden">
-            <div class="section-title">📝 Recent Free Exams</div>
-            <div id="recentExamsList" class="space-y-3"></div>
-        </div>
-
         <div id="dynBtns" class="mb-6 space-y-3"></div>
 
         <div id="studentCard" class="hidden mb-6 card p-6">
@@ -85,10 +78,7 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="avatar text-lg" id="profileAvatar">A</div>
-                <div>
-                    <div class="font-bold text-gray-800" id="profileName">—</div>
-                    <div class="text-xs text-gray-400" id="profileCollege">—</div>
-                </div>
+                <div><div class="font-bold text-gray-800" id="profileName">—</div><div class="text-xs text-gray-400" id="profileCollege">—</div></div>
             </div>
         </div>
 
@@ -108,76 +98,20 @@
             loadProfile();
             await loadDynButtons();
             await loadCountdowns();
-            await loadRecentExams(); // New logic connected
         };
 
-        function loadProfile() {
-            const raw = localStorage.getItem('atlas_user');
-            const profileArea = document.getElementById('profileArea');
-            if(raw) {
-                const user = JSON.parse(raw);
-                document.getElementById('studentCard').classList.remove('hidden');
-                document.getElementById('profileName').textContent = user.name || '—';
-                document.getElementById('profileCollege').textContent = user.college || '—';
-                document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
-                profileArea.innerHTML = `
-                    <div class="profile-chip" onclick="window.location.href='profile.html'">
-                        <div class="avatar">${(user.name||'A')[0].toUpperCase()}</div>
-                        <span class="text-xs font-bold text-gray-700">${user.name || 'Profile'}</span>
-                    </div>`;
-            }
-        }
-
-        async function loadRecentExams() {
-            // Fetch latest 3 exams to show on home
-            const { data, error } = await db.from('exams').select('*').order('created_at', { ascending: false }).limit(3);
-            if(data && data.length > 0) {
-                const section = document.getElementById('recentExamsSection');
-                const list = document.getElementById('recentExamsList');
-                section.classList.remove('hidden');
-                data.forEach(ex => {
-                    const div = document.createElement('div');
-                    div.className = 'card p-5 flex items-center space-x-3';
-                    div.onclick = () => handleNav(`exam-hall.html?id=${ex.exam_id}`);
-                    div.innerHTML = `
-                        <div class="icon-box bg-green-50 text-xl">📝</div>
-                        <div class="flex-1">
-                            <div class="font-bold text-gray-800 text-[14px] leading-tight">${ex.subject}: ${ex.chapter}</div>
-                            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-1">${ex.duration} Mins • Live Now</div>
-                        </div>
-                        <div class="text-blue-600 text-lg font-black">→</div>`;
-                    list.appendChild(div);
-                });
-            }
-        }
-
-        function goRegister() {
-            localStorage.setItem('atlas_redirect', 'index.html');
-            window.location.href = 'register.html';
-        }
-
-        function handleNav(url) {
-            const publicPages = ['reviews.html', 'courses.html'];
-            const raw = localStorage.getItem('atlas_user');
-            if(!raw && !publicPages.some(p => url.includes(p))) {
-                localStorage.setItem('atlas_redirect', url);
-                window.location.href = 'register.html';
-                return;
-            }
-            window.location.href = url;
-        }
-
         async function loadDynButtons() {
-            const { data } = await db.from('home_buttons').select('*').order('created_at', {ascending: false});
-            if(data && data.length > 0) {
+            // exams, classes, countdown_cards ছাড়াও যদি 'home_buttons' টেবিলে ডাটা থাকে তবে তা লোড করবে
+            const { data } = await db.from('home_buttons').select('*').eq('is_active', true).order('created_at', {ascending: false});
+            if(data) {
                 const container = document.getElementById('dynBtns');
                 data.forEach(btn => {
                     const div = document.createElement('div');
                     div.className = 'card p-5 flex items-center space-x-3';
                     div.onclick = () => handleNav(btn.link || '#');
                     div.innerHTML = `
-                        <div class="icon-box bg-blue-50">${btn.icon || '🚀'}</div>
-                        <div><div class="font-bold text-gray-800 text-[15px]">${btn.name}</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">দেখো</div></div>`;
+                        <div class="icon-box" style="background:${btn.color || '#eff6ff'}">${btn.icon || '🚀'}</div>
+                        <div><div class="font-bold text-gray-800 text-[15px]">${btn.title}</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">দেখো</div></div>`;
                     container.appendChild(div);
                 });
             }
@@ -213,6 +147,7 @@
                 const diff = end - now;
                 if(diff <= 0) {
                     ['d','h','m','s'].forEach(u => { const el = document.getElementById(u+'_'+id); if(el) el.textContent='00'; });
+                    clearInterval(timers[id]);
                     return;
                 }
                 const d = Math.floor(diff/(1000*60*60*24));
@@ -227,6 +162,31 @@
             }
             tick();
             timers[id] = setInterval(tick, 1000);
+        }
+
+        function loadProfile() {
+            const raw = localStorage.getItem('atlas_user');
+            if(raw) {
+                const user = JSON.parse(raw);
+                document.getElementById('studentCard').classList.remove('hidden');
+                document.getElementById('profileName').textContent = user.name || '—';
+                document.getElementById('profileCollege').textContent = user.college || '—';
+                document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+                document.getElementById('profileArea').innerHTML = `
+                    <div class="profile-chip" onclick="window.location.href='profile.html'">
+                        <div class="avatar">${(user.name||'A')[0].toUpperCase()}</div>
+                        <span class="text-xs font-bold text-gray-700">${user.name || 'Profile'}</span>
+                    </div>`;
+            }
+        }
+
+        function goRegister() { window.location.href = 'register.html'; }
+        function handleNav(url) {
+            const user = localStorage.getItem('atlas_user');
+            if(!user && !['reviews.html', 'courses.html'].includes(url)) {
+                localStorage.setItem('atlas_redirect', url);
+                window.location.href = 'register.html';
+            } else { window.location.href = url; }
         }
     </script>
 </body>
