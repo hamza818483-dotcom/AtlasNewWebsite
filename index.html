@@ -139,7 +139,6 @@
         }
 
         async function loadDynButtons() {
-            // home_buttons টেবিল থেকে ডাইনামিক বাটন লোড
             const { data } = await db.from('home_buttons').select('*').eq('is_active', true).order('created_at', {ascending: false});
             if(data && data.length > 0) {
                 const container = document.getElementById('dynBtns');
@@ -159,7 +158,6 @@
         }
 
         async function loadCountdowns() {
-            // countdown_cards টেবিল থেকে একটিভ টাইমার লোড
             const { data } = await db.from('countdown_cards').select('*').eq('active', true).order('end_time');
             if(data && data.length > 0) {
                 document.getElementById('countdownSection').classList.remove('hidden');
