@@ -76,7 +76,7 @@
         let allExams = [];
 
         window.onload = async () => {
-            if(!localStorage.getItem('atlas_user')) {
+            if(!localStorage.getItem('atlas_user') && !localStorage.getItem('atlas_student')) {
                 localStorage.setItem('atlas_redirect','exams.html');
                 window.location.href='register.html'; return;
             }
