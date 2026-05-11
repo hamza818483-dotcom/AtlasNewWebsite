@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | Free Exams</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family:'Hind Siliguri',sans-serif; background:#f0f4f8; }
+        .logo-font { font-family:'Sora',sans-serif; }
+        .card { background:white; border-radius:24px; border:1.5px solid #f1f5f9; transition:0.2s; }
+        .card:hover { border-color:#bfdbfe; transform:translateY(-2px); box-shadow:0 8px 30px rgba(30,64,175,0.08); }
+        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:16px; padding:12px 16px; font-family:'Hind Siliguri',sans-serif; font-size:14px; font-weight:600; color:#374151; outline:none; transition:0.2s; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+        .badge { border-radius:20px; padding:3px 10px; font-size:10px; font-weight:800; }
+        .status-active { background:#dcfce7; color:#16a34a; }
+        .status-ended { background:#fee2e2; color:#dc2626; }
+        .status-upcoming { background:#eff6ff; color:#1e40af; }
+        .exam-btn { background:#1e40af; color:white; border-radius:14px; padding:11px 22px; font-size:13px; font-weight:800; text-decoration:none; display:inline-block; transition:0.2s; text-align:center; }
+        .exam-btn:hover { background:#1d4ed8; transform:scale(1.02); }
+        .exam-btn.disabled { background:#e2e8f0; color:#94a3b8; cursor:not-allowed; pointer-events:none; }
+    </style>
+</head>
+<body>
+    <nav class="bg-white px-5 py-4 flex items-center gap-4 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
+        <a href="index.html"><img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain"></a>
+        <div>
+            <div class="logo-font font-black text-blue-900 text-base">Free Exams</div>
+            <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">পরীক্ষা দাও</div>
+        </div>
+    </nav>
+
+    <div class="max-w-xl mx-auto px-4 pt-6 pb-16">
+
+        <div class="card p-5 mb-5">
+            <div class="grid grid-cols-1 gap-3">
+                <div>
+                    <label class="text-[11px] font-black text-gray-400 uppercase tracking-wide mb-2 block">Subject</label>
+                    <select id="subjectFilter" class="filter-select w-full" onchange="updateChapterFilter(); applyFilters();">
+                        <option value="">— সব Subject —</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-black text-gray-400 uppercase tracking-wide mb-2 block">Paper</label>
+                        <select id="paperFilter" class="filter-select w-full" onchange="applyFilters()">
+                            <option value="">— সব —</option>
+                            <option value="1st paper">১ম পত্র</option>
+                            <option value="2nd paper">২য় পত্র</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-black text-gray-400 uppercase tracking-wide mb-2 block">Chapter</label>
+                        <select id="chapterFilter" class="filter-select w-full" onchange="applyFilters()">
+                            <option value="">— সব Chapter —</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button onclick="clearFilters()" class="mt-4 text-xs font-bold text-blue-600 underline">Clear Filters</button>
+        </div>
+
+        <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-4 px-1" id="resultCount"></div>
+
+        <div id="examList" class="space-y-4">
+            <div style="text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:48px;margin-bottom:12px">📝</div><p style="font-weight:700">লোড হচ্ছে...</p></div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let allExams = [];
+
+        window.onload = async () => {
+            if(!localStorage.getItem('atlas_user')) {
+                localStorage.setItem('atlas_redirect','exams.html');
+                window.location.href='register.html'; return;
+            }
+            const { data } = await db.from('exams').select('*').order('created_at',{ascending:false});
+            allExams = data || [];
+            populateSubjectFilter();
+            updateChapterFilter();
+            renderExams(allExams);
+        };
+
+        function populateSubjectFilter() {
+            const subjects = [...new Set(allExams.map(e => e.subject).filter(Boolean))];
+            const sSel = document.getElementById('subjectFilter');
+            subjects.forEach(s => { sSel.innerHTML += `<option value="${s}">${s}</option>`; });
+        }
+
+        function updateChapterFilter() {
+            const sub = document.getElementById('subjectFilter').value;
+            const cSel = document.getElementById('chapterFilter');
+            
+            // Filter chapters based on selected subject
+            const filteredExams = sub ? allExams.filter(e => e.subject === sub) : allExams;
+            const chapters = [...new Set(filteredExams.map(e => e.chapter).filter(Boolean))];
+            
+            cSel.innerHTML = '<option value="">— সব Chapter —</option>';
+            chapters.forEach(c => { cSel.innerHTML += `<option value="${c}">${c}</option>`; });
+        }
+
+        function applyFilters() {
+            const sub = document.getElementById('subjectFilter').value;
+            const paper = document.getElementById('paperFilter').value;
+            const chap = document.getElementById('chapterFilter').value;
+            
+            let filtered = allExams;
+            if(sub) filtered = filtered.filter(e => e.subject === sub);
+            if(paper) filtered = filtered.filter(e => e.paper === paper);
+            if(chap) filtered = filtered.filter(e => e.chapter === chap);
+            
+            renderExams(filtered);
+        }
+
+        function clearFilters() {
+            document.getElementById('subjectFilter').value = '';
+            document.getElementById('paperFilter').value = '';
+            updateChapterFilter(); // Reset chapter list
+            renderExams(allExams);
+        }
+
+        function getStatus(exam) {
+            const now = new Date();
+            if(exam.start_time && new Date(exam.start_time) > now) return 'upcoming';
+            if(exam.end_time && new Date(exam.end_time) < now) return 'ended';
+            return 'active';
+        }
+
+        function renderExams(list) {
+            const container = document.getElementById('examList');
+            document.getElementById('resultCount').textContent = list.length + ' টি এক্সাম পাওয়া গেছে';
+            
+            if(list.length === 0) {
+                container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:48px;margin-bottom:12px">🔍</div><p style="font-weight:700">কোনো এক্সাম পাওয়া যায়নি</p></div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(e => {
+                const status = getStatus(e);
+                const qCount = (() => { try { const q = typeof e.questions==='string'?JSON.parse(e.questions):e.questions; return Array.isArray(q)?q.length:0; } catch(x){return 0;} })();
+                
+                const statusBadge = status === 'active' ? '<span class="badge status-active">✓ Live Now</span>' : status === 'upcoming' ? '<span class="badge status-upcoming">⏰ Upcoming</span>' : '<span class="badge status-ended">Ended</span>';
+                const btnClass = status === 'active' ? 'exam-btn' : 'exam-btn disabled';
+                const btnLink = status === 'active' ? `exam-hall.html?id=${e.exam_id}` : '#';
+
+                return `
+                <div class="card p-6">
+                    <div class="flex items-start justify-between gap-3 mb-4">
+                        <div class="flex-1">
+                            <div style="font-family:'Sora',sans-serif;font-size:16px;font-weight:800;color:#1e293b;margin-bottom:6px;">${e.title || e.chapter}</div>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <span style="background:#eff6ff;color:#1e40af;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${e.subject}</span>
+                                ${e.paper ? `<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${e.paper}</span>` : ''}
+                                <span style="background:#fef9c3;color:#92400e;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${e.chapter}</span>
+                            </div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+                        <div style="font-size:11px;color:#64748b;font-weight:700;">⏱ ${e.duration} মিনিট</div>
+                        <div style="font-size:11px;color:#64748b;font-weight:700;">📝 ${qCount} প্রশ্ন</div>
+                        <div style="font-size:11px;color:#ef4444;font-weight:700;">−${e.neg_mark} নেগেটিভ</div>
+                    </div>
+                    <a href="${btnLink}" class="${btnClass}">এক্সাম শুরু করো →</a>
+                </div>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
