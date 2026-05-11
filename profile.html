@@ -16,12 +16,12 @@
         .history-item { background: white; border-radius: 20px; border: 1.5px solid #f1f5f9; overflow: hidden; transition: 0.2s; }
         .history-item:hover { border-color: #bfdbfe; }
         
-        /* Modal Adjustments for Compact View */
+        /* Modal Adjustments for compactness */
         .detail-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
         .detail-modal.open { display: flex; }
-        .detail-sheet { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 16px; }
+        .detail-sheet { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 16px; } /* Reduced padding */
         
-        /* Compact MCQ Review Styling (Min 3 per screen) */
+        /* Compact MCQ Review Styling */
         .q-review { background: #f8fafc; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; border-left: 3px solid #e2e8f0; }
         .q-review.correct { border-left-color: #16a34a; background: #f0fdf4; }
         .q-review.wrong { border-left-color: #dc2626; background: #fff1f2; }
@@ -32,7 +32,7 @@
         .avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; background: linear-gradient(135deg, #1e40af, #3b82f6); }
         .progress-bar-outer { background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden; }
         .progress-bar-inner { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
-        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; cursor:pointer;}
+        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; }
         .chip-btn { padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; white-space: nowrap; color: #64748b; }
         .chip-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
         ::-webkit-scrollbar { width: 4px; }
@@ -236,7 +236,6 @@
         async function loadHistory() {
             if(!studentId) return;
 
-            // Fetching questions to get full options
             const { data, error } = await db.from('exam_results')
                 .select(`*, exams(title, subject, chapter, paper, questions)`)
                 .eq('student_id', studentId)
@@ -244,7 +243,6 @@
 
             if (error) { document.getElementById('historyList').innerHTML = `<div class="text-center py-8 text-red-500 font-bold">ডেটা লোড করতে সমস্যা হয়েছে!</div>`; return; }
 
-            // Enriching user answers with original full options for Mistakes & Detailed View
             allHistoryData = (data || []).map(result => {
                 let origQs = [];
                 try { if (result.exams && result.exams.questions) origQs = typeof result.exams.questions === 'string' ? JSON.parse(result.exams.questions) : result.exams.questions; } catch(e){}
@@ -254,7 +252,7 @@
 
                 result.enrichedAnswers = userAns.map((a, i) => {
                     const orig = origQs[i] || {};
-                    return { ...orig, ...a, question: a.question || orig.questions || orig.question || `Question ${i+1}` }; // Merges full options A, B, C, D
+                    return { ...orig, ...a, question: a.question || orig.questions || orig.question || `Question ${i+1}` }; 
                 });
                 return result;
             });
@@ -265,7 +263,6 @@
             processMistakesGrouping(allHistoryData);
         }
 
-        // --- Exam History Filters Logic ---
         function populateHistoryFilters() {
             const subSet = new Set();
             const chapSet = new Set();
@@ -288,11 +285,7 @@
                 const rSub = r.exams?.subject || r.subject || '';
                 const rPap = r.exams?.paper || r.paper || '';
                 const rChap = r.exams?.chapter || r.chapter || '';
-
-                let matchSub = !sub || rSub === sub;
-                let matchPap = !pap || rPap === pap;
-                let matchChap = !chap || rChap === chap;
-                return matchSub && matchPap && matchChap;
+                return (!sub || rSub === sub) && (!pap || rPap === pap) && (!chap || rChap === chap);
             });
             renderHistoryList(filtered);
         }
@@ -318,7 +311,6 @@
                 const date = result.created_at ? new Date(result.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
                 const scoreColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
                 
-                // Get original index for correct modal opening
                 const globalIndex = allHistoryData.findIndex(r => r.id === result.id);
 
                 return `
@@ -372,21 +364,18 @@
             }
         }
 
-        // --- FEATURE 2: My Mistakes Logic (Accordion with 3 Practice Options) ---
+        // --- FEATURE 2: My Mistakes Logic ---
         function processMistakesGrouping(list) {
             groupedMistakes = {};
 
             list.forEach(result => {
                 const examTitle = result.exams?.title || result.chapter || result.subject || 'Practice Exam';
                 const examId = result.exam_id || result.id;
-                
-                let wList = [];
-                let sList = [];
+                let wList = [], sList = [];
 
                 (result.enrichedAnswers || []).forEach((a, index) => {
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
                     const qObj = { ...a, questionNum: index + 1, status: status, examTitle: examTitle, examId: examId };
-                    
                     if (status === 'wrong') wList.push(qObj);
                     if (status === 'skipped') sList.push(qObj);
                 });
@@ -430,13 +419,9 @@
                     <div id="mistake-actions-${key}" class="hidden px-4 pb-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
                         <div class="grid grid-cols-1 gap-2 mt-3">
                             <div class="text-[9px] font-black text-gray-400 uppercase text-center mb-1">কী করতে চাও?</div>
-                            
                             ${ex.wrong.length > 0 ? `<button onclick="startMistakePractice('${key}', 'wrong')" class="w-full bg-red-100 text-red-700 py-2 rounded-xl text-[11px] font-black shadow-sm hover:bg-red-200">❌ শুধু ভুল Practice করো</button>` : ''}
-                            
                             ${ex.skipped.length > 0 ? `<button onclick="startMistakePractice('${key}', 'skipped')" class="w-full bg-amber-100 text-amber-700 py-2 rounded-xl text-[11px] font-black shadow-sm hover:bg-amber-200">⏭️ শুধু স্কিপ Practice করো</button>` : ''}
-                            
                             ${ex.both.length > 0 ? `<button onclick="startMistakePractice('${key}', 'both')" class="w-full bg-blue-900 text-white py-2 rounded-xl text-[11px] font-black shadow-md hover:bg-blue-800">✅ ভুল + স্কিপ Practice করো</button>` : ''}
-                            
                             <button onclick="viewMistakesModal('${key}')" class="w-full bg-white border border-gray-300 text-gray-600 py-2 rounded-xl text-[11px] font-black hover:bg-gray-100 mt-1">👀 শুধু উত্তর দেখো</button>
                         </div>
                     </div>
@@ -444,17 +429,11 @@
             }).join('');
         }
 
-        function toggleMistakeActions(key) {
-            document.getElementById('mistake-actions-' + key).classList.toggle('hidden');
-        }
+        function toggleMistakeActions(key) { document.getElementById('mistake-actions-' + key).classList.toggle('hidden'); }
 
         function startMistakePractice(examId, type) {
             const ex = groupedMistakes[examId];
-            let listToPractice = [];
-            if(type === 'wrong') listToPractice = ex.wrong;
-            else if(type === 'skipped') listToPractice = ex.skipped;
-            else listToPractice = ex.both;
-
+            let listToPractice = type === 'wrong' ? ex.wrong : type === 'skipped' ? ex.skipped : ex.both;
             if(listToPractice.length === 0) return alert('প্র্যাকটিস করার মতো কোনো প্রশ্ন নেই!');
             
             // Clean pass for exam-hall. No hardcoded options!
@@ -468,17 +447,13 @@
 
         function viewMistakesModal(examId) {
             const ex = groupedMistakes[examId];
-            const container = document.getElementById('viewMistakeList');
-            container.innerHTML = ex.both.map(a => renderSingleMCQ(a, a.status, a.questionNum)).join('');
+            document.getElementById('viewMistakeList').innerHTML = ex.both.map(a => renderSingleMCQ(a, a.status, a.questionNum)).join('');
             document.getElementById('viewMistakeModal').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
-        function closeMistakeView() {
-            document.getElementById('viewMistakeModal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
+        function closeMistakeView() { document.getElementById('viewMistakeModal').classList.remove('open'); document.body.style.overflow = ''; }
 
-        // --- FEATURE 1: Compact Detailed Modal HTML Builder (Full MCQ & Option Checks) ---
+        // --- FEATURE 1: Compact Detailed Modal HTML Builder (Full MCQ) ---
         function renderSingleMCQ(a, status, index) {
             const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
             const qText = a.question || a.questions || `প্রশ্ন`;
@@ -534,9 +509,8 @@
 
         function openDetailByIndex(index) {
             const result = allHistoryData[index];
-            const exam = result.exams || {};
-            document.getElementById('detailTitle').textContent = exam.title || result.chapter || result.subject || 'Exam Detail';
-            document.getElementById('detailSubject').textContent = [exam.subject || result.subject, exam.paper].filter(Boolean).join(' · ');
+            document.getElementById('detailTitle').textContent = result.exams?.title || result.chapter || result.subject || 'Exam Detail';
+            document.getElementById('detailSubject').textContent = [result.exams?.subject || result.subject, result.exams?.paper || result.paper].filter(Boolean).join(' · ');
             document.getElementById('detailCorrect').textContent = result.correct || 0;
             document.getElementById('detailWrong').textContent = result.wrong || 0;
             document.getElementById('detailSkipped').textContent = result.skipped || 0;
@@ -547,10 +521,7 @@
             if(!answers || answers.length === 0) {
                 container.innerHTML = '<p class="text-center text-gray-400 font-bold py-6">প্রশ্নের তথ্য পাওয়া যায়নি</p>';
             } else {
-                container.innerHTML = answers.map((a, i) => {
-                    const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
-                    return renderSingleMCQ(a, status, i+1);
-                }).join('');
+                container.innerHTML = answers.map((a, i) => renderSingleMCQ(a, a.status || (!a.selected ? 'skipped' : (a.selected==a.answer?'correct':'wrong')), i+1)).join('');
             }
             
             filterDetailModal('all'); 
@@ -563,43 +534,20 @@
                 let btn = document.getElementById(t === 'all' ? 'btnDetAll' : t === 'correct' ? 'btnDetCor' : t === 'wrong' ? 'btnDetWro' : 'btnDetSkip');
                 if(btn) btn.className = t === type ? 'chip-btn active' : 'chip-btn';
             });
-
-            const items = document.querySelectorAll('.detail-q-item');
-            items.forEach(el => {
-                if(type === 'all') el.style.display = 'block';
-                else if(el.classList.contains(type)) el.style.display = 'block';
-                else el.style.display = 'none';
-            });
+            document.querySelectorAll('.detail-q-item').forEach(el => el.style.display = (type === 'all' || el.classList.contains(type)) ? 'block' : 'none');
         }
 
-        function closeDetail() {
-            document.getElementById('detailModal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
+        function closeDetail() { document.getElementById('detailModal').classList.remove('open'); document.body.style.overflow = ''; }
 
         // --- TAB LOGIC ---
-        let currentTab = 'exam';
         function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('examHistorySection').classList.add('hidden');
-            document.getElementById('classHistorySection').classList.add('hidden');
-            document.getElementById('mistakeSection').classList.add('hidden');
-            
-            document.getElementById('tabExam').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-            document.getElementById('tabClass').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-            document.getElementById('tabMistake').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-
-            if (tab === 'exam') {
-                document.getElementById('examHistorySection').classList.remove('hidden');
-                document.getElementById('tabExam').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-            } else if (tab === 'class') {
-                document.getElementById('classHistorySection').classList.remove('hidden');
-                document.getElementById('tabClass').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-                loadClassHistory();
-            } else if (tab === 'mistake') {
-                document.getElementById('mistakeSection').classList.remove('hidden');
-                document.getElementById('tabMistake').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-            }
+            ['exam', 'class', 'mistake'].forEach(t => {
+                document.getElementById(t+'Section' || t+'HistorySection').classList.add('hidden');
+                document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            });
+            document.getElementById(tab==='mistake'?'mistakeSection':tab+'HistorySection').classList.remove('hidden');
+            document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            if(tab==='class') loadClassHistory();
         }
 
         // --- Class History & Filters ---
