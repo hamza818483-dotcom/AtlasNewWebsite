@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATLAS | পড়াশোনা হোক গোছানো</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Sora:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --blue:#1e40af; --dark:#0f172a; --accent:#3b82f6; }
+        * { box-sizing:border-box; }
+        body { font-family:'Hind Siliguri',sans-serif; background:#f0f4f8; min-height:100vh; }
+        .logo-font { font-family:'Sora',sans-serif; }
+        .nav-shadow { box-shadow:0 2px 20px rgba(0,0,0,0.07); }
+        .card { background:white; border-radius:28px; border:1.5px solid #f1f5f9; transition:all 0.25s cubic-bezier(.4,0,.2,1); cursor:pointer; }
+        .card:hover { transform:translateY(-4px); border-color:#bfdbfe; box-shadow:0 12px 40px rgba(30,64,175,0.1); }
+        .icon-box { border-radius:18px; width:56px; height:56px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+        .countdown-card { background:linear-gradient(135deg,#1e40af 0%,#1d4ed8 50%,#1e3a8a 100%); border-radius:28px; padding:24px; color:white; position:relative; overflow:hidden; }
+        .countdown-num { font-family:'Sora',sans-serif; font-size:32px; font-weight:900; line-height:1; }
+        .countdown-label { font-size:10px; font-weight:700; opacity:0.7; text-transform:uppercase; letter-spacing:0.08em; }
+        .section-title { font-family:'Sora',sans-serif; font-size:13px; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.12em; margin-bottom:12px; padding-left:4px; }
+        .avatar { width:32px;height:32px;background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px; }
+    </style>
+</head>
+<body>
+    <nav class="bg-white px-5 py-4 flex items-center justify-between nav-shadow sticky top-0 z-50">
+        <a href="index.html" class="flex items-center space-x-2">
+            <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS Logo" class="w-9 h-9 object-contain">
+            <span class="logo-font text-xl font-black text-blue-900 tracking-tight">ATLAS</span>
+        </a>
+        <div id="profileArea">
+            <button onclick="goRegister()" class="bg-blue-700 text-white text-xs font-black px-4 py-2.5 rounded-full shadow-lg uppercase tracking-wide">Login / Register</button>
+        </div>
+    </nav>
+
+    <div class="max-w-xl mx-auto px-4 pb-16 pt-6">
+        <div class="mb-6">
+            <h1 class="logo-font text-2xl font-black text-gray-900 leading-snug">আস্সালামু আলাইকুম! 👋</h1>
+            <p class="text-gray-500 text-sm mt-1.5">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্ম।</p>
+        </div>
+
+        <div id="countdownSection" class="mb-6 space-y-4 hidden">
+            <div class="section-title">⏰ Upcoming Events</div>
+            <div id="countdownCards"></div>
+        </div>
+
+        <div class="section-title">📝 Recent Exams</div>
+        <div id="recentExamsList" class="space-y-3 mb-6">
+            <div class="text-center py-4 text-gray-400 font-bold text-xs">পরীক্ষা লোড হচ্ছে...</div>
+        </div>
+
+        <div class="section-title">Quick Access</div>
+        <div class="grid grid-cols-2 gap-3 mb-6">
+            <div class="card p-5 flex items-center space-x-3" onclick="handleNav('classes.html')">
+                <div class="icon-box bg-red-50">📺</div>
+                <div><div class="font-bold text-gray-800 text-[15px]">Free Classes</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">ভিডিও দেখো</div></div>
+            </div>
+            <div class="card p-5 flex items-center space-x-3" onclick="handleNav('exams.html')">
+                <div class="icon-box bg-green-50">📝</div>
+                <div><div class="font-bold text-gray-800 text-[15px]">Free Exams</div><div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">পরীক্ষা দাও</div></div>
+            </div>
+        </div>
+
+        <div id="dynBtns" class="mb-6 space-y-3"></div>
+
+        <footer class="text-center mt-10">
+            <p class="text-gray-300 text-[10px] font-bold uppercase tracking-widest">© 2026 Powered by ATLAS Team</p>
+            <div class="mt-3"><a href="admin.html" class="text-gray-300 text-[10px] font-bold uppercase border-b border-gray-200 pb-0.5">Admin Access</a></div>
+        </footer>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gdmhswxnlhvtyfxaevnt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkbWhzd3hubGh2dHlmeGFldm50Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MjQyMTQsImV4cCI6MjA5MzIwMDIxNH0.0vDkuK0s6dIYWsgPmvfXXPyalpHNqkm3J--kbhck2PI';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.onload = async () => {
+            loadProfile();
+            await loadDynButtons();
+            await loadCountdowns();
+            await loadRecentExams(); // Added this call
+        };
+
+        async function loadRecentExams() {
+            const { data } = await db.from('exams').select('*').order('created_at', {ascending: false}).limit(4);
+            const container = document.getElementById('recentExamsList');
+            if(data && data.length > 0) {
+                container.innerHTML = data.map(ex => {
+                    const qCount = (() => { try { const q = typeof ex.questions==='string'?JSON.parse(ex.questions):ex.questions; return Array.isArray(q)?q.length:0; } catch(e){return 0;} })();
+                    return `
+                    <div class="card p-5 flex items-center justify-between" onclick="handleNav('exam-hall.html?id=${ex.exam_id}')">
+                        <div class="flex items-center space-x-3">
+                            <div class="icon-box bg-green-50">📝</div>
+                            <div>
+                                <div class="font-bold text-gray-800 text-[15px]">${ex.title || ex.chapter}</div>
+                                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">${ex.subject} • ${qCount} Questions</div>
+                            </div>
+                        </div>
+                        <div class="text-blue-600 text-xs font-black">শুরু করো →</div>
+                    </div>`;
+                }).join('');
+            } else { container.innerHTML = '<div class="text-center py-4 text-gray-400 text-xs font-bold">কোনো পরীক্ষা পাওয়া যায়নি</div>'; }
+        }
+
+        // --- Rest of your original functions (loadProfile, loadDynButtons, etc.) follow here ---
+        function loadProfile() {
+            const raw = localStorage.getItem('atlas_user');
+            if(raw) {
+                const user = JSON.parse(raw);
+                document.getElementById('profileArea').innerHTML = `<div class="avatar">${user.name[0]}</div>`;
+            }
+        }
+        function handleNav(url) { window.location.href = url; }
+        [span_2](start_span)async function loadDynButtons() { /* Your original code[span_2](end_span) */ }
+        [span_3](start_span)async function loadCountdowns() { /* Your original code[span_3](end_span) */ }
+    </script>
+</body>
+</html>
