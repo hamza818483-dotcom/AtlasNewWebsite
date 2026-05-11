@@ -147,7 +147,13 @@
         .opt-correct .opt-label { background: #16a34a; color: white; }
         .opt-wrong .opt-label { background: #dc2626; color: white; }
 
-        /* Buttons */
+        /* PDF Sizing */
+        @media print {
+            img { max-width: 250px !important; height: auto !important; max-height: 180px !important; display: block; margin: 10px 0; border-radius: 6px; }
+            .q-wrap { break-inside: avoid; page-break-inside: avoid; overflow: hidden; margin-bottom: 15px; }
+            .content { column-count: 2; column-gap: 15px; }
+        }
+
         .pdf-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; border: none; border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 14px; cursor: pointer; flex: 1; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
         .pdf-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(220,38,38,0.4); }
         .retry-btn { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; border: none; border-radius: 14px; padding: 16px 24px; font-weight: 800; font-size: 14px; cursor: pointer; flex: 1; font-family: 'Hind Siliguri', sans-serif; transition: 0.2s; }
@@ -675,7 +681,7 @@
         submitExam();
     }
 
-    // ===== SUBMIT AND SAVE DATA FOR PROFILE =====
+    // ===== SUBMIT =====
     async function submitExam() {
         hideSubmitModal();
         clearInterval(timerInterval);
@@ -695,29 +701,19 @@
         const percent = Math.round((Math.max(0, netMarkVal) / total) * 100);
 
         try {
-            const currentStudentId = studentData?.id || JSON.parse(localStorage.getItem('atlas_user'))?.id;
-            if (currentStudentId) {
-                // Preparing detailed answers for "My Mistakes" section
-                const detailedAnswers = questions.map((q, i) => ({
-                    question: q.questions || q.question,
-                    selected: q[`option${userAnswers[i]}`] || null,
-                    answer: q[`option${q.answer}`],
-                    explanation: q.explanation || null,
-                    status: (!userAnswers[i] || userAnswers[i] === 'skipped') ? 'skipped' : (parseInt(userAnswers[i]) === parseInt(q.answer) ? 'correct' : 'wrong')
-                }));
-
+            const studentId = studentData?.id;
+            if (studentId) {
                 await atlas.from('exam_results').insert([{
-                    student_id: currentStudentId,
+                    student_id: studentId,
                     exam_id: examData.exam_id || examData.id,
                     subject: examData.subject,
                     chapter: examData.chapter,
                     correct, wrong, skipped,
                     net_mark: netMarkVal,
                     total_questions: total,
-                    percent: percent,
+                    percent,
                     time_taken: timeTaken,
-                    answers: JSON.stringify(detailedAnswers),
-                    created_at: new Date().toISOString()
+                    answers: userAnswers
                 }]);
             }
         } catch(e) { console.log("Save error:", e); }
