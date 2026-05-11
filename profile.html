@@ -15,14 +15,14 @@
         .stat-box { background: white; border-radius: 18px; padding: 16px 12px; text-align: center; flex: 1; border: 1.5px solid #f1f5f9; }
         .history-item { background: white; border-radius: 20px; border: 1.5px solid #f1f5f9; overflow: hidden; transition: 0.2s; }
         .history-item:hover { border-color: #bfdbfe; }
-        
-        /* Modal Adjustments for Compact View */
         .detail-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
         .detail-modal.open { display: flex; }
-        .detail-sheet { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 16px; }
         
-        /* Compact MCQ Review Styling (Min 3 per screen) */
-        .q-review { background: #f8fafc; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; border-left: 3px solid #e2e8f0; }
+        /* ADJUSTED: Compact Modal padding for smaller screens */
+        .detail-sheet { background: white; border-radius: 24px 24px 0 0; width: 100%; max-width: 600px; max-height: 92vh; overflow-y: auto; padding: 12px; }
+        
+        /* ADJUSTED: Compact MCQ Review block to fit 3 per screen */
+        .q-review { background: #f8fafc; border-radius: 10px; padding: 10px; margin-bottom: 8px; border-left: 3px solid #e2e8f0; }
         .q-review.correct { border-left-color: #16a34a; background: #f0fdf4; }
         .q-review.wrong { border-left-color: #dc2626; background: #fff1f2; }
         .q-review.skipped { border-left-color: #f59e0b; background: #fffbeb; }
@@ -32,7 +32,7 @@
         .avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; background: linear-gradient(135deg, #1e40af, #3b82f6); }
         .progress-bar-outer { background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden; }
         .progress-bar-inner { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
-        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; cursor:pointer;}
+        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; }
         .chip-btn { padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; white-space: nowrap; color: #64748b; }
         .chip-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
         ::-webkit-scrollbar { width: 4px; }
@@ -236,7 +236,7 @@
         async function loadHistory() {
             if(!studentId) return;
 
-            // Fetching questions to get full options
+            // Updated query: Fetching 'questions' from exams table to reconstruct full MCQ options
             const { data, error } = await db.from('exam_results')
                 .select(`*, exams(title, subject, chapter, paper, questions)`)
                 .eq('student_id', studentId)
@@ -254,7 +254,7 @@
 
                 result.enrichedAnswers = userAns.map((a, i) => {
                     const orig = origQs[i] || {};
-                    return { ...orig, ...a, question: a.question || orig.questions || orig.question || `Question ${i+1}` }; // Merges full options A, B, C, D
+                    return { ...orig, ...a, question: a.question || orig.questions || orig.question || `Question ${i+1}` }; 
                 });
                 return result;
             });
@@ -314,11 +314,10 @@
                 const pct = totalQ > 0 ? Math.round((correct / totalQ) * 100) : 0;
                 const netMark = result.net_mark !== undefined ? result.net_mark : (correct - wrong * 0.25).toFixed(2);
                 
-                // Add time to date format
+                // ADJUSTED: Add time to date format in Exam History
                 const date = result.created_at ? new Date(result.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
                 const scoreColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
                 
-                // Get original index for correct modal opening
                 const globalIndex = allHistoryData.findIndex(r => r.id === result.id);
 
                 return `
@@ -372,7 +371,7 @@
             }
         }
 
-        // --- FEATURE 2: My Mistakes Logic (Accordion with 3 Practice Options) ---
+        // --- FEATURE 2: My Mistakes Logic ---
         function processMistakesGrouping(list) {
             groupedMistakes = {};
 
@@ -412,7 +411,8 @@
 
             container.innerHTML = keys.map(key => {
                 const ex = groupedMistakes[key];
-                const date = new Date(ex.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
+                // Added time format to My mistakes as well for consistency
+                const date = new Date(ex.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 return `
                 <div class="card border border-gray-200 shadow-sm mb-3">
                     <div class="p-4 flex justify-between items-center cursor-pointer" onclick="toggleMistakeActions('${key}')">
@@ -430,13 +430,9 @@
                     <div id="mistake-actions-${key}" class="hidden px-4 pb-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
                         <div class="grid grid-cols-1 gap-2 mt-3">
                             <div class="text-[9px] font-black text-gray-400 uppercase text-center mb-1">কী করতে চাও?</div>
-                            
                             ${ex.wrong.length > 0 ? `<button onclick="startMistakePractice('${key}', 'wrong')" class="w-full bg-red-100 text-red-700 py-2 rounded-xl text-[11px] font-black shadow-sm hover:bg-red-200">❌ শুধু ভুল Practice করো</button>` : ''}
-                            
                             ${ex.skipped.length > 0 ? `<button onclick="startMistakePractice('${key}', 'skipped')" class="w-full bg-amber-100 text-amber-700 py-2 rounded-xl text-[11px] font-black shadow-sm hover:bg-amber-200">⏭️ শুধু স্কিপ Practice করো</button>` : ''}
-                            
                             ${ex.both.length > 0 ? `<button onclick="startMistakePractice('${key}', 'both')" class="w-full bg-blue-900 text-white py-2 rounded-xl text-[11px] font-black shadow-md hover:bg-blue-800">✅ ভুল + স্কিপ Practice করো</button>` : ''}
-                            
                             <button onclick="viewMistakesModal('${key}')" class="w-full bg-white border border-gray-300 text-gray-600 py-2 rounded-xl text-[11px] font-black hover:bg-gray-100 mt-1">👀 শুধু উত্তর দেখো</button>
                         </div>
                     </div>
@@ -457,9 +453,19 @@
 
             if(listToPractice.length === 0) return alert('প্র্যাকটিস করার মতো কোনো প্রশ্ন নেই!');
             
-            // Clean pass for exam-hall. No hardcoded options!
+            // Explicitly map all existing options to ensure exam-hall receives valid data without falling back to defaults
             let practiceReady = listToPractice.map(q => {
-                return { ...q, questions: q.question || q.questions, answer: q.answer, explanation: q.explanation };
+                return { 
+                    ...q, 
+                    questions: q.question || q.questions, 
+                    option1: q.option1 || '',
+                    option2: q.option2 || '',
+                    option3: q.option3 || '',
+                    option4: q.option4 || '',
+                    option5: q.option5 || '',
+                    answer: q.answer, 
+                    explanation: q.explanation 
+                };
             });
 
             localStorage.setItem('atlas_mistakes_exam', JSON.stringify(practiceReady));
@@ -478,7 +484,7 @@
             document.body.style.overflow = '';
         }
 
-        // --- FEATURE 1: Compact Detailed Modal HTML Builder (Full MCQ & Option Checks) ---
+        // --- FEATURE 1: Compact Detailed Modal HTML Builder (Full MCQ) ---
         function renderSingleMCQ(a, status, index) {
             const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
             const qText = a.question || a.questions || `প্রশ্ন`;
@@ -498,16 +504,16 @@
                     
                     if (isCorrect) {
                         optClass = 'bg-green-50 border-green-500 text-green-700 font-bold';
-                        icon = ' <span class="ml-auto font-black text-green-600 text-base">✓</span>';
+                        icon = ' <span class="ml-auto font-black text-green-600 text-sm">✓</span>';
                     } else if (isSelected && !isCorrect) {
                         optClass = 'bg-red-50 border-red-400 text-red-700 font-bold';
-                        icon = ' <span class="ml-auto font-black text-red-600 text-base">✗</span>';
+                        icon = ' <span class="ml-auto font-black text-red-600 text-sm">✗</span>';
                     }
 
                     optionsHtml += `
-                    <div class="flex items-start gap-2 p-2 border-[1.5px] rounded-lg mb-1.5 ${optClass} text-[12px] leading-snug">
-                        <span class="w-5 h-5 flex items-center justify-center rounded bg-gray-100/50 border border-gray-200 text-gray-500 text-[9px] flex-shrink-0 font-black mt-0.5">${labels[n-1]}</span>
-                        <span class="flex-1 pt-0.5">${a[`option${n}`]}</span>
+                    <div class="flex items-start gap-2 p-1.5 border-[1.5px] rounded-lg mb-1 ${optClass} text-[11px] leading-tight">
+                        <span class="w-4 h-4 flex items-center justify-center rounded bg-gray-100/50 border border-gray-200 text-gray-500 text-[8px] flex-shrink-0 font-black mt-0.5">${labels[n-1]}</span>
+                        <span class="flex-1">${a[`option${n}`]}</span>
                         ${icon}
                     </div>`;
                 }
@@ -515,20 +521,20 @@
 
             if (!hasOptions) {
                 optionsHtml = `
-                    ${a.selected ? `<p class="text-[11px] font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
-                    ${a.answer && status !== 'correct' ? `<p class="text-[11px] font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
+                    ${a.selected ? `<p class="text-[10px] font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
+                    ${a.answer && status !== 'correct' ? `<p class="text-[10px] font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
                 `;
             }
 
             return `
             <div class="q-review ${status} detail-q-item">
-                <div class="flex justify-between items-start mb-2">
-                    <span class="text-[10px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">Q.${index}</span>
-                    <span class="text-[10px] font-black ${status==='correct'?'text-green-600':status==='wrong'?'text-red-600':'text-amber-600'}">${statusLabel}</span>
+                <div class="flex justify-between items-start mb-1.5">
+                    <span class="text-[9px] font-black text-gray-500 bg-gray-200 px-1.5 py-0.5 rounded">Q.${index}</span>
+                    <span class="text-[9px] font-black ${status==='correct'?'text-green-600':status==='wrong'?'text-red-600':'text-amber-600'}">${statusLabel}</span>
                 </div>
-                <p class="text-[13px] font-black text-gray-800 mb-3 leading-snug">${qText}</p>
+                <p class="text-[12.5px] font-black text-gray-800 mb-2 leading-snug">${qText}</p>
                 ${optionsHtml}
-                ${a.explanation ? `<div class="text-[11px] font-semibold bg-blue-50 text-blue-800 border border-blue-100 p-2 rounded-lg mt-2 leading-relaxed">💡 <b>ব্যাখ্যা:</b> ${a.explanation}</div>` : ''}
+                ${a.explanation ? `<div class="text-[10px] font-semibold bg-blue-50 text-blue-800 border border-blue-100 p-1.5 rounded-lg mt-1.5 leading-relaxed">💡 <b>ব্যাখ্যা:</b> ${a.explanation}</div>` : ''}
             </div>`;
         }
 
