@@ -16,13 +16,12 @@
         .chip:hover:not(.active) { border-color:#bfdbfe; }
         .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:16px; padding:12px 16px; font-family:'Hind Siliguri',sans-serif; font-size:14px; font-weight:600; color:#374151; outline:none; cursor:pointer; transition:0.2s; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
         .filter-select:focus { border-color:#3b82f6; }
-        .yt-btn { background:#ef4444; color:white; border-radius:14px; padding:10px 20px; font-size:13px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:0.2s; }
+        .yt-btn { background:#ef4444; color:white; border-radius:14px; padding:10px 20px; font-size:13px; font-weight:800; text-decoration:none; display:inline-flex; align-items:center; gap:6px; transition:0.2s; cursor: pointer; border: none; }
         .yt-btn:hover { background:#dc2626; transform:scale(1.02); }
         .empty-state { text-align:center; padding:60px 20px; color:#94a3b8; }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     <nav class="bg-white px-5 py-4 flex items-center gap-4 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
         <a href="index.html"><img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'"></a>
         <div>
@@ -33,7 +32,6 @@
 
     <div class="max-w-xl mx-auto px-4 pt-6 pb-16">
 
-        <!-- Filters -->
         <div class="card p-5 mb-5">
             <div class="grid grid-cols-1 gap-3">
                 <div>
@@ -62,10 +60,8 @@
             <button onclick="clearFilters()" class="mt-4 text-xs font-bold text-blue-600 underline">Clear Filters</button>
         </div>
 
-        <!-- Results count -->
         <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-4 px-1" id="resultCount"></div>
 
-        <!-- Class List -->
         <div id="classList" class="space-y-3">
             <div class="empty-state"><div class="text-4xl mb-3">📺</div><p class="font-bold">লোড হচ্ছে...</p></div>
         </div>
@@ -77,13 +73,17 @@
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let allClasses = [];
+        let currentStudentId = null;
 
         window.onload = async () => {
             // Auth check
-            if(!localStorage.getItem('atlas_user')) {
+            const userRaw = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
+            if(!userRaw) {
                 localStorage.setItem('atlas_redirect','classes.html');
                 window.location.href='register.html'; return;
             }
+            currentStudentId = JSON.parse(userRaw).id;
+
             const { data } = await db.from('classes').select('*').order('created_at',{ascending:false});
             allClasses = data || [];
             populateFilters();
@@ -128,14 +128,41 @@
                 <div class="card p-5 flex items-start gap-4">
                     <div style="width:52px;height:52px;background:#fee2e2;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📺</div>
                     <div class="flex-1 min-w-0">
-                        <div style="font-weight:800;color:#1e293b;font-size:15px;margin-bottom:6px;">${c.chapter || 'Class'}</div>
+                        <div style="font-weight:800;color:#1e293b;font-size:15px;margin-bottom:6px;">${c.chapter || c.title || 'Class'}</div>
                         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
                             ${c.subject ? `<span style="background:#eff6ff;color:#1e40af;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${c.subject}</span>` : ''}
                             ${c.paper ? `<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${c.paper}</span>` : ''}
                         </div>
-                        <a href="${c.link}" target="_blank" class="yt-btn">▶ Watch on YouTube</a>
+                        <button onclick="watchClass('${c.id}', '${c.title || c.chapter || 'Class'}', '${c.subject || ''}', '${c.paper || ''}', '${c.chapter || ''}', '${c.link}')" class="yt-btn">▶ Watch on YouTube</button>
                     </div>
                 </div>`).join('');
+        }
+
+        // NEW LOGIC: This saves the history to DB before opening the YouTube link
+        async function watchClass(classId, title, subject, paper, chapter, link) {
+            if (!link) return alert("ক্লাসের লিংক পাওয়া যায়নি!");
+            
+            // Open link immediately for better user experience
+            window.open(link, '_blank');
+
+            // Save to class_history table silently in the background
+            if (currentStudentId) {
+                try {
+                    const { error } = await db.from('class_history').insert([{
+                        student_id: currentStudentId,
+                        class_id: classId,
+                        title: title,
+                        subject: subject,
+                        paper: paper,
+                        chapter: chapter,
+                        link: link,
+                        last_accessed: new Date().toISOString()
+                    }]);
+                    if (error) console.error("Class History Save Error:", error);
+                } catch(e) {
+                    console.error("TryCatch Error:", e);
+                }
+            }
         }
     </script>
 </body>
