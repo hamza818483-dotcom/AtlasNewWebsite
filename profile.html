@@ -18,7 +18,7 @@
         .detail-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; }
         .detail-modal.open { display: flex; }
         .detail-sheet { background: white; border-radius: 28px 28px 0 0; width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px; }
-        .q-review { background: #f8fafc; border-radius: 14px; padding: 14px; margin-bottom: 10px; border-left: 4px solid #e2e8f0; }
+        .q-review { background: #f8fafc; border-radius: 14px; padding: 16px; margin-bottom: 12px; border-left: 4px solid #e2e8f0; }
         .q-review.correct { border-left-color: #16a34a; background: #f0fdf4; }
         .q-review.wrong { border-left-color: #dc2626; background: #fff1f2; }
         .q-review.skipped { border-left-color: #f59e0b; background: #fffbeb; }
@@ -27,6 +27,9 @@
         .avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; background: linear-gradient(135deg, #1e40af, #3b82f6); }
         .progress-bar-outer { background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden; }
         .progress-bar-inner { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
+        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; }
+        .chip-btn { padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; white-space: nowrap; color: #64748b; }
+        .chip-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-thumb { background: #1e40af; border-radius: 2px; }
     </style>
@@ -98,61 +101,44 @@
 
         <div id="examHistorySection">
             <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Exam History</div>
+            
+            <div class="bg-white p-3 rounded-xl border border-gray-200 mb-4 flex gap-2 overflow-x-auto">
+                <select id="histSubFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()">
+                    <option value="">সব Subject</option>
+                </select>
+                <select id="histPapFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()">
+                    <option value="">সব Paper</option>
+                    <option value="1st paper">১ম পত্র</option>
+                    <option value="2nd paper">২য় পত্র</option>
+                </select>
+                <select id="histChapFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()">
+                    <option value="">সব Chapter</option>
+                </select>
+            </div>
+
             <div id="historyList" class="space-y-3">
-                <div class="text-center py-10 text-gray-400 font-bold">
-                    <div class="text-4xl mb-3">📋</div>
-                    <p>লোড হচ্ছে...</p>
-                </div>
+                <div class="text-center py-10 text-gray-400 font-bold"><p>লোড হচ্ছে...</p></div>
             </div>
         </div>
 
         <div id="classHistorySection" class="hidden">
             <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Class History</div>
             <div id="classHistoryList" class="space-y-3">
-                <div class="text-center py-10 text-gray-400 font-bold">
-                    <div class="text-4xl mb-3">📚</div>
-                    <p>লোড হচ্ছে...</p>
-                </div>
+                <div class="text-center py-10 text-gray-400 font-bold"><p>লোড হচ্ছে...</p></div>
             </div>
         </div>
 
         <div id="mistakeSection" class="hidden">
             <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">My Mistakes & Practice</div>
-            
-            <div class="bg-white p-4 rounded-2xl border-[1.5px] border-gray-200 mb-4 shadow-sm">
-                <div class="grid grid-cols-2 gap-3 mb-3">
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase">Exam Select</label>
-                        <select id="mistakeExamSelect" class="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-700 outline-none" onchange="filterMistakesList()">
-                            <option value="all">All Exams (সব)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-gray-400 uppercase">Question Type</label>
-                        <select id="mistakeTypeSelect" class="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-700 outline-none" onchange="filterMistakesList()">
-                            <option value="both">উভয় (ভুল + স্কিপ)</option>
-                            <option value="wrong">❌ শুধুমাত্র ভুল</option>
-                            <option value="skipped">⏭️ শুধুমাত্র স্কিপ</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="startMistakeExam()" class="w-full bg-blue-900 text-white px-3 py-3 rounded-xl text-xs font-black uppercase shadow-md hover:bg-blue-800 transition-colors">
-                    এই ফিল্টারে পরীক্ষা দাও →
-                </button>
-            </div>
-
-            <div id="mistakeList" class="space-y-3">
-                <div class="text-center py-10 text-gray-400 font-bold">
-                    <div class="text-4xl mb-3">✅</div>
-                    <p>লোড হচ্ছে...</p>
-                </div>
+            <div id="mistakeList" class="space-y-4">
+                <div class="text-center py-10 text-gray-400 font-bold"><p>লোড হচ্ছে...</p></div>
             </div>
         </div>
     </div> 
 
     <div class="detail-modal" id="detailModal">
-        <div class="detail-sheet">
-            <div class="flex items-center justify-between mb-5">
+        <div class="detail-sheet flex flex-col">
+            <div class="flex items-center justify-between mb-4 shrink-0">
                 <div>
                     <div class="logo-font font-black text-blue-900 text-base" id="detailTitle">Exam Details</div>
                     <div class="text-xs text-gray-400 font-bold" id="detailSubject"></div>
@@ -160,23 +146,41 @@
                 <button onclick="closeDetail()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-black text-lg hover:bg-gray-200 transition-colors">×</button>
             </div>
 
-            <div class="flex gap-3 mb-5">
-                <div class="flex-1 bg-green-50 rounded-2xl p-3 text-center">
-                    <div class="text-xl font-black text-green-600" id="detailCorrect">0</div>
-                    <div class="text-[10px] font-bold text-green-500 uppercase">Correct</div>
+            <div class="flex gap-3 mb-4 shrink-0">
+                <div class="flex-1 bg-green-50 rounded-xl p-2 text-center">
+                    <div class="text-lg font-black text-green-600" id="detailCorrect">0</div>
+                    <div class="text-[9px] font-bold text-green-500 uppercase">Correct</div>
                 </div>
-                <div class="flex-1 bg-red-50 rounded-2xl p-3 text-center">
-                    <div class="text-xl font-black text-red-600" id="detailWrong">0</div>
-                    <div class="text-[10px] font-bold text-red-400 uppercase">Wrong</div>
+                <div class="flex-1 bg-red-50 rounded-xl p-2 text-center">
+                    <div class="text-lg font-black text-red-600" id="detailWrong">0</div>
+                    <div class="text-[9px] font-bold text-red-400 uppercase">Wrong</div>
                 </div>
-                <div class="flex-1 bg-amber-50 rounded-2xl p-3 text-center">
-                    <div class="text-xl font-black text-amber-600" id="detailSkipped">0</div>
-                    <div class="text-[10px] font-bold text-amber-400 uppercase">Skipped</div>
+                <div class="flex-1 bg-amber-50 rounded-xl p-2 text-center">
+                    <div class="text-lg font-black text-amber-600" id="detailSkipped">0</div>
+                    <div class="text-[9px] font-bold text-amber-400 uppercase">Skipped</div>
                 </div>
             </div>
 
-            <div class="logo-font font-black text-gray-700 text-xs uppercase tracking-wide mb-3">প্রশ্নের বিস্তারিত (Question & Solution)</div>
-            <div id="questionReviewList" class="space-y-3"></div>
+            <div class="flex gap-2 mb-4 overflow-x-auto pb-1 shrink-0 hide-scrollbar">
+                <button onclick="filterDetailModal('all')" id="btnDetAll" class="chip-btn active">সব দেখো</button>
+                <button onclick="filterDetailModal('correct')" id="btnDetCor" class="chip-btn">✅ সঠিকগুলো</button>
+                <button onclick="filterDetailModal('wrong')" id="btnDetWro" class="chip-btn">❌ ভুলগুলো</button>
+                <button onclick="filterDetailModal('skipped')" id="btnDetSkip" class="chip-btn">⏭️ স্কিপগুলো</button>
+            </div>
+
+            <div class="logo-font font-black text-gray-700 text-xs uppercase tracking-wide mb-2 shrink-0">প্রশ্নের বিস্তারিত (Question & Solution)</div>
+            
+            <div id="questionReviewList" class="space-y-3 flex-1 overflow-y-auto pr-2 pb-10"></div>
+        </div>
+    </div>
+
+    <div class="detail-modal" id="viewMistakeModal">
+        <div class="detail-sheet flex flex-col">
+            <div class="flex items-center justify-between mb-4 shrink-0">
+                <div class="logo-font font-black text-blue-900 text-base">ভুল ও স্কিপ করা প্রশ্নসমূহ</div>
+                <button onclick="closeMistakeView()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-black text-lg hover:bg-gray-200">×</button>
+            </div>
+            <div id="viewMistakeList" class="space-y-3 flex-1 overflow-y-auto pr-2 pb-10"></div>
         </div>
     </div>
 
@@ -187,20 +191,16 @@
 
         let studentId = null;
         let performanceChartInstance = null;
-        let allPracticeQuestions = []; // Updated variable for advanced mistakes logic
+        
+        let allHistoryData = []; // Full exam history
+        let groupedMistakes = {}; // Grouped by exam_id
 
         window.onload = async () => {
             const raw = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
             if(!raw) { window.location.href = 'register.html'; return; }
             
             const rawData = JSON.parse(raw);
-            const user = {
-                id: rawData.id,
-                name: rawData.name,
-                college: rawData.college,
-                batch: rawData.batch || rawData.hsc_batch,
-                phone: rawData.phone || rawData.whatsapp
-            };
+            const user = { id: rawData.id, name: rawData.name, college: rawData.college, batch: rawData.batch || rawData.hsc_batch, phone: rawData.phone || rawData.whatsapp };
             studentId = user.id;
 
             document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
@@ -209,56 +209,70 @@
             document.getElementById('profileBatch').textContent = user.batch ? 'HSC ' + user.batch : '—';
             document.getElementById('profilePhone').textContent = user.phone || '—';
 
-            if(studentId) {
-                const { data: stu } = await db.from('students').select('social_link').eq('id', studentId).single();
-                if(stu && stu.social_link) {
-                    const sl = document.getElementById('profileSocial');
-                    sl.textContent = 'Profile Link';
-                    sl.onclick = () => window.open(stu.social_link, '_blank');
-                    sl.style.cursor = 'pointer';
-                }
-            }
-
             await loadHistory();
         };
 
         async function loadHistory() {
             if(!studentId) return;
 
-            const { data, error } = await db
-                .from('exam_results')
+            const { data, error } = await db.from('exam_results')
                 .select(`*, exams(title, subject, chapter, paper)`)
                 .eq('student_id', studentId)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error("Error fetching data:", error);
-                document.getElementById('historyList').innerHTML = `<div class="text-center py-8 text-red-500 font-bold">ডেটা লোড করতে সমস্যা হয়েছে!</div>`;
-                return;
-            }
+            if (error) { document.getElementById('historyList').innerHTML = `<div class="text-center py-8 text-red-500 font-bold">ডেটা লোড করতে সমস্যা হয়েছে!</div>`; return; }
 
-            const list = data || [];
+            allHistoryData = data || [];
+            
+            // Populate Filters
+            populateHistoryFilters();
+
+            // Render Exam History
+            renderHistoryList(allHistoryData);
+
+            // Render Stats & Graph
+            updateStatsAndGraph(allHistoryData);
+
+            // FEATURE 2: Process My Mistakes Grouping
+            processMistakesGrouping(allHistoryData);
+        }
+
+        // --- FEATURE 3: Exam History Filters Logic ---
+        function populateHistoryFilters() {
+            const subSet = new Set();
+            const chapSet = new Set();
+            allHistoryData.forEach(r => {
+                if(r.exams?.subject || r.subject) subSet.add(r.exams?.subject || r.subject);
+                if(r.exams?.chapter || r.chapter) chapSet.add(r.exams?.chapter || r.chapter);
+            });
+            const sSel = document.getElementById('histSubFilter');
+            const cSel = document.getElementById('histChapFilter');
+            subSet.forEach(s => sSel.innerHTML += `<option value="${s}">${s}</option>`);
+            chapSet.forEach(c => cSel.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+
+        function applyHistoryFilters() {
+            const sub = document.getElementById('histSubFilter').value;
+            const pap = document.getElementById('histPapFilter').value;
+            const chap = document.getElementById('histChapFilter').value;
+
+            const filtered = allHistoryData.filter(r => {
+                const rSub = r.exams?.subject || r.subject || '';
+                const rPap = r.exams?.paper || r.paper || '';
+                const rChap = r.exams?.chapter || r.chapter || '';
+
+                let matchSub = !sub || rSub === sub;
+                let matchPap = !pap || rPap === pap;
+                let matchChap = !chap || rChap === chap;
+                return matchSub && matchPap && matchChap;
+            });
+            renderHistoryList(filtered);
+        }
+
+        function renderHistoryList(list) {
             const container = document.getElementById('historyList');
-
-            document.getElementById('totalExams').textContent = list.length;
-            if(list.length > 0) {
-                const totalQ = list.reduce((a, r) => a + (r.total_questions || 0), 0);
-                const totalCorrect = list.reduce((a, r) => a + (r.correct || 0), 0);
-                const avgPct = totalQ > 0 ? Math.round((totalCorrect / totalQ) * 100) : 0;
-                document.getElementById('avgScore').textContent = avgPct + '%';
-                document.getElementById('totalQuestions').textContent = totalQ;
-            }
-
-            processGraphAndMistakes(list);
-
             if(list.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-12">
-                        <div class="text-5xl mb-4">📝</div>
-                        <div class="logo-font font-black text-gray-600 text-base mb-2">এখনো কোনো Exam দাওনি</div>
-                        <p class="text-gray-400 text-sm">প্রথম পরীক্ষা দিয়ে ইতিহাস শুরু করো!</p>
-                        <a href="exams.html" class="inline-block mt-4 bg-blue-900 text-white px-6 py-3 rounded-xl font-bold text-sm">Exams দেখো →</a>
-                    </div>`;
+                container.innerHTML = `<div class="text-center py-12"><div class="text-5xl mb-4">📝</div><p class="text-gray-400 font-bold">কোনো Exam History পাওয়া যায়নি</p></div>`;
                 return;
             }
 
@@ -266,17 +280,13 @@
                 const title = result.exams?.title || result.chapter || result.subject || `Exam #${i+1}`;
                 const subjectName = result.exams?.subject || result.subject || '';
                 const paperName = result.exams?.paper || '';
-
                 const totalQ = result.total_questions || 0;
                 const correct = result.correct || 0;
                 const wrong = result.wrong || 0;
-                const skipped = result.skipped || 0;
                 const pct = totalQ > 0 ? Math.round((correct / totalQ) * 100) : 0;
                 const netMark = result.net_mark !== undefined ? result.net_mark : (correct - wrong * 0.25).toFixed(2);
                 const date = result.created_at ? new Date(result.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-
                 const scoreColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
-                const barColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
 
                 return `
                 <div class="history-item">
@@ -295,159 +305,122 @@
                                 <div class="text-[10px] font-bold text-gray-400">Net: ${netMark}</div>
                             </div>
                         </div>
-
-                        <div class="progress-bar-outer mb-3">
-                            <div class="progress-bar-inner" style="width:${pct}%;background:${barColor}"></div>
-                        </div>
-
-                        <div class="flex gap-3 mb-3">
-                            <div class="flex-1 text-center">
-                                <span class="text-sm font-black text-green-600">${correct}</span>
-                                <span class="text-[10px] text-gray-400 font-bold block">Correct</span>
-                            </div>
-                            <div class="flex-1 text-center">
-                                <span class="text-sm font-black text-red-600">${wrong}</span>
-                                <span class="text-[10px] text-gray-400 font-bold block">Wrong</span>
-                            </div>
-                            <div class="flex-1 text-center">
-                                <span class="text-sm font-black text-amber-600">${skipped}</span>
-                                <span class="text-[10px] text-gray-400 font-bold block">Skipped</span>
-                            </div>
-                            <div class="flex-1 text-center">
-                                <span class="text-sm font-black text-gray-700">${totalQ}</span>
-                                <span class="text-[10px] text-gray-400 font-bold block">মোট</span>
-                            </div>
-                        </div>
-
-                        ${result.answers ? `
-                        <button onclick='openDetail(${JSON.stringify(result).replace(/'/g,"&#39;")})' 
-                            class="w-full py-2.5 mb-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black hover:bg-blue-100 transition-colors">
-                            📋 বিস্তারিত দেখো (প্রশ্ন+উত্তর                +ব্যাখ্যা)
-                        </button>` : ''}
-                        
-                        <a href="exam-hall.html?id=${result.exam_id}" class="block w-full py-2.5 bg-blue-900 text-white rounded-xl text-xs font-black text-center hover:bg-blue-800 transition-colors">
-                            🔄 আবার পরীক্ষা দাও
-                        </a>
+                        <div class="progress-bar-outer mb-3"><div class="progress-bar-inner" style="width:${pct}%;background:${scoreColor}"></div></div>
+                        <button onclick='openDetail(${JSON.stringify(result).replace(/'/g,"&#39;")})' class="w-full py-2.5 mb-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black hover:bg-blue-100 transition-colors">📋 বিস্তারিত দেখো (প্রশ্ন + উত্তর + ব্যাখ্যা)</button>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        function processGraphAndMistakes(list) {
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-            
+        function updateStatsAndGraph(list) {
+            document.getElementById('totalExams').textContent = list.length;
+            if(list.length > 0) {
+                const totalQ = list.reduce((a, r) => a + (r.total_questions || 0), 0);
+                const totalCorrect = list.reduce((a, r) => a + (r.correct || 0), 0);
+                document.getElementById('avgScore').textContent = totalQ > 0 ? Math.round((totalCorrect / totalQ) * 100) + '%' : '0%';
+                document.getElementById('totalQuestions').textContent = totalQ;
+            }
+
+            const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             const recentExams = list.filter(r => new Date(r.created_at) >= thirtyDaysAgo).reverse();
             
             if (recentExams.length > 0) {
                 document.getElementById('graphContainer').classList.remove('hidden');
                 const labels = recentExams.map(r => new Date(r.created_at).toLocaleDateString('bn-BD', { month: 'short', day: 'numeric' }));
-                const scores = recentExams.map(r => {
-                    const totalQ = r.total_questions || 0;
-                    return totalQ > 0 ? Math.round((r.correct / totalQ) * 100) : 0;
-                });
+                const scores = recentExams.map(r => r.total_questions > 0 ? Math.round((r.correct / r.total_questions) * 100) : 0);
 
                 const ctx = document.getElementById('performanceChart').getContext('2d');
                 if(performanceChartInstance) performanceChartInstance.destroy();
-                performanceChartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Score (%)',
-                            data: scores,
-                            borderColor: '#3b82f6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderWidth: 2,
-                            fill: true,
-                            tension: 0.4,
-                            pointBackgroundColor: '#1e40af'
-                        }]
-                    },
-                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
-                });
+                performanceChartInstance = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Score (%)', data: scores, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, fill: true, tension: 0.4 }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } } });
             }
+        }
 
-            // NEW: Advanced Mistakes Logic (Extracting Wrong and Skipped)
-            allPracticeQuestions = [];
-            let examOptionsHtml = '<option value="all">All Exams (সব)</option>';
-            const uniqueExams = new Set();
+        // --- FEATURE 2: My Mistakes Logic (Grouped by Exam) ---
+        function processMistakesGrouping(list) {
+            groupedMistakes = {};
+            let totalMistakesFound = 0;
 
             list.forEach(result => {
                 const answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || []);
                 const examTitle = result.exams?.title || result.chapter || result.subject || 'Practice Exam';
-                const examId = result.exam_id || 'unknown';
-
-                if (!uniqueExams.has(examId)) {
-                    uniqueExams.add(examId);
-                    examOptionsHtml += `<option value="${examId}">${examTitle}</option>`;
-                }
+                const examId = result.exam_id || result.id;
+                
+                let wList = [];
+                let sList = [];
 
                 answers.forEach((a, index) => {
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
-                    if (status === 'wrong' || status === 'skipped') {
-                        // Saving entire question object for exam-hall compatibility
-                        allPracticeQuestions.push({ ...a, examTitle, examId, questionNum: index + 1, status: status });
-                    }
+                    const qObj = { ...a, questionNum: index + 1, status: status, examTitle: examTitle, examId: examId };
+                    
+                    if (status === 'wrong') wList.push(qObj);
+                    if (status === 'skipped') sList.push(qObj);
                 });
+
+                if (wList.length > 0 || sList.length > 0) {
+                    // Overwrite if same exam taken multiple times, or keep newest
+                    if(!groupedMistakes[examId]) {
+                        groupedMistakes[examId] = { title: examTitle, wrong: wList, skipped: sList, both: [...wList, ...sList], date: result.created_at };
+                        totalMistakesFound++;
+                    }
+                }
             });
 
-            document.getElementById('mistakeExamSelect').innerHTML = examOptionsHtml;
-            filterMistakesList(); // Initial render
+            renderMistakeExamsList();
         }
 
-        function filterMistakesList() {
-            const examFilter = document.getElementById('mistakeExamSelect').value;
-            const typeFilter = document.getElementById('mistakeTypeSelect').value;
-            
-            let filtered = allPracticeQuestions.filter(q => {
-                let matchExam = (examFilter === 'all' || q.examId == examFilter);
-                let matchType = false;
-                if (typeFilter === 'wrong') matchType = (q.status === 'wrong');
-                if (typeFilter === 'skipped') matchType = (q.status === 'skipped');
-                if (typeFilter === 'both') matchType = (q.status === 'wrong' || q.status === 'skipped');
-                return matchExam && matchType;
-            });
-
+        function renderMistakeExamsList() {
             const container = document.getElementById('mistakeList');
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><div class="text-4xl mb-3">✨</div><p>এই ফিল্টারে কোনো প্রশ্ন নেই!</p></div>';
+            const keys = Object.keys(groupedMistakes);
+
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><div class="text-4xl mb-3">✨</div><p>তোমার কোনো ভুল বা স্কিপ করা প্রশ্ন নেই!</p></div>';
                 return;
             }
 
-            container.innerHTML = filtered.map(m => `
-                <div class="q-review ${m.status}">
-                    <div class="flex justify-between items-start mb-2">
-                        <span class="text-[11px] font-black text-gray-500">${m.examTitle} - Q${m.questionNum}</span>
-                        <span class="text-[11px] font-black ${m.status==='wrong' ? 'text-red-600' : 'text-amber-600'}">${m.status==='wrong' ? '❌ ভুল' : '⏭️ স্কিপ'}</span>
+            container.innerHTML = keys.map(key => {
+                const ex = groupedMistakes[key];
+                const date = new Date(ex.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
+                return `
+                <div class="card p-4 border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-black text-gray-800 text-sm leading-tight">${ex.title}</h3>
+                            <span class="text-[10px] font-bold text-gray-400">${date}</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded">❌ ${ex.wrong.length}</span>
+                            <span class="text-xs font-black text-amber-600 bg-amber-50 px-2 py-1 rounded ml-1">⏭️ ${ex.skipped.length}</span>
+                        </div>
                     </div>
-                    <p class="text-sm font-bold text-gray-800 mb-2 leading-relaxed">${m.question || m.questions || 'প্রশ্ন'}</p>
-                    <p class="text-xs font-bold text-gray-600">তোমার উত্তর: <span class="${m.status==='wrong' ? 'text-red-600' : 'text-amber-600'}">${m.selected || 'দেওয়া হয়নি'}</span></p>
-                    <p class="text-xs font-bold text-gray-600">সঠিক উত্তর: <span class="text-green-700">${m.answer}</span></p>
-                    ${m.explanation ? `<p class="text-[11px] bg-blue-50 text-blue-700 p-2 rounded-lg mt-2 leading-relaxed">💡 ${m.explanation}</p>` : ''}
-                </div>
-            `).join('');
+                    
+                    <div class="grid grid-cols-1 gap-2 mt-3 bg-gray-50 p-2 rounded-xl">
+                        <div class="text-[10px] font-black text-gray-400 uppercase text-center mb-1">কী করতে চাও?</div>
+                        
+                        ${ex.wrong.length > 0 ? `<button onclick="startMistakePractice('${key}', 'wrong')" class="w-full bg-red-100 text-red-700 py-2 rounded-lg text-xs font-black hover:bg-red-200">❌ শুধু ভুলগুলো Practice করো</button>` : ''}
+                        
+                        ${ex.skipped.length > 0 ? `<button onclick="startMistakePractice('${key}', 'skipped')" class="w-full bg-amber-100 text-amber-700 py-2 rounded-lg text-xs font-black hover:bg-amber-200">⏭️ শুধু স্কিপগুলো Practice করো</button>` : ''}
+                        
+                        ${ex.both.length > 0 ? `<button onclick="startMistakePractice('${key}', 'both')" class="w-full bg-blue-900 text-white py-2 rounded-lg text-xs font-black shadow-md hover:bg-blue-800">✅ ভুল + স্কিপ (সব) Practice করো</button>` : ''}
+                        
+                        <button onclick="viewMistakesModal('${key}')" class="w-full bg-white border-2 border-gray-200 text-gray-600 py-2 rounded-lg text-xs font-black hover:bg-gray-100 mt-1">👀 পরীক্ষা ছাড়া শুধু উত্তর দেখো</button>
+                    </div>
+                </div>`;
+            }).join('');
         }
 
-        function startMistakeExam() {
-            const examFilter = document.getElementById('mistakeExamSelect').value;
-            const typeFilter = document.getElementById('mistakeTypeSelect').value;
-            
-            let filtered = allPracticeQuestions.filter(q => {
-                let matchExam = (examFilter === 'all' || q.examId == examFilter);
-                let matchType = false;
-                if (typeFilter === 'wrong') matchType = (q.status === 'wrong');
-                if (typeFilter === 'skipped') matchType = (q.status === 'skipped');
-                if (typeFilter === 'both') matchType = (q.status === 'wrong' || q.status === 'skipped');
-                return matchExam && matchType;
-            });
+        function startMistakePractice(examId, type) {
+            const ex = groupedMistakes[examId];
+            let listToPractice = [];
+            if(type === 'wrong') listToPractice = ex.wrong;
+            else if(type === 'skipped') listToPractice = ex.skipped;
+            else listToPractice = ex.both;
 
-            if(filtered.length === 0) return alert('এই ফিল্টারে প্র্যাকটিস করার মতো কোনো প্রশ্ন নেই!');
+            if(listToPractice.length === 0) return alert('প্র্যাকটিস করার মতো কোনো প্রশ্ন নেই!');
             
-            // Format fallback for exam-hall.html to render options properly
-            let practiceReady = filtered.map(q => ({
+            // Format fallback for exam-hall compatibility
+            let practiceReady = listToPractice.map(q => ({
                 question: q.question || q.questions,
-                option1: q.option1 || q.answer, // Fallback if full options were not saved
+                option1: q.option1 || q.answer, 
                 option2: q.option2 || q.selected || 'Skip', 
                 option3: q.option3 || 'Option C',
                 option4: q.option4 || 'Option D',
@@ -460,7 +433,72 @@
             window.location.href = `exam-hall.html?mode=mistakes`;
         }
 
-        // NEW: Advanced Detail Modal (Shows Full MCQs like Exam Hall)
+        function viewMistakesModal(examId) {
+            const ex = groupedMistakes[examId];
+            const container = document.getElementById('viewMistakeList');
+            container.innerHTML = ex.both.map(a => renderSingleMCQ(a, a.status, a.questionNum)).join('');
+            document.getElementById('viewMistakeModal').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeMistakeView() {
+            document.getElementById('viewMistakeModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        // --- FEATURE 1: Detailed Modal HTML Builder (Full MCQ & Filter Logic) ---
+        function renderSingleMCQ(a, status, index) {
+            const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
+            const qText = a.question || a.questions || `প্রশ্ন`;
+            
+            let optionsHtml = '';
+            const labels = ['A', 'B', 'C', 'D', 'E'];
+            let hasOptions = false;
+
+            for(let n=1; n<=5; n++) {
+                if(a[`option${n}`]) {
+                    hasOptions = true;
+                    const isCorrect = a[`option${n}`] == a.answer || n == parseInt(a.answer);
+                    const isSelected = a[`option${n}`] == a.selected || n == parseInt(a.selected);
+                    
+                    let optClass = 'bg-white border-gray-200 text-gray-700';
+                    let icon = '';
+                    
+                    if (isCorrect) {
+                        optClass = 'bg-green-50 border-green-500 text-green-700 font-bold';
+                        icon = ' <span class="ml-auto font-black">✓</span>';
+                    } else if (isSelected && !isCorrect) {
+                        optClass = 'bg-red-50 border-red-400 text-red-700 font-bold';
+                        icon = ' <span class="ml-auto font-black">✗</span>';
+                    }
+
+                    optionsHtml += `
+                    <div class="flex items-center gap-3 p-3 border-[1.5px] rounded-xl mb-2 ${optClass} text-[13px]">
+                        <span class="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 text-[10px] flex-shrink-0 font-black">${labels[n-1]}</span>
+                        <span class="flex-1">${a[`option${n}`]}</span>
+                        ${icon}
+                    </div>`;
+                }
+            }
+
+            if (!hasOptions) {
+                optionsHtml = `
+                    ${a.selected ? `<p class="text-xs font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
+                    ${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
+                `;
+            }
+
+            return `
+            <div class="q-review ${status} detail-q-item">
+                <div class="flex justify-between items-start mb-3">
+                    <span class="text-[11px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">Q.${index}</span>
+                    <span class="text-[11px] font-black ${status==='correct'?'text-green-600':status==='wrong'?'text-red-600':'text-amber-600'}">${statusLabel}</span>
+                </div>
+                <p class="text-[14px] font-black text-gray-800 mb-4 leading-relaxed">${qText}</p>
+                ${optionsHtml}
+                ${a.explanation ? `<div class="text-[12px] font-semibold bg-blue-50 text-blue-800 border border-blue-100 p-3 rounded-xl mt-3 leading-relaxed">💡 <b>ব্যাখ্যা:</b> ${a.explanation}</div>` : ''}
+            </div>`;
+        }
+
         function openDetail(result) {
             const exam = result.exams || {};
             document.getElementById('detailTitle').textContent = exam.title || result.chapter || result.subject || 'Exam Detail';
@@ -477,64 +515,29 @@
             } else {
                 container.innerHTML = answers.map((a, i) => {
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
-                    const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
-                    const qText = a.question || a.questions || `প্রশ্ন ${i+1}`;
-                    
-                    // Generate full MCQ options
-                    let optionsHtml = '';
-                    const labels = ['A', 'B', 'C', 'D', 'E'];
-                    let hasOptions = false;
-
-                    for(let n=1; n<=5; n++) {
-                        if(a[`option${n}`]) {
-                            hasOptions = true;
-                            // Check matching by exact text or index number
-                            const isCorrect = a[`option${n}`] == a.answer || n == parseInt(a.answer);
-                            const isSelected = a[`option${n}`] == a.selected || n == parseInt(a.selected);
-                            
-                            let optClass = 'bg-white border-gray-200 text-gray-700'; // default
-                            let icon = '';
-                            
-                            if (isCorrect) {
-                                optClass = 'bg-green-50 border-green-500 text-green-700';
-                                icon = ' <span class="ml-auto font-black">✓</span>';
-                            } else if (isSelected && !isCorrect) {
-                                optClass = 'bg-red-50 border-red-400 text-red-700';
-                                icon = ' <span class="ml-auto font-black">✗</span>';
-                            }
-
-                            optionsHtml += `
-                            <div class="flex items-center gap-3 p-2.5 border-[1.5px] rounded-xl mb-2 ${optClass} text-[13px] font-bold">
-                                <span class="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 text-[10px] flex-shrink-0">${labels[n-1]}</span>
-                                <span class="flex-1">${a[`option${n}`]}</span>
-                                ${icon}
-                            </div>`;
-                        }
-                    }
-
-                    // Fallback logic if options are missing from DB
-                    if (!hasOptions) {
-                        optionsHtml = `
-                            ${a.selected ? `<p class="text-xs font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
-                            ${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
-                        `;
-                    }
-
-                    return `
-                    <div class="q-review ${status}">
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="text-[11px] font-black text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Q.${i+1}</span>
-                            <span class="text-[11px] font-black ${status==='correct'?'text-green-600':status==='wrong'?'text-red-600':'text-amber-600'}">${statusLabel}</span>
-                        </div>
-                        <p class="text-[13px] font-bold text-gray-800 mb-4 leading-relaxed">${qText}</p>
-                        ${optionsHtml}
-                        ${a.explanation ? `<div class="text-[11px] bg-blue-50 text-blue-800 border border-blue-100 p-3 rounded-xl mt-3 leading-relaxed">💡 <b>ব্যাখ্যা:</b> ${a.explanation}</div>` : ''}
-                    </div>`;
+                    return renderSingleMCQ(a, status, i+1);
                 }).join('');
             }
-
+            
+            filterDetailModal('all'); // Reset filters
             document.getElementById('detailModal').classList.add('open');
             document.body.style.overflow = 'hidden';
+        }
+
+        function filterDetailModal(type) {
+            // Update Active Button Style
+            ['all', 'correct', 'wrong', 'skipped'].forEach(t => {
+                let btn = document.getElementById(t === 'all' ? 'btnDetAll' : t === 'correct' ? 'btnDetCor' : t === 'wrong' ? 'btnDetWro' : 'btnDetSkip');
+                if(btn) btn.className = t === type ? 'chip-btn active' : 'chip-btn';
+            });
+
+            // Filter DOM elements
+            const items = document.querySelectorAll('.detail-q-item');
+            items.forEach(el => {
+                if(type === 'all') el.style.display = 'block';
+                else if(el.classList.contains(type)) el.style.display = 'block';
+                else el.style.display = 'none';
+            });
         }
 
         function closeDetail() {
@@ -542,17 +545,10 @@
             document.body.style.overflow = '';
         }
 
-        function logout() {
-            if(confirm('Logout করতে চাও?')) {
-                localStorage.removeItem('atlas_user'); localStorage.removeItem('atlas_student');
-                window.location.href = 'index.html';
-            }
-        }
-
+        // --- TAB LOGIC ---
         let currentTab = 'exam';
         function switchTab(tab) {
             currentTab = tab;
-            
             document.getElementById('examHistorySection').classList.add('hidden');
             document.getElementById('classHistorySection').classList.add('hidden');
             document.getElementById('mistakeSection').classList.add('hidden');
@@ -587,29 +583,30 @@
                     return;
                 }
                 container.innerHTML = data.map(cls => {
-                    const date = cls.last_accessed ? new Date(cls.last_accessed).toLocaleDateString('bn-BD', { day:'numeric', month:'short', year:'numeric' }) : '—';
+                    const date = cls.last_accessed ? new Date(cls.last_accessed).toLocaleDateString('bn-BD', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
                     return `<div class="history-item"><div class="p-5">
                         <div class="flex items-start justify-between gap-3 mb-2">
                             <div class="flex-1 min-w-0">
-                                <div class="font-black text-gray-800 text-sm">${cls.title || 'Class'}</div>
+                                <div class="font-black text-gray-800 text-sm">${cls.chapter || cls.title || 'Class'}</div>
                                 <div class="flex gap-2 flex-wrap mt-1">
                                     ${cls.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${cls.subject}</span>` : ''}
                                     ${cls.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${cls.paper}</span>` : ''}
-                                    ${cls.chapter ? `<span style="font-size:10px;font-weight:800;color:#92400e;background:#fef9c3;border-radius:10px;padding:2px 8px;">${cls.chapter}</span>` : ''}
                                     <span style="font-size:10px;font-weight:700;color:#64748b;">🕐 ${date}</span>
                                 </div>
                             </div>
-                            ${cls.link ? `<a href="${cls.link}" target="_blank" class="text-xs font-black text-blue-600 bg-blue-50 px-3 py-2 rounded-xl hover:bg-blue-100 shrink-0">দেখো →</a>` : ''}
+                            ${cls.link ? `<a href="${cls.link}" target="_blank" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-lg hover:bg-red-100 shrink-0">▶</a>` : ''}
                         </div>
                     </div></div>`;
                 }).join('');
-            } catch(e) {
-                container.innerHTML = `<div class="text-center py-8 text-gray-400 font-bold">Class history লোড করা যায়নি।</div>`;
+            } catch(e) { container.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">Class history লোড করা যায়নি।</div>`; }
+        }
+
+        function logout() {
+            if(confirm('Logout করতে চাও?')) {
+                localStorage.removeItem('atlas_user'); localStorage.removeItem('atlas_student');
+                window.location.href = 'index.html';
             }
         }
-        document.getElementById('detailModal').addEventListener('click', function(e) {
-            if(e.target === this) closeDetail();
-        });
     </script>
 </body>
 </html>
