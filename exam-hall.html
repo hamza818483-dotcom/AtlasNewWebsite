@@ -252,7 +252,7 @@
         </div>
     </div>
 
-    <div id="questionArea" class="pb-28 pt-6 px-4 max-w-[1400px] mx-auto" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;"></div>
+    <div id="questionArea" class="pb-28 px-4 pt-6 max-w-[1400px] mx-auto" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;"></div>
 
     <div class="nav-panel">
         <button class="nav-toggle-btn" onclick="toggleNavPanel()" id="navToggleBtn" title="Navigation">
@@ -662,7 +662,7 @@
         submitExam();
     }
 
-    // ===== SUBMIT AND SAVE DATA FOR PROFILE =====
+    // ===== SUBMIT =====
     async function submitExam() {
         hideSubmitModal();
         clearInterval(timerInterval);
@@ -682,29 +682,19 @@
         const percent = Math.round((Math.max(0, netMarkVal) / total) * 100);
 
         try {
-            const currentStudentId = studentData?.id || JSON.parse(localStorage.getItem('atlas_user'))?.id;
-            if (currentStudentId) {
-                // Preparing detailed answers for "My Mistakes" section
-                const detailedAnswers = questions.map((q, i) => ({
-                    question: q.questions || q.question,
-                    selected: q[`option${userAnswers[i]}`] || null,
-                    answer: q[`option${q.answer}`],
-                    explanation: q.explanation || null,
-                    status: (!userAnswers[i] || userAnswers[i] === 'skipped') ? 'skipped' : (parseInt(userAnswers[i]) === parseInt(q.answer) ? 'correct' : 'wrong')
-                }));
-
+            const studentId = studentData?.id;
+            if (studentId) {
                 await atlas.from('exam_results').insert([{
-                    student_id: currentStudentId,
+                    student_id: studentId,
                     exam_id: examData.exam_id || examData.id,
                     subject: examData.subject,
                     chapter: examData.chapter,
                     correct, wrong, skipped,
                     net_mark: netMarkVal,
                     total_questions: total,
-                    percent: percent,
+                    percent,
                     time_taken: timeTaken,
-                    answers: JSON.stringify(detailedAnswers),
-                    created_at: new Date().toISOString()
+                    answers: userAnswers
                 }]);
             }
         } catch(e) { console.log("Save error:", e); }
