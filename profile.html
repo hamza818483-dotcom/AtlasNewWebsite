@@ -128,7 +128,9 @@
                 </div>
             </div>
         </div>
-    </div> <div class="detail-modal" id="detailModal">
+    </div> 
+
+    <div class="detail-modal" id="detailModal">
         <div class="detail-sheet">
             <div class="flex items-center justify-between mb-5">
                 <div>
@@ -181,14 +183,12 @@
             };
             studentId = user.id;
 
-            // Fill profile UI
             document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
             document.getElementById('profileName').textContent = user.name || '—';
             document.getElementById('profileCollege').textContent = user.college || '—';
             document.getElementById('profileBatch').textContent = user.batch ? 'HSC ' + user.batch : '—';
             document.getElementById('profilePhone').textContent = user.phone || '—';
 
-            // Fetch full student data from DB for social link
             if(studentId) {
                 const { data: stu } = await db.from('students').select('social_link').eq('id', studentId).single();
                 if(stu && stu.social_link) {
@@ -205,16 +205,22 @@
         async function loadHistory() {
             if(!studentId) return;
 
+            // Updated Query: Fallback system added to ignore Foreign Key mismatch issues
             const { data, error } = await db
                 .from('exam_results')
-                .select('*, exams(title, subject, chapter, paper)')
+                .select(`*, exams(title, subject, chapter, paper)`)
                 .eq('student_id', studentId)
                 .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching data:", error);
+                document.getElementById('historyList').innerHTML = `<div class="text-center py-8 text-red-500 font-bold">ডেটা লোড করতে সমস্যা হয়েছে!</div>`;
+                return;
+            }
 
             const list = data || [];
             const container = document.getElementById('historyList');
 
-            // Overall stats
             document.getElementById('totalExams').textContent = list.length;
             if(list.length > 0) {
                 const totalQ = list.reduce((a, r) => a + (r.total_questions || 0), 0);
@@ -238,7 +244,11 @@
             }
 
             container.innerHTML = list.map((result, i) => {
-                const exam = result.exams || {};
+                // Fallback Logic: If 'exams' relation fails, read directly from exam_results
+                const title = result.exams?.title || result.chapter || result.subject || `Exam #${i+1}`;
+                const subjectName = result.exams?.subject || result.subject || '';
+                const paperName = result.exams?.paper || '';
+
                 const totalQ = result.total_questions || 0;
                 const correct = result.correct || 0;
                 const wrong = result.wrong || 0;
@@ -255,10 +265,10 @@
                     <div class="p-5">
                         <div class="flex items-start justify-between gap-3 mb-3">
                             <div class="flex-1 min-w-0">
-                                <div class="font-black text-gray-800 text-sm">${exam.title || exam.chapter || 'Exam #' + (i+1)}</div>
+                                <div class="font-black text-gray-800 text-sm">${title}</div>
                                 <div class="flex gap-2 flex-wrap mt-1">
-                                    ${exam.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${exam.subject}</span>` : ''}
-                                    ${exam.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${exam.paper}</span>` : ''}
+                                    ${subjectName ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${subjectName}</span>` : ''}
+                                    ${paperName ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${paperName}</span>` : ''}
                                     <span style="font-size:10px;font-weight:700;color:#64748b;">${date}</span>
                                 </div>
                             </div>
@@ -306,7 +316,6 @@
         }
 
         function processGraphAndMistakes(list) {
-            // Chart Logic
             const thirtyDaysAgo = new Date();
             thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
             
@@ -345,11 +354,10 @@
                 });
             }
 
-            // Mistakes Logic
             allMistakes = [];
             list.forEach(result => {
                 const answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || []);
-                const examTitle = (result.exams && result.exams.title) ? result.exams.title : (result.exams && result.exams.chapter) ? result.exams.chapter : 'Exam';
+                const examTitle = result.exams?.title || result.chapter || result.subject || 'Practice Exam';
                 answers.forEach((a, index) => {
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
                     if (status === 'wrong') {
@@ -389,8 +397,8 @@
 
         function openDetail(result) {
             const exam = result.exams || {};
-            document.getElementById('detailTitle').textContent = exam.title || exam.chapter || 'Exam Detail';
-            document.getElementById('detailSubject').textContent = [exam.subject, exam.paper].filter(Boolean).join(' · ');
+            document.getElementById('detailTitle').textContent = exam.title || result.chapter || result.subject || 'Exam Detail';
+            document.getElementById('detailSubject').textContent = [exam.subject || result.subject, exam.paper].filter(Boolean).join(' · ');
             document.getElementById('detailCorrect').textContent = result.correct || 0;
             document.getElementById('detailWrong').textContent = result.wrong || 0;
             document.getElementById('detailSkipped').textContent = result.skipped || 0;
@@ -439,17 +447,14 @@
         function switchTab(tab) {
             currentTab = tab;
             
-            // Hide all sections
             document.getElementById('examHistorySection').classList.add('hidden');
             document.getElementById('classHistorySection').classList.add('hidden');
             document.getElementById('mistakeSection').classList.add('hidden');
             
-            // Reset all tab styles
             document.getElementById('tabExam').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
             document.getElementById('tabClass').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
             document.getElementById('tabMistake').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
 
-            // Active chosen tab
             if (tab === 'exam') {
                 document.getElementById('examHistorySection').classList.remove('hidden');
                 document.getElementById('tabExam').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
