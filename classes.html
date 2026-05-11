@@ -117,6 +117,9 @@
             renderClasses(allClasses);
         }
 
+        // String escape function to prevent errors with quotes in class names
+        const escapeStr = (str) => (str || '').toString().replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
         function renderClasses(list) {
             const container = document.getElementById('classList');
             document.getElementById('resultCount').textContent = list.length + ' টি ক্লাস পাওয়া গেছে';
@@ -133,7 +136,7 @@
                             ${c.subject ? `<span style="background:#eff6ff;color:#1e40af;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${c.subject}</span>` : ''}
                             ${c.paper ? `<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:10px;font-weight:800;">${c.paper}</span>` : ''}
                         </div>
-                        <button onclick="watchClass('${c.id}', '${c.title || c.chapter || 'Class'}', '${c.subject || ''}', '${c.paper || ''}', '${c.chapter || ''}', '${c.link}')" class="yt-btn">▶ Watch on YouTube</button>
+                        <button onclick="watchClass('${c.id}', '${escapeStr(c.title || c.chapter || 'Class')}', '${escapeStr(c.subject)}', '${escapeStr(c.paper)}', '${escapeStr(c.chapter)}', '${c.link}')" class="yt-btn">▶ Watch on YouTube</button>
                     </div>
                 </div>`).join('');
         }
@@ -158,7 +161,12 @@
                         link: link,
                         last_accessed: new Date().toISOString()
                     }]);
-                    if (error) console.error("Class History Save Error:", error);
+                    
+                    if (error) {
+                        console.error("Class History Save Error:", error);
+                        // Alert added to catch Supabase issues like RLS Policy
+                        alert("⚠️ ডাটাবেসে হিস্ট্রি সেভ হতে সমস্যা হয়েছে: " + error.message + "\nদয়া করে Supabase এ class_history টেবিলের RLS Policy চেক করুন।");
+                    }
                 } catch(e) {
                     console.error("TryCatch Error:", e);
                 }
