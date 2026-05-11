@@ -27,7 +27,7 @@
         .avatar-big { width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; background: linear-gradient(135deg, #1e40af, #3b82f6); }
         .progress-bar-outer { background: #e2e8f0; border-radius: 6px; height: 8px; overflow: hidden; }
         .progress-bar-inner { height: 100%; border-radius: 6px; transition: width 0.5s ease; }
-        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; cursor:pointer; }
+        .filter-select { background:white; border:1.5px solid #e2e8f0; border-radius:12px; padding:8px 12px; font-size:12px; font-weight:700; color:#475569; outline:none; }
         .chip-btn { padding: 6px 14px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; white-space: nowrap; color: #64748b; }
         .chip-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
         ::-webkit-scrollbar { width: 4px; }
@@ -37,12 +37,16 @@
 <body class="pb-16">
 
     <nav class="bg-white px-5 py-4 flex items-center gap-3 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
-        <a href="index.html"><img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'"></a>
+        <a href="index.html">
+            <img src="https://i.ibb.co/Vv99z9W/atlas-logo.png" alt="ATLAS" class="w-8 h-8 object-contain" onerror="this.style.display='none'">
+        </a>
         <div>
             <div class="logo-font font-black text-blue-900 text-base">My Profile</div>
             <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">আমার তথ্য ও ইতিহাস</div>
         </div>
-        <div class="ml-auto"><button onclick="logout()" class="logout-btn text-xs">Logout</button></div>
+        <div class="ml-auto">
+            <button onclick="logout()" class="logout-btn text-xs">Logout</button>
+        </div>
     </nav>
 
     <div class="max-w-xl mx-auto px-4 pt-6">
@@ -97,11 +101,21 @@
 
         <div id="examHistorySection">
             <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Exam History</div>
-            <div class="bg-white p-3 rounded-xl border border-gray-200 mb-4 flex gap-2 overflow-x-auto shrink-0">
-                <select id="histSubFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()"><option value="">সব Subject</option></select>
-                <select id="histPapFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()"><option value="">সব Paper</option><option value="1st paper">১ম পত্র</option><option value="2nd paper">২য় পত্র</option></select>
-                <select id="histChapFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()"><option value="">সব Chapter</option></select>
+            
+            <div class="bg-white p-3 rounded-xl border border-gray-200 mb-4 flex gap-2 overflow-x-auto">
+                <select id="histSubFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()">
+                    <option value="">সব Subject</option>
+                </select>
+                <select id="histPapFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()">
+                    <option value="">সব Paper</option>
+                    <option value="1st paper">১ম পত্র</option>
+                    <option value="2nd paper">২য় পত্র</option>
+                </select>
+                <select id="histChapFilter" class="filter-select shrink-0" onchange="applyHistoryFilters()">
+                    <option value="">সব Chapter</option>
+                </select>
             </div>
+
             <div id="historyList" class="space-y-3">
                 <div class="text-center py-10 text-gray-400 font-bold"><p>লোড হচ্ছে...</p></div>
             </div>
@@ -109,11 +123,6 @@
 
         <div id="classHistorySection" class="hidden">
             <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">Class History</div>
-            <div class="bg-white p-3 rounded-xl border border-gray-200 mb-4 flex gap-2 overflow-x-auto shrink-0">
-                <select id="classSubFilter" class="filter-select shrink-0" onchange="applyClassFilters()"><option value="">সব Subject</option></select>
-                <select id="classPapFilter" class="filter-select shrink-0" onchange="applyClassFilters()"><option value="">সব Paper</option><option value="1st paper">১ম পত্র</option><option value="2nd paper">২য় পত্র</option></select>
-                <select id="classChapFilter" class="filter-select shrink-0" onchange="applyClassFilters()"><option value="">সব Chapter</option></select>
-            </div>
             <div id="classHistoryList" class="space-y-3">
                 <div class="text-center py-10 text-gray-400 font-bold"><p>লোড হচ্ছে...</p></div>
             </div>
@@ -160,6 +169,7 @@
             </div>
 
             <div class="logo-font font-black text-gray-700 text-xs uppercase tracking-wide mb-2 shrink-0">প্রশ্নের বিস্তারিত (Question & Solution)</div>
+            
             <div id="questionReviewList" class="space-y-3 flex-1 overflow-y-auto pr-2 pb-10"></div>
         </div>
     </div>
@@ -182,20 +192,22 @@
         let studentId = null;
         let performanceChartInstance = null;
         
-        let allHistoryData = []; 
-        let allClassHistoryData = [];
-        let groupedMistakes = {}; 
+        let allHistoryData = []; // Full exam history
+        let groupedMistakes = {}; // Grouped by exam_id
 
         window.onload = async () => {
             const raw = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
             if(!raw) { window.location.href = 'register.html'; return; }
-            const u = JSON.parse(raw); studentId = u.id;
             
-            document.getElementById('profileAvatar').textContent = (u.name || 'A')[0].toUpperCase();
-            document.getElementById('profileName').textContent = u.name || '—';
-            document.getElementById('profileCollege').textContent = u.college || '—';
-            document.getElementById('profileBatch').textContent = u.batch || u.hsc_batch ? 'HSC ' + (u.batch || u.hsc_batch) : '—';
-            document.getElementById('profilePhone').textContent = u.phone || u.whatsapp || '—';
+            const rawData = JSON.parse(raw);
+            const user = { id: rawData.id, name: rawData.name, college: rawData.college, batch: rawData.batch || rawData.hsc_batch, phone: rawData.phone || rawData.whatsapp };
+            studentId = user.id;
+
+            document.getElementById('profileAvatar').textContent = (user.name || 'A')[0].toUpperCase();
+            document.getElementById('profileName').textContent = user.name || '—';
+            document.getElementById('profileCollege').textContent = user.college || '—';
+            document.getElementById('profileBatch').textContent = user.batch ? 'HSC ' + user.batch : '—';
+            document.getElementById('profilePhone').textContent = user.phone || '—';
 
             await loadHistory();
         };
@@ -203,53 +215,78 @@
         async function loadHistory() {
             if(!studentId) return;
 
-            // Fetching questions to get full options
             const { data, error } = await db.from('exam_results')
-                .select(`*, exams(title, subject, chapter, paper, questions)`)
+                .select(`*, exams(title, subject, chapter, paper)`)
                 .eq('student_id', studentId)
                 .order('created_at', { ascending: false });
 
             if (error) { document.getElementById('historyList').innerHTML = `<div class="text-center py-8 text-red-500 font-bold">ডেটা লোড করতে সমস্যা হয়েছে!</div>`; return; }
 
-            allHistoryData = (data || []).map(r => {
-                let oQ = []; try { if(r.exams?.questions) oQ = typeof r.exams.questions === 'string' ? JSON.parse(r.exams.questions) : r.exams.questions; } catch(e){}
-                let uA = []; try { uA = typeof r.answers === 'string' ? JSON.parse(r.answers) : (r.answers || []); } catch(e){}
-                r.enrichedAnswers = uA.map((a, i) => ({ ...(oQ[i]||{}), ...a, question: a.question || oQ[i]?.questions || oQ[i]?.question || `Question ${i+1}` }));
-                return r;
-            });
+            allHistoryData = data || [];
             
+            // Populate Filters
             populateHistoryFilters();
+
+            // Render Exam History
             renderHistoryList(allHistoryData);
+
+            // Render Stats & Graph
             updateStatsAndGraph(allHistoryData);
+
+            // FEATURE 2: Process My Mistakes Grouping
             processMistakesGrouping(allHistoryData);
         }
 
-        // --- Exam Filters ---
+        // --- FEATURE 3: Exam History Filters Logic ---
         function populateHistoryFilters() {
-            const subSet = new Set(), chapSet = new Set();
-            allHistoryData.forEach(r => { if(r.exams?.subject||r.subject) subSet.add(r.exams?.subject||r.subject); if(r.exams?.chapter||r.chapter) chapSet.add(r.exams?.chapter||r.chapter); });
-            const sSel = document.getElementById('histSubFilter'), cSel = document.getElementById('histChapFilter');
+            const subSet = new Set();
+            const chapSet = new Set();
+            allHistoryData.forEach(r => {
+                if(r.exams?.subject || r.subject) subSet.add(r.exams?.subject || r.subject);
+                if(r.exams?.chapter || r.chapter) chapSet.add(r.exams?.chapter || r.chapter);
+            });
+            const sSel = document.getElementById('histSubFilter');
+            const cSel = document.getElementById('histChapFilter');
             subSet.forEach(s => sSel.innerHTML += `<option value="${s}">${s}</option>`);
             chapSet.forEach(c => cSel.innerHTML += `<option value="${c}">${c}</option>`);
         }
 
         function applyHistoryFilters() {
-            const s = document.getElementById('histSubFilter').value, p = document.getElementById('histPapFilter').value, c = document.getElementById('histChapFilter').value;
-            const filtered = allHistoryData.filter(r => (!s||(r.exams?.subject||r.subject)===s) && (!p||(r.exams?.paper||r.paper)===p) && (!c||(r.exams?.chapter||r.chapter)===c));
+            const sub = document.getElementById('histSubFilter').value;
+            const pap = document.getElementById('histPapFilter').value;
+            const chap = document.getElementById('histChapFilter').value;
+
+            const filtered = allHistoryData.filter(r => {
+                const rSub = r.exams?.subject || r.subject || '';
+                const rPap = r.exams?.paper || r.paper || '';
+                const rChap = r.exams?.chapter || r.chapter || '';
+
+                let matchSub = !sub || rSub === sub;
+                let matchPap = !pap || rPap === pap;
+                let matchChap = !chap || rChap === chap;
+                return matchSub && matchPap && matchChap;
+            });
             renderHistoryList(filtered);
         }
 
         function renderHistoryList(list) {
             const container = document.getElementById('historyList');
-            if(list.length === 0) { container.innerHTML = `<div class="text-center py-12"><div class="text-5xl mb-4">📝</div><p class="text-gray-400 font-bold">কোনো Exam History পাওয়া যায়নি</p></div>`; return; }
+            if(list.length === 0) {
+                container.innerHTML = `<div class="text-center py-12"><div class="text-5xl mb-4">📝</div><p class="text-gray-400 font-bold">কোনো Exam History পাওয়া যায়নি</p></div>`;
+                return;
+            }
 
-            container.innerHTML = list.map((r, i) => {
-                const title = r.exams?.title || r.chapter || r.subject || `Exam #${i+1}`;
-                const pct = r.total_questions > 0 ? Math.round((r.correct/r.total_questions)*100) : 0;
-                const netMark = r.net_mark !== undefined ? r.net_mark : (r.correct - (r.wrong||0)*0.25).toFixed(2);
-                const color = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
-                const date = r.created_at ? new Date(r.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-                const idx = allHistoryData.findIndex(x => x.id === r.id);
+            container.innerHTML = list.map((result, i) => {
+                const title = result.exams?.title || result.chapter || result.subject || `Exam #${i+1}`;
+                const subjectName = result.exams?.subject || result.subject || '';
+                const paperName = result.exams?.paper || '';
+                const totalQ = result.total_questions || 0;
+                const correct = result.correct || 0;
+                const wrong = result.wrong || 0;
+                const pct = totalQ > 0 ? Math.round((correct / totalQ) * 100) : 0;
+                const netMark = result.net_mark !== undefined ? result.net_mark : (correct - wrong * 0.25).toFixed(2);
+                const date = result.created_at ? new Date(result.created_at).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+                const scoreColor = pct >= 70 ? '#16a34a' : pct >= 40 ? '#f59e0b' : '#dc2626';
 
                 return `
                 <div class="history-item">
@@ -258,22 +295,18 @@
                             <div class="flex-1 min-w-0">
                                 <div class="font-black text-gray-800 text-sm">${title}</div>
                                 <div class="flex gap-2 flex-wrap mt-1">
-                                    ${(r.exams?.subject||r.subject) ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${r.exams?.subject||r.subject}</span>` : ''}
-                                    ${(r.exams?.paper||r.paper) ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${r.exams?.paper||r.paper}</span>` : ''}
+                                    ${subjectName ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${subjectName}</span>` : ''}
+                                    ${paperName ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${paperName}</span>` : ''}
                                     <span style="font-size:10px;font-weight:700;color:#64748b;">${date}</span>
                                 </div>
                             </div>
                             <div class="text-right flex-shrink-0">
-                                <div class="logo-font text-2xl font-black" style="color:${color}">${pct}%</div>
+                                <div class="logo-font text-2xl font-black" style="color:${scoreColor}">${pct}%</div>
                                 <div class="text-[10px] font-bold text-gray-400">Net: ${netMark}</div>
                             </div>
                         </div>
-                        <div class="progress-bar-outer mb-3"><div class="progress-bar-inner" style="width:${pct}%;background:${color}"></div></div>
-                        
-                        <div class="grid grid-cols-2 gap-2 mt-2">
-                            <button onclick="openDetailByIndex(${idx})" class="w-full py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black hover:bg-blue-100 transition-colors">📋 বিস্তারিত দেখো</button>
-                            <a href="exam-hall.html?id=${r.exam_id}" class="block w-full py-2 bg-blue-900 text-white rounded-xl text-xs font-black text-center hover:bg-blue-800 transition-colors" style="line-height:2.2">🔄 আবার পরীক্ষা দাও</a>
-                        </div>
+                        <div class="progress-bar-outer mb-3"><div class="progress-bar-inner" style="width:${pct}%;background:${scoreColor}"></div></div>
+                        <button onclick='openDetail(${JSON.stringify(result).replace(/'/g,"&#39;")})' class="w-full py-2.5 mb-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black hover:bg-blue-100 transition-colors">📋 বিস্তারিত দেখো (প্রশ্ন + উত্তর + ব্যাখ্যা)</button>
                     </div>
                 </div>`;
             }).join('');
@@ -302,25 +335,36 @@
             }
         }
 
-        // --- My Mistakes Logic ---
+        // --- FEATURE 2: My Mistakes Logic (Grouped by Exam) ---
         function processMistakesGrouping(list) {
             groupedMistakes = {};
-            list.forEach(r => {
-                const examTitle = r.exams?.title || r.chapter || r.subject || 'Practice Exam';
-                const examId = r.exam_id || r.id;
-                let wList = [], sList = [];
+            let totalMistakesFound = 0;
 
-                (r.enrichedAnswers || []).forEach((a, index) => {
+            list.forEach(result => {
+                const answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || []);
+                const examTitle = result.exams?.title || result.chapter || result.subject || 'Practice Exam';
+                const examId = result.exam_id || result.id;
+                
+                let wList = [];
+                let sList = [];
+
+                answers.forEach((a, index) => {
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
                     const qObj = { ...a, questionNum: index + 1, status: status, examTitle: examTitle, examId: examId };
+                    
                     if (status === 'wrong') wList.push(qObj);
                     if (status === 'skipped') sList.push(qObj);
                 });
 
                 if (wList.length > 0 || sList.length > 0) {
-                    if(!groupedMistakes[examId]) groupedMistakes[examId] = { title: examTitle, wrong: wList, skipped: sList, both: [...wList, ...sList], date: r.created_at };
+                    // Overwrite if same exam taken multiple times, or keep newest
+                    if(!groupedMistakes[examId]) {
+                        groupedMistakes[examId] = { title: examTitle, wrong: wList, skipped: sList, both: [...wList, ...sList], date: result.created_at };
+                        totalMistakesFound++;
+                    }
                 }
             });
+
             renderMistakeExamsList();
         }
 
@@ -328,75 +372,120 @@
             const container = document.getElementById('mistakeList');
             const keys = Object.keys(groupedMistakes);
 
-            if (keys.length === 0) { container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><div class="text-4xl mb-3">✨</div><p>তোমার কোনো ভুল বা স্কিপ করা প্রশ্ন নেই!</p></div>'; return; }
+            if (keys.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><div class="text-4xl mb-3">✨</div><p>তোমার কোনো ভুল বা স্কিপ করা প্রশ্ন নেই!</p></div>';
+                return;
+            }
 
             container.innerHTML = keys.map(key => {
                 const ex = groupedMistakes[key];
                 const date = new Date(ex.date).toLocaleDateString('bn-BD', { day: 'numeric', month: 'short' });
                 return `
-                <div class="card border border-gray-200 shadow-sm mb-3">
-                    <div class="p-4 flex justify-between items-center cursor-pointer" onclick="toggleMistakeActions('${key}')">
-                        <div class="flex-1">
+                <div class="card p-4 border border-gray-200 shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
                             <h3 class="font-black text-gray-800 text-sm leading-tight">${ex.title}</h3>
                             <span class="text-[10px] font-bold text-gray-400">${date}</span>
                         </div>
-                        <div class="text-right shrink-0">
+                        <div class="text-right">
                             <span class="text-xs font-black text-red-600 bg-red-50 px-2 py-1 rounded">❌ ${ex.wrong.length}</span>
                             <span class="text-xs font-black text-amber-600 bg-amber-50 px-2 py-1 rounded ml-1">⏭️ ${ex.skipped.length}</span>
-                            <span class="ml-2 text-gray-400 font-bold text-xs">▼</span>
                         </div>
                     </div>
                     
-                    <div id="mistake-actions-${key}" class="hidden px-4 pb-4 bg-gray-50 border-t border-gray-100 rounded-b-2xl">
-                        <div class="grid grid-cols-1 gap-2 mt-3">
-                            <div class="text-[10px] font-black text-gray-400 uppercase text-center mb-1">কী করতে চাও?</div>
-                            ${ex.wrong.length > 0 ? `<button onclick="startMistakePractice('${key}', 'wrong')" class="w-full bg-red-100 text-red-700 py-2.5 rounded-xl text-xs font-black shadow-sm hover:bg-red-200">❌ শুধু ভুলগুলো Practice করো</button>` : ''}
-                            ${ex.skipped.length > 0 ? `<button onclick="startMistakePractice('${key}', 'skipped')" class="w-full bg-amber-100 text-amber-700 py-2.5 rounded-xl text-xs font-black shadow-sm hover:bg-amber-200">⏭️ শুধু স্কিপগুলো Practice করো</button>` : ''}
-                            ${ex.both.length > 0 ? `<button onclick="startMistakePractice('${key}', 'both')" class="w-full bg-blue-900 text-white py-2.5 rounded-xl text-xs font-black shadow-md hover:bg-blue-800">✅ ভুল + স্কিপ (সব) Practice করো</button>` : ''}
-                            <button onclick="viewMistakesModal('${key}')" class="w-full bg-white border border-gray-300 text-gray-600 py-2.5 rounded-xl text-xs font-black hover:bg-gray-100 mt-1">👀 পরীক্ষা ছাড়া শুধু উত্তর দেখো</button>
-                        </div>
+                    <div class="grid grid-cols-1 gap-2 mt-3 bg-gray-50 p-2 rounded-xl">
+                        <div class="text-[10px] font-black text-gray-400 uppercase text-center mb-1">কী করতে চাও?</div>
+                        
+                        ${ex.wrong.length > 0 ? `<button onclick="startMistakePractice('${key}', 'wrong')" class="w-full bg-red-100 text-red-700 py-2 rounded-lg text-xs font-black hover:bg-red-200">❌ শুধু ভুলগুলো Practice করো</button>` : ''}
+                        
+                        ${ex.skipped.length > 0 ? `<button onclick="startMistakePractice('${key}', 'skipped')" class="w-full bg-amber-100 text-amber-700 py-2 rounded-lg text-xs font-black hover:bg-amber-200">⏭️ শুধু স্কিপগুলো Practice করো</button>` : ''}
+                        
+                        ${ex.both.length > 0 ? `<button onclick="startMistakePractice('${key}', 'both')" class="w-full bg-blue-900 text-white py-2 rounded-lg text-xs font-black shadow-md hover:bg-blue-800">✅ ভুল + স্কিপ (সব) Practice করো</button>` : ''}
+                        
+                        <button onclick="viewMistakesModal('${key}')" class="w-full bg-white border-2 border-gray-200 text-gray-600 py-2 rounded-lg text-xs font-black hover:bg-gray-100 mt-1">👀 পরীক্ষা ছাড়া শুধু উত্তর দেখো</button>
                     </div>
                 </div>`;
             }).join('');
         }
 
-        function toggleMistakeActions(key) { document.getElementById('mistake-actions-' + key).classList.toggle('hidden'); }
-
         function startMistakePractice(examId, type) {
             const ex = groupedMistakes[examId];
-            let listToPractice = type === 'wrong' ? ex.wrong : type === 'skipped' ? ex.skipped : ex.both;
+            let listToPractice = [];
+            if(type === 'wrong') listToPractice = ex.wrong;
+            else if(type === 'skipped') listToPractice = ex.skipped;
+            else listToPractice = ex.both;
+
             if(listToPractice.length === 0) return alert('প্র্যাকটিস করার মতো কোনো প্রশ্ন নেই!');
             
-            // Full options are passed directly
-            localStorage.setItem('atlas_mistakes_exam', JSON.stringify(listToPractice));
+            // Format fallback for exam-hall compatibility
+            let practiceReady = listToPractice.map(q => ({
+                question: q.question || q.questions,
+                option1: q.option1 || q.answer, 
+                option2: q.option2 || q.selected || 'Skip', 
+                option3: q.option3 || 'Option C',
+                option4: q.option4 || 'Option D',
+                answer: q.answer,
+                explanation: q.explanation,
+                ...q
+            }));
+
+            localStorage.setItem('atlas_mistakes_exam', JSON.stringify(practiceReady));
             window.location.href = `exam-hall.html?mode=mistakes`;
         }
 
         function viewMistakesModal(examId) {
             const ex = groupedMistakes[examId];
-            document.getElementById('viewMistakeList').innerHTML = ex.both.map(a => renderSingleMCQ(a, a.status, a.questionNum)).join('');
+            const container = document.getElementById('viewMistakeList');
+            container.innerHTML = ex.both.map(a => renderSingleMCQ(a, a.status, a.questionNum)).join('');
             document.getElementById('viewMistakeModal').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
-        function closeMistakeView() { document.getElementById('viewMistakeModal').classList.remove('open'); document.body.style.overflow = ''; }
+        function closeMistakeView() {
+            document.getElementById('viewMistakeModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
 
-        // --- Detail Modal Render (Full MCQ) ---
+        // --- FEATURE 1: Detailed Modal HTML Builder (Full MCQ & Filter Logic) ---
         function renderSingleMCQ(a, status, index) {
             const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
-            let optionsHtml = ''; const labels = ['A', 'B', 'C', 'D', 'E'];
+            const qText = a.question || a.questions || `প্রশ্ন`;
+            
+            let optionsHtml = '';
+            const labels = ['A', 'B', 'C', 'D', 'E'];
+            let hasOptions = false;
 
             for(let n=1; n<=5; n++) {
                 if(a[`option${n}`]) {
+                    hasOptions = true;
                     const isCorrect = a[`option${n}`] == a.answer || n == parseInt(a.answer);
                     const isSelected = a[`option${n}`] == a.selected || n == parseInt(a.selected);
-                    let optClass = 'bg-white border-gray-200 text-gray-700', icon = '';
-                    if (isCorrect) { optClass = 'bg-green-50 border-green-500 text-green-700 font-bold'; icon = ' <span class="ml-auto font-black">✓</span>'; }
-                    else if (isSelected && !isCorrect) { optClass = 'bg-red-50 border-red-400 text-red-700 font-bold'; icon = ' <span class="ml-auto font-black">✗</span>'; }
+                    
+                    let optClass = 'bg-white border-gray-200 text-gray-700';
+                    let icon = '';
+                    
+                    if (isCorrect) {
+                        optClass = 'bg-green-50 border-green-500 text-green-700 font-bold';
+                        icon = ' <span class="ml-auto font-black">✓</span>';
+                    } else if (isSelected && !isCorrect) {
+                        optClass = 'bg-red-50 border-red-400 text-red-700 font-bold';
+                        icon = ' <span class="ml-auto font-black">✗</span>';
+                    }
 
-                    optionsHtml += `<div class="flex items-center gap-3 p-3 border-[1.5px] rounded-xl mb-2 ${optClass} text-[13px]"><span class="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 text-[10px] flex-shrink-0 font-black">${labels[n-1]}</span><span class="flex-1">${a[`option${n}`]}</span>${icon}</div>`;
+                    optionsHtml += `
+                    <div class="flex items-center gap-3 p-3 border-[1.5px] rounded-xl mb-2 ${optClass} text-[13px]">
+                        <span class="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 text-[10px] flex-shrink-0 font-black">${labels[n-1]}</span>
+                        <span class="flex-1">${a[`option${n}`]}</span>
+                        ${icon}
+                    </div>`;
                 }
             }
-            if (!optionsHtml) optionsHtml = `${a.selected ? `<p class="text-xs font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}`;
+
+            if (!hasOptions) {
+                optionsHtml = `
+                    ${a.selected ? `<p class="text-xs font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
+                    ${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
+                `;
+            }
 
             return `
             <div class="q-review ${status} detail-q-item">
@@ -404,81 +493,120 @@
                     <span class="text-[11px] font-black text-gray-500 bg-gray-200 px-2 py-0.5 rounded">Q.${index}</span>
                     <span class="text-[11px] font-black ${status==='correct'?'text-green-600':status==='wrong'?'text-red-600':'text-amber-600'}">${statusLabel}</span>
                 </div>
-                <p class="text-[14px] font-black text-gray-800 mb-4 leading-relaxed">${a.question || a.questions || 'প্রশ্ন'}</p>
+                <p class="text-[14px] font-black text-gray-800 mb-4 leading-relaxed">${qText}</p>
                 ${optionsHtml}
                 ${a.explanation ? `<div class="text-[12px] font-semibold bg-blue-50 text-blue-800 border border-blue-100 p-3 rounded-xl mt-3 leading-relaxed">💡 <b>ব্যাখ্যা:</b> ${a.explanation}</div>` : ''}
             </div>`;
         }
 
-        function openDetailByIndex(index) {
-            const result = allHistoryData[index];
-            document.getElementById('detailTitle').textContent = result.exams?.title || result.chapter || result.subject || 'Exam Detail';
-            document.getElementById('detailSubject').textContent = [result.exams?.subject || result.subject, result.exams?.paper || result.paper].filter(Boolean).join(' · ');
+        function openDetail(result) {
+            const exam = result.exams || {};
+            document.getElementById('detailTitle').textContent = exam.title || result.chapter || result.subject || 'Exam Detail';
+            document.getElementById('detailSubject').textContent = [exam.subject || result.subject, exam.paper].filter(Boolean).join(' · ');
             document.getElementById('detailCorrect').textContent = result.correct || 0;
             document.getElementById('detailWrong').textContent = result.wrong || 0;
             document.getElementById('detailSkipped').textContent = result.skipped || 0;
 
-            const answers = result.enrichedAnswers || [];
-            document.getElementById('questionReviewList').innerHTML = answers.length ? answers.map((a, i) => renderSingleMCQ(a, a.status || (!a.selected ? 'skipped' : (a.selected==a.answer?'correct':'wrong')), i+1)).join('') : '<p class="text-center text-gray-400 font-bold py-6">তথ্য পাওয়া যায়নি</p>';
+            const answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || []);
+            const container = document.getElementById('questionReviewList');
+
+            if(!answers || answers.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 font-bold py-6">প্রশ্নের তথ্য পাওয়া যায়নি</p>';
+            } else {
+                container.innerHTML = answers.map((a, i) => {
+                    const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
+                    return renderSingleMCQ(a, status, i+1);
+                }).join('');
+            }
             
-            filterDetailModal('all');
+            filterDetailModal('all'); // Reset filters
             document.getElementById('detailModal').classList.add('open');
             document.body.style.overflow = 'hidden';
         }
 
         function filterDetailModal(type) {
+            // Update Active Button Style
             ['all', 'correct', 'wrong', 'skipped'].forEach(t => {
                 let btn = document.getElementById(t === 'all' ? 'btnDetAll' : t === 'correct' ? 'btnDetCor' : t === 'wrong' ? 'btnDetWro' : 'btnDetSkip');
                 if(btn) btn.className = t === type ? 'chip-btn active' : 'chip-btn';
             });
-            document.querySelectorAll('.detail-q-item').forEach(el => el.style.display = (type === 'all' || el.classList.contains(type)) ? 'block' : 'none');
+
+            // Filter DOM elements
+            const items = document.querySelectorAll('.detail-q-item');
+            items.forEach(el => {
+                if(type === 'all') el.style.display = 'block';
+                else if(el.classList.contains(type)) el.style.display = 'block';
+                else el.style.display = 'none';
+            });
         }
 
-        function closeDetail() { document.getElementById('detailModal').classList.remove('open'); document.body.style.overflow = ''; }
+        function closeDetail() {
+            document.getElementById('detailModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
 
-        // --- Class History ---
+        // --- TAB LOGIC ---
+        let currentTab = 'exam';
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('examHistorySection').classList.add('hidden');
+            document.getElementById('classHistorySection').classList.add('hidden');
+            document.getElementById('mistakeSection').classList.add('hidden');
+            
+            document.getElementById('tabExam').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            document.getElementById('tabClass').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            document.getElementById('tabMistake').className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+
+            if (tab === 'exam') {
+                document.getElementById('examHistorySection').classList.remove('hidden');
+                document.getElementById('tabExam').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            } else if (tab === 'class') {
+                document.getElementById('classHistorySection').classList.remove('hidden');
+                document.getElementById('tabClass').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+                loadClassHistory();
+            } else if (tab === 'mistake') {
+                document.getElementById('mistakeSection').classList.remove('hidden');
+                document.getElementById('tabMistake').className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
+            }
+        }
+
+        let classHistoryLoaded = false;
         async function loadClassHistory() {
-            if (allClassHistoryData.length > 0) return;
+            if (classHistoryLoaded) return;
             if (!studentId) return;
+            classHistoryLoaded = true;
+            const container = document.getElementById('classHistoryList');
             try {
                 const { data } = await db.from('class_history').select('*').eq('student_id', studentId).order('last_accessed', { ascending: false });
-                allClassHistoryData = data || [];
-                populateClassFilters();
-                renderClassHistoryList(allClassHistoryData);
-            } catch(e) { document.getElementById('classHistoryList').innerHTML = `<div class="text-center py-8 text-red-400 font-bold">Class history লোড করা যায়নি।</div>`; }
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div class="text-center py-12"><div class="text-5xl mb-4">📚</div><div class="logo-font font-black text-gray-600 text-base mb-2">এখনো কোনো Class দেখোনি</div><p class="text-gray-400 text-sm">Class দেখলে এখানে history জমা হবে।</p><a href="classes.html" class="inline-block mt-4 bg-blue-900 text-white px-6 py-3 rounded-xl font-bold text-sm">Classes দেখো →</a></div>`;
+                    return;
+                }
+                container.innerHTML = data.map(cls => {
+                    const date = cls.last_accessed ? new Date(cls.last_accessed).toLocaleDateString('bn-BD', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }) : '—';
+                    return `<div class="history-item"><div class="p-5">
+                        <div class="flex items-start justify-between gap-3 mb-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="font-black text-gray-800 text-sm">${cls.chapter || cls.title || 'Class'}</div>
+                                <div class="flex gap-2 flex-wrap mt-1">
+                                    ${cls.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${cls.subject}</span>` : ''}
+                                    ${cls.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${cls.paper}</span>` : ''}
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;">🕐 ${date}</span>
+                                </div>
+                            </div>
+                            ${cls.link ? `<a href="${cls.link}" target="_blank" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-lg hover:bg-red-100 shrink-0">▶</a>` : ''}
+                        </div>
+                    </div></div>`;
+                }).join('');
+            } catch(e) { container.innerHTML = `<div class="text-center py-8 text-red-400 font-bold">Class history লোড করা যায়নি।</div>`; }
         }
 
-        function populateClassFilters() {
-            const subSet = new Set(), chapSet = new Set();
-            allClassHistoryData.forEach(r => { if(r.subject) subSet.add(r.subject); if(r.chapter) chapSet.add(r.chapter); });
-            const sSel = document.getElementById('classSubFilter'), cSel = document.getElementById('classChapFilter');
-            subSet.forEach(s => sSel.innerHTML += `<option value="${s}">${s}</option>`);
-            chapSet.forEach(c => cSel.innerHTML += `<option value="${c}">${c}</option>`);
+        function logout() {
+            if(confirm('Logout করতে চাও?')) {
+                localStorage.removeItem('atlas_user'); localStorage.removeItem('atlas_student');
+                window.location.href = 'index.html';
+            }
         }
-
-        function applyClassFilters() {
-            const s = document.getElementById('classSubFilter').value, p = document.getElementById('classPapFilter').value, c = document.getElementById('classChapFilter').value;
-            renderClassHistoryList(allClassHistoryData.filter(r => (!s||r.subject===s) && (!p||r.paper===p) && (!c||r.chapter===c)));
-        }
-
-        function renderClassHistoryList(list) {
-            const container = document.getElementById('classHistoryList');
-            if(list.length === 0) { container.innerHTML = `<div class="text-center py-12"><div class="text-5xl mb-4">📚</div><p class="text-gray-400 font-bold">Class history পাওয়া যায়নি</p></div>`; return; }
-            container.innerHTML = list.map(cls => `<div class="history-item p-5"><div class="flex justify-between items-start"><div class="flex-1 min-w-0"><div class="font-black text-gray-800 text-sm">${cls.chapter || cls.title || 'Class'}</div><div class="flex gap-2 flex-wrap mt-1">${cls.subject ? `<span style="font-size:10px;font-weight:800;color:#1e40af;background:#eff6ff;border-radius:10px;padding:2px 8px;">${cls.subject}</span>` : ''}${cls.paper ? `<span style="font-size:10px;font-weight:800;color:#16a34a;background:#f0fdf4;border-radius:10px;padding:2px 8px;">${cls.paper}</span>` : ''}<span style="font-size:10px;font-weight:700;color:#64748b;">🕐 ${new Date(cls.last_accessed).toLocaleDateString('bn-BD')}</span></div></div><a href="${cls.link}" target="_blank" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-lg shrink-0">▶</a></div></div>`).join('');
-        }
-
-        // --- Tabs ---
-        function switchTab(tab) {
-            ['exam', 'class', 'mistake'].forEach(t => {
-                document.getElementById(t+'Section' || t+'HistorySection').classList.add('hidden');
-                document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).className = 'flex-1 py-3 bg-gray-100 text-gray-500 rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-            });
-            document.getElementById(tab==='mistake'?'mistakeSection':tab+'HistorySection').classList.remove('hidden');
-            document.getElementById('tab'+tab.charAt(0).toUpperCase()+tab.slice(1)).className = 'flex-1 py-3 bg-blue-900 text-white rounded-xl font-black text-xs uppercase tracking-wide transition-all';
-            if(tab==='class') loadClassHistory();
-        }
-
-        function logout() { if(confirm('Logout করতে চাও?')) { localStorage.clear(); window.location.href = 'index.html'; } }
     </script>
 </body>
 </html>
