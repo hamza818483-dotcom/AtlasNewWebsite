@@ -212,7 +212,7 @@
         </div>
 
         <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6 text-left">
-            <p class="text-yellow-300 text-xs font-bold leading-relaxed">⚠️ একবার উত্তর দিলে আর পরিবর্তন করা যাবেবিধা নেই। প্রতিটি উত্তর Lock হয়ে যাবে।</p>
+            <p class="text-yellow-300 text-xs font-bold leading-relaxed">⚠️ একবার উত্তর দিলে আর পরিবর্তন করা যাবে না। প্রতিটি উত্তর Lock হয়ে যাবে।</p>
         </div>
 
         <button class="start-btn" onclick="startExam()">
@@ -429,10 +429,43 @@
         document.getElementById(id).classList.remove('hidden');
     }
 
-    // ===== INIT =====
+    // ===== INIT & MISTAKES LOGIC =====
     window.onload = async () => {
         const params = new URLSearchParams(window.location.search);
+        const mode = params.get('mode');
         const examId = params.get('id');
+
+        // Added Logic: Handle My Mistakes Exam
+        if (mode === 'mistakes') {
+            showScreen('loadingScreen');
+            const mistakesRaw = localStorage.getItem('atlas_mistakes_exam');
+            if (mistakesRaw) {
+                questions = JSON.parse(mistakesRaw);
+                examData = {
+                    title: "My Mistakes Practice",
+                    subject: "Mixed Subjects",
+                    chapter: "Mistakes Review",
+                    duration: questions.length, // 1 minute per question
+                    neg_mark: 0.25,
+                    exam_id: 'mistakes_practice'
+                };
+                negMark = 0.25;
+                timeLeft = questions.length * 60;
+                
+                const saved = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
+                if (saved) { 
+                    studentData = JSON.parse(saved); 
+                    showPreExamScreen(); 
+                } else {
+                    showScreen('regScreen');
+                }
+            } else {
+                alert("কোনো ভুল প্রশ্ন পাওয়া যায়নি!");
+                window.location.href = 'profile.html';
+            }
+            return; // Stop normal execution for mistakes mode
+        }
+
         if (!examId) { alert("Exam ID পাওয়া যায়নি!"); return; }
 
         localStorage.setItem('last_exam_id', examId);
@@ -440,7 +473,6 @@
 
         try {
             await loadExamData(examId);
-            // Check BOTH keys for backward compatibility
             const saved = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
             if (saved) {
                 studentData = JSON.parse(saved);
@@ -521,7 +553,6 @@
                 student = data;
             }
             studentData = student;
-            // Save under BOTH keys for cross-page compatibility
             const userData = { id: student.id, name: student.name, college: student.college, batch: student.hsc_batch, phone: student.whatsapp };
             localStorage.setItem('atlas_student', JSON.stringify(student));
             localStorage.setItem('atlas_user', JSON.stringify(userData));
@@ -597,7 +628,6 @@
         userAnswers[qIndex] = num;
         lockedAnswers.add(qIndex);
 
-        // Update only that question's options (no full re-render)
         const labels = ['A','B','C','D','E'];
         const q = questions[qIndex];
         [1,2,3,4,5].forEach(n => {
@@ -606,13 +636,11 @@
             btn.className = 'option-btn locked';
             if (n === num) btn.className += ' selected';
             btn.onclick = null;
-            // Update lock icon
             const lockSpan = btn.querySelector('.lock-icon');
             if (n === num) {
                 if (!lockSpan) { const span = document.createElement('span'); span.className = 'lock-icon'; span.textContent = '🔒'; btn.appendChild(span); }
             }
         });
-        // Update question badge
         const badge = document.querySelector(`#qcard${qIndex} .q-number-badge`);
         if (badge) badge.innerHTML = `Q. ${qIndex + 1} / ${questions.length} 🔒`;
 
@@ -681,7 +709,7 @@
         submitExam();
     }
 
-    // ===== SUBMIT =====
+    // ===== SUBMIT AND SAVE DATA FOR PROFILE =====
     async function submitExam() {
         hideSubmitModal();
         clearInterval(timerInterval);
@@ -701,22 +729,39 @@
         const percent = Math.round((Math.max(0, netMarkVal) / total) * 100);
 
         try {
-            const studentId = studentData?.id;
-            if (studentId) {
-                await atlas.from('exam_results').insert([{
-                    student_id: studentId,
-                    exam_id: examData.exam_id || examData.id,
-                    subject: examData.subject,
-                    chapter: examData.chapter,
+            const currentStudentId = studentData?.id || JSON.parse(localStorage.getItem('atlas_user'))?.id;
+            if (currentStudentId) {
+                const detailedAnswers = questions.map((q, i) => ({
+                    question: q.questions || q.question,
+                    selected: q[`option${userAnswers[i]}`] || null,
+                    answer: q[`option${q.answer}`],
+                    explanation: q.explanation || null,
+                    status: (!userAnswers[i] || userAnswers[i] === 'skipped') ? 'skipped' : (parseInt(userAnswers[i]) === parseInt(q.answer) ? 'correct' : 'wrong')
+                }));
+
+                // Added logic: Explicit Error Check for Database Insert
+                const { error } = await atlas.from('exam_results').insert([{
+                    student_id: currentStudentId,
+                    exam_id: examData.exam_id || examData.id || 'practice', // Avoid null exam_id issue
+                    subject: examData.subject || 'Mixed',
+                    chapter: examData.chapter || 'Review',
                     correct, wrong, skipped,
                     net_mark: netMarkVal,
                     total_questions: total,
-                    percent,
+                    percent: percent,
                     time_taken: timeTaken,
-                    answers: userAnswers
+                    answers: detailedAnswers, // Used direct object instead of JSON string to avoid JSONB errors
+                    created_at: new Date().toISOString()
                 }]);
+                
+                if(error) {
+                    console.error("DB Insert Error:", error);
+                    alert("⚠️ Data Save Error: " + error.message + "\nআপনার Supabase RLS Policy চেক করুন।");
+                }
             }
-        } catch(e) { console.log("Save error:", e); }
+        } catch(e) { 
+            console.log("Save error:", e); 
+        }
 
         showResult(correct, wrong, skipped, netMarkVal, total, percent);
     }
