@@ -429,11 +429,11 @@
         document.getElementById(id).classList.remove('hidden');
     }
 
-    // ===== INIT & MISTAKES LOGIC =====
+    // ===== INIT =====
     window.onload = async () => {
         const params = new URLSearchParams(window.location.search);
-        const mode = params.get('mode');
         const examId = params.get('id');
+        const mode = params.get('mode');
 
         // Added Logic: Handle My Mistakes Exam
         if (mode === 'mistakes') {
@@ -739,10 +739,9 @@
                     status: (!userAnswers[i] || userAnswers[i] === 'skipped') ? 'skipped' : (parseInt(userAnswers[i]) === parseInt(q.answer) ? 'correct' : 'wrong')
                 }));
 
-                // Added logic: Explicit Error Check for Database Insert
                 const { error } = await atlas.from('exam_results').insert([{
                     student_id: currentStudentId,
-                    exam_id: examData.exam_id || examData.id || 'practice', // Avoid null exam_id issue
+                    exam_id: examData.exam_id || examData.id || 'practice',
                     subject: examData.subject || 'Mixed',
                     chapter: examData.chapter || 'Review',
                     correct, wrong, skipped,
@@ -750,7 +749,7 @@
                     total_questions: total,
                     percent: percent,
                     time_taken: timeTaken,
-                    answers: detailedAnswers, // Used direct object instead of JSON string to avoid JSONB errors
+                    answers: detailedAnswers, // Not using stringify, sending direct object for jsonb
                     created_at: new Date().toISOString()
                 }]);
                 
