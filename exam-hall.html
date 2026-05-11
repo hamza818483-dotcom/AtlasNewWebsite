@@ -38,7 +38,17 @@
         .timer-box.warning { background: rgba(245,158,11,0.3); color: #fde68a; }
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.85;transform:scale(1.02)} }
 
-        /* Question cards - Grid Layout Support Added & Margin adjusted */
+        /* Grid Layout Added for Side-by-Side MCQs */
+        #questionArea { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); 
+            gap: 16px; 
+            padding: 14px; 
+            padding-bottom: 120px; 
+            max-width: 1400px; 
+            margin: 0 auto; 
+        }
+
         .q-card { background: white; border-radius: 1.5rem; padding: 24px; margin: 0; box-shadow: 0 4px 24px rgba(0,0,0,0.07); border-left: 5px solid #1e40af; transition: 0.2s; height: fit-content; }
         .q-number-badge { background: linear-gradient(135deg, #1e40af, #1d4ed8); color: white; font-size: 11px; font-weight: 900; padding: 5px 14px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 6px; }
         
@@ -56,7 +66,7 @@
         .option-btn.locked.selected { border-color: #1d4ed8; background: linear-gradient(135deg, #dbeafe, #bfdbfe); }
         .lock-icon { margin-left: auto; font-size: 14px; }
 
-        /* RIGHT SIDE NAV PANEL */
+        /* RIGHT SIDE NAV PANEL - Fixed to not squeeze MCQs */
         .nav-panel { position: fixed; right: 0; top: 50%; transform: translateY(-50%); z-index: 200; }
         .nav-toggle-btn {
             width: 44px; height: 44px; background: linear-gradient(135deg,#1e40af,#1d4ed8);
@@ -121,6 +131,9 @@
         /* Filter buttons */
         .filter-btn { padding: 8px 18px; border-radius: 20px; font-size: 12px; font-weight: 800; border: 2px solid #e2e8f0; background: white; cursor: pointer; transition: 0.2s; }
         .filter-btn.active { background: #1e40af; border-color: #1e40af; color: white; }
+
+        /* Grid Layout for Review Items */
+        #reviewSection { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; padding: 16px; max-width: 1400px; margin: 0 auto; }
 
         /* Review items - FULL solve sheet with ALL options */
         .review-item { background: white; border-radius: 1.4rem; padding: 18px 20px; margin-bottom: 0; border-left: 5px solid #e2e8f0; transition: 0.2s; height: fit-content; }
@@ -193,7 +206,7 @@
         </div>
 
         <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl p-4 mb-6 text-left">
-            <p class="text-yellow-300 text-xs font-bold leading-relaxed">⚠️ একবার উত্তর দিলে আর পরিবর্তন করা যাবে না। প্রতিটি উত্তর Lock হয়ে যাবে।</p>
+            <p class="text-yellow-300 text-xs font-bold leading-relaxed">⚠️ একবার উত্তর দিলে আর পরিবর্তন করা যাবেবিধা নেই। প্রতিটি উত্তর Lock হয়ে যাবে।</p>
         </div>
 
         <button class="start-btn" onclick="startExam()">
@@ -252,7 +265,7 @@
         </div>
     </div>
 
-    <div id="questionArea" class="pb-28 px-4 pt-6 max-w-[1400px] mx-auto" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;"></div>
+    <div id="questionArea"></div>
 
     <div class="nav-panel">
         <button class="nav-toggle-btn" onclick="toggleNavPanel()" id="navToggleBtn" title="Navigation">
@@ -379,7 +392,7 @@
             <button class="filter-btn" onclick="filterReview('skipped')" id="fSkipped">⏭️ Skipped</button>
         </div>
 
-        <div id="reviewSection" class="pb-16 max-w-[1400px] mx-auto" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px;"></div>
+        <div id="reviewSection"></div>
     </div>
 </div>
 
@@ -662,7 +675,7 @@
         submitExam();
     }
 
-    // ===== SUBMIT =====
+    // ===== SUBMIT AND SAVE DATA FOR PROFILE =====
     async function submitExam() {
         hideSubmitModal();
         clearInterval(timerInterval);
@@ -682,19 +695,29 @@
         const percent = Math.round((Math.max(0, netMarkVal) / total) * 100);
 
         try {
-            const studentId = studentData?.id;
-            if (studentId) {
+            const currentStudentId = studentData?.id || JSON.parse(localStorage.getItem('atlas_user'))?.id;
+            if (currentStudentId) {
+                // Preparing detailed answers for "My Mistakes" section
+                const detailedAnswers = questions.map((q, i) => ({
+                    question: q.questions || q.question,
+                    selected: q[`option${userAnswers[i]}`] || null,
+                    answer: q[`option${q.answer}`],
+                    explanation: q.explanation || null,
+                    status: (!userAnswers[i] || userAnswers[i] === 'skipped') ? 'skipped' : (parseInt(userAnswers[i]) === parseInt(q.answer) ? 'correct' : 'wrong')
+                }));
+
                 await atlas.from('exam_results').insert([{
-                    student_id: studentId,
+                    student_id: currentStudentId,
                     exam_id: examData.exam_id || examData.id,
                     subject: examData.subject,
                     chapter: examData.chapter,
                     correct, wrong, skipped,
                     net_mark: netMarkVal,
                     total_questions: total,
-                    percent,
+                    percent: percent,
                     time_taken: timeTaken,
-                    answers: userAnswers
+                    answers: JSON.stringify(detailedAnswers),
+                    created_at: new Date().toISOString()
                 }]);
             }
         } catch(e) { console.log("Save error:", e); }
