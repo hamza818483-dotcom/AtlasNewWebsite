@@ -117,10 +117,30 @@
         </div>
 
         <div id="mistakeSection" class="hidden">
-            <div class="flex justify-between items-center mb-3">
-                <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide">My Mistakes</div>
-                <button onclick="startMistakeExam()" class="bg-red-50 text-red-600 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase border border-red-200">ভুলগুলো প্র্যাকটিস করো →</button>
+            <div class="logo-font font-black text-gray-600 text-xs uppercase tracking-wide mb-3">My Mistakes & Practice</div>
+            
+            <div class="bg-white p-4 rounded-2xl border-[1.5px] border-gray-200 mb-4 shadow-sm">
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">Exam Select</label>
+                        <select id="mistakeExamSelect" class="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-700 outline-none" onchange="filterMistakesList()">
+                            <option value="all">All Exams (সব)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-400 uppercase">Question Type</label>
+                        <select id="mistakeTypeSelect" class="w-full mt-1 bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold text-gray-700 outline-none" onchange="filterMistakesList()">
+                            <option value="both">উভয় (ভুল + স্কিপ)</option>
+                            <option value="wrong">❌ শুধুমাত্র ভুল</option>
+                            <option value="skipped">⏭️ শুধুমাত্র স্কিপ</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="startMistakeExam()" class="w-full bg-blue-900 text-white px-3 py-3 rounded-xl text-xs font-black uppercase shadow-md hover:bg-blue-800 transition-colors">
+                    এই ফিল্টারে পরীক্ষা দাও →
+                </button>
             </div>
+
             <div id="mistakeList" class="space-y-3">
                 <div class="text-center py-10 text-gray-400 font-bold">
                     <div class="text-4xl mb-3">✅</div>
@@ -137,7 +157,7 @@
                     <div class="logo-font font-black text-blue-900 text-base" id="detailTitle">Exam Details</div>
                     <div class="text-xs text-gray-400 font-bold" id="detailSubject"></div>
                 </div>
-                <button onclick="closeDetail()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-black text-lg">×</button>
+                <button onclick="closeDetail()" class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-black text-lg hover:bg-gray-200 transition-colors">×</button>
             </div>
 
             <div class="flex gap-3 mb-5">
@@ -155,8 +175,8 @@
                 </div>
             </div>
 
-            <div class="logo-font font-black text-gray-700 text-xs uppercase tracking-wide mb-3">প্রশ্নের বিস্তারিত</div>
-            <div id="questionReviewList" class="space-y-2"></div>
+            <div class="logo-font font-black text-gray-700 text-xs uppercase tracking-wide mb-3">প্রশ্নের বিস্তারিত (Question & Solution)</div>
+            <div id="questionReviewList" class="space-y-3"></div>
         </div>
     </div>
 
@@ -167,7 +187,7 @@
 
         let studentId = null;
         let performanceChartInstance = null;
-        let allMistakes = [];
+        let allPracticeQuestions = []; // Updated variable for advanced mistakes logic
 
         window.onload = async () => {
             const raw = localStorage.getItem('atlas_user') || localStorage.getItem('atlas_student');
@@ -205,7 +225,6 @@
         async function loadHistory() {
             if(!studentId) return;
 
-            // Updated Query: Fallback system added to ignore Foreign Key mismatch issues
             const { data, error } = await db
                 .from('exam_results')
                 .select(`*, exams(title, subject, chapter, paper)`)
@@ -244,7 +263,6 @@
             }
 
             container.innerHTML = list.map((result, i) => {
-                // Fallback Logic: If 'exams' relation fails, read directly from exam_results
                 const title = result.exams?.title || result.chapter || result.subject || `Exam #${i+1}`;
                 const subjectName = result.exams?.subject || result.subject || '';
                 const paperName = result.exams?.paper || '';
@@ -346,55 +364,103 @@
                             pointBackgroundColor: '#1e40af'
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, max: 100 } }
-                    }
+                    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
                 });
             }
 
-            allMistakes = [];
+            // NEW: Advanced Mistakes Logic (Extracting Wrong and Skipped)
+            allPracticeQuestions = [];
+            let examOptionsHtml = '<option value="all">All Exams (সব)</option>';
+            const uniqueExams = new Set();
+
             list.forEach(result => {
                 const answers = typeof result.answers === 'string' ? JSON.parse(result.answers) : (result.answers || []);
                 const examTitle = result.exams?.title || result.chapter || result.subject || 'Practice Exam';
+                const examId = result.exam_id || 'unknown';
+
+                if (!uniqueExams.has(examId)) {
+                    uniqueExams.add(examId);
+                    examOptionsHtml += `<option value="${examId}">${examTitle}</option>`;
+                }
+
                 answers.forEach((a, index) => {
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
-                    if (status === 'wrong') {
-                        allMistakes.push({ ...a, examTitle, questionNum: index + 1 });
+                    if (status === 'wrong' || status === 'skipped') {
+                        // Saving entire question object for exam-hall compatibility
+                        allPracticeQuestions.push({ ...a, examTitle, examId, questionNum: index + 1, status: status });
                     }
                 });
             });
 
-            renderMistakes();
+            document.getElementById('mistakeExamSelect').innerHTML = examOptionsHtml;
+            filterMistakesList(); // Initial render
         }
 
-        function renderMistakes() {
+        function filterMistakesList() {
+            const examFilter = document.getElementById('mistakeExamSelect').value;
+            const typeFilter = document.getElementById('mistakeTypeSelect').value;
+            
+            let filtered = allPracticeQuestions.filter(q => {
+                let matchExam = (examFilter === 'all' || q.examId == examFilter);
+                let matchType = false;
+                if (typeFilter === 'wrong') matchType = (q.status === 'wrong');
+                if (typeFilter === 'skipped') matchType = (q.status === 'skipped');
+                if (typeFilter === 'both') matchType = (q.status === 'wrong' || q.status === 'skipped');
+                return matchExam && matchType;
+            });
+
             const container = document.getElementById('mistakeList');
-            if (allMistakes.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><div class="text-4xl mb-3">✨</div><p>তোমার কোনো ভুল নেই!</p></div>';
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 text-gray-400 font-bold"><div class="text-4xl mb-3">✨</div><p>এই ফিল্টারে কোনো প্রশ্ন নেই!</p></div>';
                 return;
             }
-            container.innerHTML = allMistakes.map(m => `
-                <div class="q-review wrong">
+
+            container.innerHTML = filtered.map(m => `
+                <div class="q-review ${m.status}">
                     <div class="flex justify-between items-start mb-2">
                         <span class="text-[11px] font-black text-gray-500">${m.examTitle} - Q${m.questionNum}</span>
-                        <span class="text-[11px] font-black text-red-600">❌ ভুল</span>
+                        <span class="text-[11px] font-black ${m.status==='wrong' ? 'text-red-600' : 'text-amber-600'}">${m.status==='wrong' ? '❌ ভুল' : '⏭️ স্কিপ'}</span>
                     </div>
                     <p class="text-sm font-bold text-gray-800 mb-2 leading-relaxed">${m.question || m.questions || 'প্রশ্ন'}</p>
-                    <p class="text-xs font-bold text-gray-600">তোমার উত্তর: <span class="text-red-600">${m.selected || 'দেওয়া হয়নি'}</span></p>
+                    <p class="text-xs font-bold text-gray-600">তোমার উত্তর: <span class="${m.status==='wrong' ? 'text-red-600' : 'text-amber-600'}">${m.selected || 'দেওয়া হয়নি'}</span></p>
                     <p class="text-xs font-bold text-gray-600">সঠিক উত্তর: <span class="text-green-700">${m.answer}</span></p>
-                    ${m.explanation ? `<p class="text-xs text-gray-500 mt-1 leading-relaxed">💡 ${m.explanation}</p>` : ''}
+                    ${m.explanation ? `<p class="text-[11px] bg-blue-50 text-blue-700 p-2 rounded-lg mt-2 leading-relaxed">💡 ${m.explanation}</p>` : ''}
                 </div>
             `).join('');
         }
 
         function startMistakeExam() {
-            if(allMistakes.length === 0) return alert('প্র্যাকটিস করার মতো কোনো ভুল নেই!');
-            localStorage.setItem('atlas_mistakes_exam', JSON.stringify(allMistakes));
-            window.location.href = 'exam-hall.html?mode=mistakes';
+            const examFilter = document.getElementById('mistakeExamSelect').value;
+            const typeFilter = document.getElementById('mistakeTypeSelect').value;
+            
+            let filtered = allPracticeQuestions.filter(q => {
+                let matchExam = (examFilter === 'all' || q.examId == examFilter);
+                let matchType = false;
+                if (typeFilter === 'wrong') matchType = (q.status === 'wrong');
+                if (typeFilter === 'skipped') matchType = (q.status === 'skipped');
+                if (typeFilter === 'both') matchType = (q.status === 'wrong' || q.status === 'skipped');
+                return matchExam && matchType;
+            });
+
+            if(filtered.length === 0) return alert('এই ফিল্টারে প্র্যাকটিস করার মতো কোনো প্রশ্ন নেই!');
+            
+            // Format fallback for exam-hall.html to render options properly
+            let practiceReady = filtered.map(q => ({
+                question: q.question || q.questions,
+                option1: q.option1 || q.answer, // Fallback if full options were not saved
+                option2: q.option2 || q.selected || 'Skip', 
+                option3: q.option3 || 'Option C',
+                option4: q.option4 || 'Option D',
+                answer: q.answer,
+                explanation: q.explanation,
+                ...q
+            }));
+
+            localStorage.setItem('atlas_mistakes_exam', JSON.stringify(practiceReady));
+            window.location.href = `exam-hall.html?mode=mistakes`;
         }
 
+        // NEW: Advanced Detail Modal (Shows Full MCQs like Exam Hall)
         function openDetail(result) {
             const exam = result.exams || {};
             document.getElementById('detailTitle').textContent = exam.title || result.chapter || result.subject || 'Exam Detail';
@@ -413,16 +479,56 @@
                     const status = a.status || (a.selected === null || a.selected === undefined ? 'skipped' : (a.selected === a.answer ? 'correct' : 'wrong'));
                     const statusLabel = status === 'correct' ? '✅ সঠিক' : status === 'wrong' ? '❌ ভুল' : '⏭ Skip';
                     const qText = a.question || a.questions || `প্রশ্ন ${i+1}`;
+                    
+                    // Generate full MCQ options
+                    let optionsHtml = '';
+                    const labels = ['A', 'B', 'C', 'D', 'E'];
+                    let hasOptions = false;
+
+                    for(let n=1; n<=5; n++) {
+                        if(a[`option${n}`]) {
+                            hasOptions = true;
+                            // Check matching by exact text or index number
+                            const isCorrect = a[`option${n}`] == a.answer || n == parseInt(a.answer);
+                            const isSelected = a[`option${n}`] == a.selected || n == parseInt(a.selected);
+                            
+                            let optClass = 'bg-white border-gray-200 text-gray-700'; // default
+                            let icon = '';
+                            
+                            if (isCorrect) {
+                                optClass = 'bg-green-50 border-green-500 text-green-700';
+                                icon = ' <span class="ml-auto font-black">✓</span>';
+                            } else if (isSelected && !isCorrect) {
+                                optClass = 'bg-red-50 border-red-400 text-red-700';
+                                icon = ' <span class="ml-auto font-black">✗</span>';
+                            }
+
+                            optionsHtml += `
+                            <div class="flex items-center gap-3 p-2.5 border-[1.5px] rounded-xl mb-2 ${optClass} text-[13px] font-bold">
+                                <span class="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 text-gray-500 text-[10px] flex-shrink-0">${labels[n-1]}</span>
+                                <span class="flex-1">${a[`option${n}`]}</span>
+                                ${icon}
+                            </div>`;
+                        }
+                    }
+
+                    // Fallback logic if options are missing from DB
+                    if (!hasOptions) {
+                        optionsHtml = `
+                            ${a.selected ? `<p class="text-xs font-bold text-gray-600 mb-1">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
+                            ${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600 mb-1">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
+                        `;
+                    }
+
                     return `
                     <div class="q-review ${status}">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="text-[11px] font-black text-gray-500">প্রশ্ন ${i+1}</span>
-                            <span class="text-[11px] font-black">${statusLabel}</span>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[11px] font-black text-gray-500 bg-gray-100 px-2 py-0.5 rounded">Q.${i+1}</span>
+                            <span class="text-[11px] font-black ${status==='correct'?'text-green-600':status==='wrong'?'text-red-600':'text-amber-600'}">${statusLabel}</span>
                         </div>
-                        <p class="text-sm font-bold text-gray-800 mb-2 leading-relaxed">${qText}</p>
-                        ${a.selected ? `<p class="text-xs font-bold text-gray-600">তোমার উত্তর: <span class="${status==='correct'?'text-green-700':'text-red-600'}">${a.selected}</span></p>` : ''}
-                        ${a.answer && status !== 'correct' ? `<p class="text-xs font-bold text-gray-600">সঠিক উত্তর: <span class="text-green-700">${a.answer}</span></p>` : ''}
-                        ${a.explanation ? `<p class="text-xs text-gray-500 mt-1 leading-relaxed">💡 ${a.explanation}</p>` : ''}
+                        <p class="text-[13px] font-bold text-gray-800 mb-4 leading-relaxed">${qText}</p>
+                        ${optionsHtml}
+                        ${a.explanation ? `<div class="text-[11px] bg-blue-50 text-blue-800 border border-blue-100 p-3 rounded-xl mt-3 leading-relaxed">💡 <b>ব্যাখ্যা:</b> ${a.explanation}</div>` : ''}
                     </div>`;
                 }).join('');
             }
