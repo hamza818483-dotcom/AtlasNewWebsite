@@ -40,7 +40,6 @@
     </nav>
 
     <div class="max-w-xl mx-auto px-4 pb-16 pt-6">
-
         <div class="mb-6">
             <h1 class="logo-font text-2xl font-black text-gray-900 leading-snug">আস্সালামু আলাইকুম! 👋</h1>
             <p class="text-gray-500 text-sm mt-1.5">মেডিকেল ও ভার্সিটি প্রস্তুতির পূর্ণাঙ্গ প্ল্যাটফর্ম।</p>
@@ -49,11 +48,6 @@
         <div id="countdownSection" class="mb-6 space-y-4 hidden">
             <div class="section-title">⏰ Upcoming Events</div>
             <div id="countdownCards"></div>
-        </div>
-
-        <div class="section-title">📝 Recent Exams</div>
-        <div id="recentExamsList" class="space-y-3 mb-6">
-            <div class="text-center py-4 text-gray-400 font-bold text-xs">পরীক্ষা লোড হচ্ছে...</div>
         </div>
 
         <div class="section-title">Quick Access</div>
@@ -108,7 +102,6 @@
             loadProfile();
             await loadDynButtons();
             await loadCountdowns();
-            await loadRecentExams(); // নিশ্চিত করে পরীক্ষার লিস্ট লোড করা
         };
 
         function loadProfile() {
@@ -125,29 +118,6 @@
                         <div class="avatar">${(user.name||'A')[0].toUpperCase()}</div>
                         <span class="text-xs font-bold text-gray-700">${user.name || 'Profile'}</span>
                     </div>`;
-            }
-        }
-
-        async function loadRecentExams() {
-            const { data, error } = await db.from('exams').select('*').order('created_at', {ascending: false}).limit(4);
-            const container = document.getElementById('recentExamsList');
-            if(data && data.length > 0) {
-                container.innerHTML = data.map(ex => {
-                    const qCount = (() => { try { const q = typeof ex.questions==='string'?JSON.parse(ex.questions):ex.questions; return Array.isArray(q)?q.length:0; } catch(e){return 0;} })();
-                    return `
-                    <div class="card p-5 flex items-center justify-between" onclick="handleNav('exam-hall.html?id=${ex.exam_id}')">
-                        <div class="flex items-center space-x-3">
-                            <div class="icon-box bg-green-50 text-xl">📝</div>
-                            <div>
-                                <div class="font-bold text-gray-800 text-[15px]">${ex.title || ex.chapter}</div>
-                                <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide">${ex.subject} • ${qCount} Questions</div>
-                            </div>
-                        </div>
-                        <div class="text-blue-600 text-xs font-black">শুরু করো →</div>
-                    </div>`;
-                }).join('');
-            } else {
-                container.innerHTML = '<div class="text-center py-4 text-gray-400 text-xs font-bold">কোনো পরীক্ষা পাওয়া যায়নি</div>';
             }
         }
 
