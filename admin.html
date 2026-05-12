@@ -81,10 +81,32 @@
 
             <div id="course_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
                 <h3 class="font-black text-blue-800 uppercase italic mb-4">Course Manager</h3>
-                <input id="cName" placeholder="Course Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
-                <input id="cLink" placeholder="Course Landing Page Link" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
-                <button onclick="saveCourse()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase">Add Course</button>
-                <div id="courseList" class="mt-6 space-y-2"></div>
+                
+                <input id="cName" placeholder="Course Name" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold mb-2">
+                
+                <select id="cCategory" class="w-full p-4 bg-gray-50 rounded-2xl font-bold border-none mb-2">
+                    <option value="Medical">Medical (মেডিকেল)</option>
+                    <option value="Varsity">Varsity (ভার্সিটি)</option>
+                    <option value="HSC">HSC (এইচএসসি)</option>
+                    <option value="English">English (ইংরেজি)</option>
+                </select>
+                
+                <input id="cDetails" placeholder="লিংক: 'বিস্তারিত' বাটনের জন্য" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold mb-2">
+                <input id="cEnroll" placeholder="লিংক: 'ভর্তি হই' বাটনের জন্য" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold mb-2">
+                
+                <div class="border-2 border-dashed p-6 rounded-3xl text-center mb-2">
+                    <p class="text-[10px] font-bold text-gray-400 mb-2 uppercase">Attach Course Thumbnail (Image)</p>
+                    <input type="file" id="cImgFile" accept="image/*" class="text-xs">
+                </div>
+
+                <input id="cLink" placeholder="Old Link Fallback" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold mb-4" style="display: none;">
+                
+                <button id="addCourseBtn" onclick="saveCourse()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase tracking-widest">Add Course</button>
+                
+                <div class="mt-8">
+                    <h4 class="font-bold text-gray-500 mb-3 text-sm">Added Courses</h4>
+                    <div id="courseList" class="space-y-2"></div>
+                </div>
             </div>
 
             <div id="button_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
@@ -202,17 +224,107 @@
             }
         }
 
+        // --- UPDATED SAVE COURSE LOGIC (IMAGE + MULTI-LINKS) ---
         async function saveCourse() {
-            const { error } = await atlas.from('courses').insert([{ name: cName.value, link: cLink.value }]);
-            if(!error) { alert("Course Added!"); loadCourses(); }
+            try {
+                const cNameVal = document.getElementById('cName').value;
+                const cCatVal = document.getElementById('cCategory').value;
+                const cDetailsVal = document.getElementById('cDetails').value;
+                const cEnrollVal = document.getElementById('cEnroll').value;
+                const imageFile = document.getElementById('cImgFile').files[0];
+                const cLinkVal = document.getElementById('cLink').value || cDetailsVal; // Fallback
+                
+                if(!cNameVal || !cDetailsVal) {
+                    alert("⚠️ Course Name এবং অন্তত একটি লিংক দিতে হবে!");
+                    return;
+                }
+
+                const btn = document.getElementById('addCourseBtn');
+                btn.innerText = "অপেক্ষা করুন...";
+                btn.disabled = true;
+
+                let photoUrl = "";
+                // If user selected an image, upload it to the existing bucket
+                if(imageFile) {
+                    const fileName = "course_" + Date.now() + "_" + imageFile.name;
+                    const { data: uploadData, error: upError } = await atlas.storage.from('review-photos').upload(fileName, imageFile);
+                    if(upError) throw upError;
+                    const { data: urlData } = atlas.storage.from('review-photos').getPublicUrl(fileName);
+                    photoUrl = urlData.publicUrl;
+                }
+
+                // Push to DB
+                const { data, error } = await atlas.from('courses').insert([{ 
+                    name: cNameVal, 
+                    link: cLinkVal, // Keeping original for backward compatibility
+                    category: cCatVal,
+                    details_link: cDetailsVal,
+                    enroll_link: cEnrollVal,
+                    image_url: photoUrl
+                }]);
+
+                btn.innerText = "Add Course";
+                btn.disabled = false;
+
+                if(error) {
+                    alert("❌ ডাটাবেস এরর:\n" + error.message);
+                } else {
+                    alert("✅ Course সফলভাবে যুক্ত হয়েছে!"); 
+                    document.getElementById('cName').value = '';
+                    document.getElementById('cDetails').value = '';
+                    document.getElementById('cEnroll').value = '';
+                    document.getElementById('cImgFile').value = '';
+                    loadCourses(); 
+                }
+            } catch (err) {
+                alert("❌ System Error: " + err.message);
+                document.getElementById('addCourseBtn').innerText = "Add Course";
+                document.getElementById('addCourseBtn').disabled = false;
+            }
         }
 
+        // --- UPDATED LOAD COURSE LOGIC (WITH NEW UI) ---
         async function loadCourses() {
-            const { data } = await atlas.from('courses').select('*');
-            if(data) {
-                document.getElementById('courseList').innerHTML = data.map(c => `
-                    <div class="list-item" style="background:#eff6ff">${c.name}</div>
-                `).join('');
+            try {
+                const { data, error } = await atlas.from('courses').select('*');
+                
+                if (error) {
+                    console.log("Load Course Error:", error);
+                    return;
+                }
+
+                if(data && data.length > 0) {
+                    // Sorting locally to prevent crashes if 'id' column is missing
+                    const sortedData = data.sort((a, b) => (b.id || 0) - (a.id || 0));
+                    
+                    document.getElementById('courseList').innerHTML = sortedData.map(c => `
+                        <div class="list-item flex justify-between items-center" style="background:#eff6ff">
+                            <div class="flex gap-3 items-center text-left w-full">
+                                ${c.image_url ? `<img src="${c.image_url}" class="w-10 h-10 rounded-lg object-cover shadow-sm">` : `<div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-xl shadow-sm">🎓</div>`}
+                                
+                                <div class="flex-1">
+                                    <div class="text-sm font-black text-blue-900">${c.name} <span class="bg-blue-200 text-blue-800 text-[8px] px-2 py-0.5 rounded-full ml-1">${c.category || 'N/A'}</span></div>
+                                    <div class="text-[9px] text-gray-500 mt-1 font-bold">
+                                        <a href="${c.details_link || '#'}" target="_blank" class="text-blue-500 mr-2">📄 বিস্তারিত</a>
+                                        <a href="${c.enroll_link || '#'}" target="_blank" class="text-green-600">🚀 ভর্তি</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="deleteCourse('${c.id}')" class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-[10px] font-bold">Delete</button>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('courseList').innerHTML = `<div class="text-xs text-gray-400 font-bold text-center py-4">কোনো কোর্স নেই</div>`;
+                }
+            } catch(e) {
+                console.log("Error loading courses list:", e);
+            }
+        }
+
+        async function deleteCourse(id) {
+            if(confirm("Are you sure you want to delete this course?")) {
+                await atlas.from('courses').delete().eq('id', id);
+                loadCourses(); 
             }
         }
     </script>
