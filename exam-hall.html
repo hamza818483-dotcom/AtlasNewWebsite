@@ -738,6 +738,12 @@
                     explanation: q.explanation || null,
                     status: (!userAnswers[i] || userAnswers[i] === 'skipped') ? 'skipped' : (parseInt(userAnswers[i]) === parseInt(q.answer) ? 'correct' : 'wrong')
                 }));
+                  const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('mode') === 'mistakes') {
+    alert("এটি প্র্যাকটিস মোড ছিল, তাই রেজাল্ট সেভ করা হলো না।");
+    window.location.href = 'profile.html';
+    return; // এই return টি ডাটাবেসে ডেটা সেভ হওয়া আটকে দেবে
+}
 
                 const { error } = await atlas.from('exam_results').insert([{
                     student_id: currentStudentId,
