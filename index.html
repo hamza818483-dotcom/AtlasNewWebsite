@@ -31,7 +31,7 @@
         /* ডাইনামিক বাটন গ্রিড স্টাইল */
         .btn-subtitle { font-size: 10px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
         
-        /* গ্লোয়িং বর্ডার ব্যানার অ্যানিমেশন */
+        /* পুরানো ব্যানারের CSS রেখে দেওয়া হলো (ডিলিট রুল অনুযায়ী) */
         .instructor-card {
             position: relative; padding: 3px; 
             background: linear-gradient(90deg, #1e40af, #7c3aed, #1e40af);
@@ -39,15 +39,104 @@
             border-radius: 28px; cursor: pointer; transition: 0.3s;
         }
         .instructor-card:active { transform: scale(0.98); }
-        @keyframes rotateGlow { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
         .instructor-inner { background: #0f172a; border-radius: 25px; padding: 18px 20px; display: flex; align-items: center; gap: 15px; }
         
-        /* পপআপ মডাল স্টাইল */
+        /* পপআপ মডাল স্টাইল (ডিলিট রুল অনুযায়ী রেখে দেওয়া হলো) */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);
         }
-        /* NEW FEATURES CSS END */
+
+        /* --- নতুন FLIPCARD CSS শুরু --- */
+        @keyframes rotateGlow { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+        .flip-card-container {
+            perspective: 1000px;
+            width: 100%;
+            max-width: 300px; /* ইমেজের চওড়া */
+            height: 380px; /* ইমেজের উচ্চতা */
+            margin: 0 auto;
+            margin-top: 20px;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            cursor: pointer;
+        }
+
+        /* ক্লিক করলে এই ক্লাসটি অ্যাড হবে এবং কার্ডটি ঘুরবে */
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 32px;
+        }
+
+        /* ফ্রন্ট সাইড: ফুল ইমেজ এবং গ্লোয়িং বর্ডার */
+        .flip-card-front {
+            padding: 5px; /* এই প্যাডিংটাই বর্ডারের মতো কাজ করবে */
+            background: linear-gradient(90deg, #3b82f6, #7c3aed, #1e40af, #3b82f6);
+            background-size: 300% 100%;
+            animation: rotateGlow 3s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 15px 35px rgba(30, 64, 175, 0.2);
+        }
+
+        .flip-card-front img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 28px; /* বর্ডারের ভেতরের ইমেজের রাউন্ড শেপ */
+        }
+
+        /* ইমেজের ওপরের ভাসমান লেখা */
+        .flip-overlay {
+            position: absolute;
+            bottom: 25px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+        }
+
+        .flip-overlay span {
+            background: rgba(15, 23, 42, 0.85);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 800;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.1);
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        /* ব্যাক সাইড: পরিচিতি ও বিস্তারিত */
+        .flip-card-back {
+            background: #0f172a; /* ডার্ক ব্যাকগ্রাউন্ড */
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 20px;
+            text-align: center;
+            border: 2px solid #1e40af;
+            box-shadow: 0 15px 35px rgba(15, 23, 42, 0.4);
+        }
+        /* --- নতুন FLIPCARD CSS শেষ --- */
     </style>
 </head>
 <body>
@@ -108,7 +197,7 @@
             </div>
         </div>
 
-        <div id="instructorSection" class="mb-6"></div>
+        <div id="instructorSection" class="mb-10 mt-10"></div>
 
         <footer class="text-center mt-10">
             <p class="text-gray-300 text-[10px] font-bold uppercase tracking-widest">© 2026 Powered by ATLAS Team</p>
@@ -141,7 +230,7 @@
         window.onload = async () => {
             loadProfile();
             await loadDynButtons();
-            await loadInstructor(); // Added new function call
+            await loadInstructor(); 
             await loadCountdowns();
         };
 
@@ -178,7 +267,6 @@
             window.location.href = url;
         }
 
-        // URL Helper to fix broken links like "t.me/xyz"
         function formatSafeUrl(url) {
             if (!url || url.trim() === '' || url === '#') return '#';
             let clean = url.trim();
@@ -188,7 +276,6 @@
             return clean;
         }
 
-        // UPDATED: Dynamic Button Load with Subtitle Support and 2-Column Grid Format
         async function loadDynButtons() {
             const { data, error } = await db.from('home_buttons').select('*').order('priority', {ascending: true});
             if(data && data.length > 0) {
@@ -205,27 +292,44 @@
             }
         }
 
-        // NEW FEATURE: Instructor Banner Load
+        // UPDATED FEATURE: Instructor Load with 3D Flipcard
         async function loadInstructor() {
             const { data: profile, error } = await db.from('instructor_profile').select('*').eq('id', 1).single();
             if(profile && profile.name) {
-                window.currentProfile = profile;
+                window.currentProfile = profile; // Old modal backup
+                
                 document.getElementById('instructorSection').innerHTML = `
-                    <div class="instructor-card" onclick="openProfileModal()">
-                        <div class="instructor-inner">
-                            <img src="${profile.image_url || 'https://via.placeholder.com/150'}" class="w-14 h-14 rounded-[14px] object-cover border border-blue-500/30">
-                            <div class="flex-1">
-                                <h4 class="text-white font-black text-[15px] tracking-tight leading-tight">${profile.name}</h4>
-                                <p class="text-blue-300 text-[10px] font-bold uppercase tracking-widest opacity-90 mt-0.5">${profile.title || 'Instructor'}</p>
+                    <div class="section-title text-center mb-2">Meet the Instructor</div>
+                    
+                    <div class="flip-card-container" onclick="this.querySelector('.flip-card-inner').classList.toggle('flipped')">
+                        <div class="flip-card-inner">
+                            
+                            <div class="flip-card-front">
+                                <img src="${profile.image_url || 'https://via.placeholder.com/300x400?text=Instructor+Image'}" alt="Instructor">
+                                <div class="flip-overlay">
+                                    <span>ক্লিক করে বিস্তারিত দেখো 🔄</span>
+                                </div>
                             </div>
-                            <div class="text-2xl opacity-80">🎓</div>
+
+                            <div class="flip-card-back">
+                                <div class="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center text-3xl mb-4 border-2 border-blue-500 shadow-lg">🎓</div>
+                                <h3 class="logo-font font-black text-2xl mb-1 text-white">${profile.name}</h3>
+                                <p class="text-blue-400 font-bold text-[10px] uppercase tracking-widest mb-4">${profile.title || 'Lead Instructor'}</p>
+                                
+                                <div class="bg-white/10 p-4 rounded-2xl w-full backdrop-blur border border-white/10">
+                                    <p class="text-gray-300 text-sm leading-relaxed font-medium">${profile.description || 'Welcome to ATLAS learning platform.'}</p>
+                                </div>
+                                
+                                <p class="text-gray-500 text-[9px] mt-6 uppercase tracking-widest font-bold">আবার ক্লিক করে ছবি দেখো</p>
+                            </div>
+
                         </div>
                     </div>
                 `;
             }
         }
 
-        // NEW FEATURE: Instructor Modal Controls
+        // Old Modal Functions (Kept intact per strict rules)
         function openProfileModal() {
             const p = window.currentProfile;
             if(!p) return;
