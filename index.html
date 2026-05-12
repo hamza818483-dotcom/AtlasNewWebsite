@@ -28,10 +28,8 @@
         .badge { background:#eff6ff; color:#1e40af; border-radius:20px; padding:3px 10px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; }
         
         /* NEW FEATURES CSS START */
-        /* ডাইনামিক বাটন গ্রিড স্টাইল */
         .btn-subtitle { font-size: 10px; color: #94a3b8; font-weight: 600; margin-top: 2px; }
         
-        /* পুরানো ব্যানারের CSS রেখে দেওয়া হলো (ডিলিট রুল অনুযায়ী) */
         .instructor-card {
             position: relative; padding: 3px; 
             background: linear-gradient(90deg, #1e40af, #7c3aed, #1e40af);
@@ -41,20 +39,18 @@
         .instructor-card:active { transform: scale(0.98); }
         .instructor-inner { background: #0f172a; border-radius: 25px; padding: 18px 20px; display: flex; align-items: center; gap: 15px; }
         
-        /* পপআপ মডাল স্টাইল (ডিলিট রুল অনুযায়ী রেখে দেওয়া হলো) */
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px);
         }
 
-        /* --- নতুন FLIPCARD CSS শুরু --- */
         @keyframes rotateGlow { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
 
         .flip-card-container {
             perspective: 1000px;
             width: 100%;
-            max-width: 300px; /* ইমেজের চওড়া */
-            height: 380px; /* ইমেজের উচ্চতা */
+            max-width: 300px; 
+            height: 380px; 
             margin: 0 auto;
             margin-top: 20px;
         }
@@ -68,7 +64,6 @@
             cursor: pointer;
         }
 
-        /* ক্লিক করলে এই ক্লাসটি অ্যাড হবে এবং কার্ডটি ঘুরবে */
         .flip-card-inner.flipped {
             transform: rotateY(180deg);
         }
@@ -81,9 +76,8 @@
             border-radius: 32px;
         }
 
-        /* ফ্রন্ট সাইড: ফুল ইমেজ এবং গ্লোয়িং বর্ডার */
         .flip-card-front {
-            padding: 5px; /* এই প্যাডিংটাই বর্ডারের মতো কাজ করবে */
+            padding: 5px; 
             background: linear-gradient(90deg, #3b82f6, #7c3aed, #1e40af, #3b82f6);
             background-size: 300% 100%;
             animation: rotateGlow 3s linear infinite;
@@ -97,10 +91,9 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            border-radius: 28px; /* বর্ডারের ভেতরের ইমেজের রাউন্ড শেপ */
+            border-radius: 28px; 
         }
 
-        /* ইমেজের ওপরের ভাসমান লেখা */
         .flip-overlay {
             position: absolute;
             bottom: 25px;
@@ -122,9 +115,8 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        /* ব্যাক সাইড: পরিচিতি ও বিস্তারিত */
         .flip-card-back {
-            background: #0f172a; /* ডার্ক ব্যাকগ্রাউন্ড */
+            background: #0f172a; 
             color: white;
             transform: rotateY(180deg);
             display: flex;
@@ -136,17 +128,21 @@
             border: 2px solid #1e40af;
             box-shadow: 0 15px 35px rgba(15, 23, 42, 0.4);
         }
-        /* --- নতুন FLIPCARD CSS শেষ --- */
     </style>
 </head>
 <body>
-    <nav class="bg-white px-5 py-4 flex items-center justify-between nav-shadow sticky top-0 z-50">
-        <a href="index.html" class="flex items-center space-x-2">
-            <img src="https://cdn.phototourl.com/free/2026-05-12-b12bdf48-407a-4512-8b9c-d83260f2c9de.png" alt="ATLAS Logo" class="w-9 h-9 object-contain" onerror="this.style.display='none'">
-            <span class="logo-font text-xl font-black text-blue-900 tracking-tight">ATLAS</span>
+    <nav class="bg-white px-4 py-3 flex items-center justify-between nav-shadow sticky top-0 z-50">
+        <a href="index.html" class="flex items-center gap-2">
+            <img src="https://cdn.phototourl.com/free/2026-05-12-b12bdf48-407a-4512-8b9c-d83260f2c9de.png" alt="ATLAS Logo" class="w-12 h-12 object-contain">
+            
+            <div class="flex flex-col">
+                <span class="logo-font text-xl font-black text-blue-900 leading-none">ATLAS</span>
+                <span class="text-[9px] font-bold text-gray-500 mt-1">পড়াশোনা হোক গোছানো</span>
+            </div>
         </a>
+
         <div id="profileArea">
-            <button onclick="goRegister()" class="bg-blue-700 text-white text-xs font-black px-4 py-2.5 rounded-full shadow-lg uppercase tracking-wide">Login / Register</button>
+            <button onclick="goRegister()" class="bg-blue-700 text-white text-[10px] font-black px-4 py-2.5 rounded-full shadow-lg uppercase tracking-wider">Login / Register</button>
         </div>
     </nav>
 
@@ -292,44 +288,34 @@
             }
         }
 
-        // UPDATED FEATURE: Instructor Load with 3D Flipcard
         async function loadInstructor() {
             const { data: profile, error } = await db.from('instructor_profile').select('*').eq('id', 1).single();
             if(profile && profile.name) {
-                window.currentProfile = profile; // Old modal backup
-                
+                window.currentProfile = profile;
                 document.getElementById('instructorSection').innerHTML = `
                     <div class="section-title text-center mb-2">Meet the Owner</div>
-                    
                     <div class="flip-card-container" onclick="this.querySelector('.flip-card-inner').classList.toggle('flipped')">
                         <div class="flip-card-inner">
-                            
                             <div class="flip-card-front">
                                 <img src="${profile.image_url || 'https://via.placeholder.com/300x400?text=Instructor+Image'}" alt="Instructor">
                                 <div class="flip-overlay">
                                     <span>পরিচয় জানতে ছবিতে ক্লিক করো👋</span>
                                 </div>
                             </div>
-
                             <div class="flip-card-back">
                                 <div class="w-16 h-16 bg-blue-900 rounded-full flex items-center justify-center text-3xl mb-4 border-2 border-blue-500 shadow-lg">🎓</div>
                                 <h3 class="logo-font font-black text-2xl mb-1 text-white">${profile.name}</h3>
                                 <p class="text-blue-400 font-bold text-[10px] uppercase tracking-widest mb-4">${profile.title || 'Lead Instructor'}</p>
-                                
                                 <div class="bg-white/10 p-4 rounded-2xl w-full backdrop-blur border border-white/10">
                                     <p class="text-gray-300 text-sm leading-relaxed font-medium">${profile.description || 'Welcome to ATLAS learning platform.'}</p>
                                 </div>
-                                
                                 <p class="text-gray-500 text-[9px] mt-6 uppercase tracking-widest font-bold">আবার ক্লিক করে ছবি দেখো</p>
                             </div>
-
                         </div>
-                    </div>
-                `;
+                    </div>`;
             }
         }
 
-        // Old Modal Functions (Kept intact per strict rules)
         function openProfileModal() {
             const p = window.currentProfile;
             if(!p) return;
