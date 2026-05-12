@@ -42,7 +42,9 @@
         .cat-chip { padding: 8px 18px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 2px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; }
         .cat-chip.active { background: #1e40af; color: white; border-color: #1e40af; box-shadow: 0 4px 12px rgba(30,64,175,0.2); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .course-img { width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
+        
+        /* UPDATED: object-fit changed to contain so image doesn't get cut */
+        .course-img { width: 100%; height: 160px; object-fit: contain; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
         /* NEW FEATURES CSS END */
 
         .hero-section {
@@ -131,7 +133,7 @@
             { top:'linear-gradient(90deg,#0891b2,#38bdf8)', icon:'from-cyan-500 to-cyan-700', tagBg:'#ecfeff', tagColor:'#0e7490' },
         ];
 
-        let allData = []; // NEW: Store all courses for filtering
+        let allData = [];
 
         window.onload = async () => {
             const { data, error } = await db.from('courses').select('*').order('created_at', { ascending: false });
@@ -157,7 +159,6 @@
             renderCourses(allData);
         };
 
-        // NEW: Filter Function
         function filterBy(cat, btn) {
             document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -170,7 +171,16 @@
             }
         }
 
-        // REFACTORED: Moved existing map logic to a reusable function
+        // NEW: URL Helper Function
+        function formatSafeUrl(url) {
+            if (!url || url.trim() === '' || url === '#') return '#';
+            let clean = url.trim();
+            if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+                return 'https://' + clean;
+            }
+            return clean;
+        }
+
         function renderCourses(dataToRender) {
             const container = document.getElementById('courseList');
             
@@ -186,9 +196,9 @@
                 const isNew = i === 0;
                 const isHot = course.is_popular;
                 
-                // Link Fallbacks (Supports old link and new details_link/enroll_link)
-                const dLink = course.details_link || course.link || '#';
-                const eLink = course.enroll_link || course.link || '#';
+                // UPDATED: Now uses formatSafeUrl to fix broken links
+                const dLink = formatSafeUrl(course.details_link || course.link || '#');
+                const eLink = formatSafeUrl(course.enroll_link || course.link || '#');
 
                 return `
                 <div class="course-card">
