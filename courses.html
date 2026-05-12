@@ -14,6 +14,7 @@
             background: white; border-radius: 24px; border: 1.5px solid #f1f5f9;
             overflow: hidden; transition: all 0.28s cubic-bezier(.4,0,.2,1); cursor: pointer;
             box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; /* Added for layout */
         }
         .course-card:hover { transform: translateY(-5px); border-color: #bfdbfe; box-shadow: 0 16px 48px rgba(30,64,175,0.13); }
         .course-card:active { transform: scale(0.98); }
@@ -24,8 +25,26 @@
             background: linear-gradient(135deg, #1e40af, #1d4ed8);
             color: white; font-weight: 800; font-size: 13px; border-radius: 14px;
             text-decoration: none; letter-spacing: 0.05em; transition: 0.2s; border: none; cursor: pointer;
+            flex: 1.5; /* Added for double button layout */
         }
         .enroll-btn:hover { background: linear-gradient(135deg, #1d4ed8, #2563eb); transform: scale(1.02); }
+        
+        /* NEW FEATURES CSS START */
+        .details-btn {
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            width: 100%; padding: 14px;
+            background: #f1f5f9;
+            color: #475569; font-weight: 800; font-size: 13px; border-radius: 14px;
+            text-decoration: none; letter-spacing: 0.05em; transition: 0.2s; border: none; cursor: pointer;
+            flex: 1;
+        }
+        .details-btn:hover { background: #e2e8f0; transform: scale(1.02); }
+        .cat-chip { padding: 8px 18px; border-radius: 50px; font-size: 11px; font-weight: 800; border: 2px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; white-space: nowrap; transition: 0.2s; text-transform: uppercase; }
+        .cat-chip.active { background: #1e40af; color: white; border-color: #1e40af; box-shadow: 0 4px 12px rgba(30,64,175,0.2); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .course-img { width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
+        /* NEW FEATURES CSS END */
+
         .hero-section {
             background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%);
             padding: 32px 20px 36px; position: relative; overflow: hidden;
@@ -42,7 +61,6 @@
 </head>
 <body class="pb-16">
 
-    <!-- Navbar -->
     <nav class="bg-white px-5 py-4 flex items-center gap-3 sticky top-0 z-50" style="box-shadow:0 2px 20px rgba(0,0,0,0.07)">
         <a href="index.html" style="text-decoration:none;">
             <div style="width:36px;height:36px;background:linear-gradient(135deg,#16a34a,#15803d);border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-style:italic;font-family:'Sora',sans-serif;font-size:16px;">A</div>
@@ -56,7 +74,6 @@
         </div>
     </nav>
 
-    <!-- Hero -->
     <div class="hero-section relative z-10">
         <div class="max-w-xl mx-auto">
             <div class="text-blue-300 text-[11px] font-black uppercase tracking-widest mb-2 relative z-10">ATLAS Courses</div>
@@ -79,10 +96,20 @@
         </div>
     </div>
 
-    <!-- Course List -->
-    <div class="max-w-xl mx-auto px-4 pt-6">
+    <div class="max-w-xl mx-auto px-4 mt-5">
+        <div class="flex gap-2 py-2 overflow-x-auto no-scrollbar">
+            <button class="cat-chip active" onclick="filterBy('All', this)">🌟 সব কোর্স</button>
+            <button class="cat-chip" onclick="filterBy('Medical', this)">🏥 মেডিকেল</button>
+            <button class="cat-chip" onclick="filterBy('Varsity', this)">🎓 ভার্সিটি</button>
+            <button class="cat-chip" onclick="filterBy('HSC', this)">📖 HSC</button>
+            <button class="cat-chip" onclick="filterBy('English', this)">🇬🇧 English</button>
+        </div>
+    </div>
+
+    <div class="max-w-xl mx-auto px-4 pt-4">
         <div class="text-[11px] font-bold text-gray-400 uppercase tracking-wide mb-4">Available Courses</div>
-        <div id="courseList" class="space-y-4">
+        
+        <div id="courseList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="skeleton h-44"></div>
             <div class="skeleton h-44"></div>
             <div class="skeleton h-44"></div>
@@ -104,15 +131,16 @@
             { top:'linear-gradient(90deg,#0891b2,#38bdf8)', icon:'from-cyan-500 to-cyan-700', tagBg:'#ecfeff', tagColor:'#0e7490' },
         ];
 
+        let allData = []; // NEW: Store all courses for filtering
+
         window.onload = async () => {
             const { data, error } = await db.from('courses').select('*').order('created_at', { ascending: false });
-            const container = document.getElementById('courseList');
             const countEl = document.getElementById('courseCount');
             const heroCount = document.getElementById('heroCount');
 
             if(!data || data.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
+                document.getElementById('courseList').innerHTML = `
+                    <div class="empty-state col-span-full">
                         <div class="text-5xl mb-4">📚</div>
                         <h3 class="logo-font font-black text-gray-700 text-lg mb-2">এখনো কোনো কোর্স নেই</h3>
                         <p class="text-gray-400 text-sm">শীঘ্রই নতুন কোর্স আসছে!</p>
@@ -122,24 +150,66 @@
                 return;
             }
 
+            allData = data;
             countEl.textContent = data.length + ' টি';
             heroCount.textContent = data.length;
 
-            container.innerHTML = data.map((course, i) => {
+            renderCourses(allData);
+        };
+
+        // NEW: Filter Function
+        function filterBy(cat, btn) {
+            document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if(cat === 'All') {
+                renderCourses(allData);
+            } else {
+                const filtered = allData.filter(c => c.category === cat);
+                renderCourses(filtered);
+            }
+        }
+
+        // REFACTORED: Moved existing map logic to a reusable function
+        function renderCourses(dataToRender) {
+            const container = document.getElementById('courseList');
+            
+            if(dataToRender.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-gray-400 font-bold col-span-full">এই ক্যাটাগরিতে কোনো কোর্স নেই</div>`;
+                return;
+            }
+
+            container.innerHTML = dataToRender.map((course, i) => {
                 const icon = courseIcons[i % courseIcons.length];
                 const cs = colorSchemes[i % colorSchemes.length];
                 const features = course.features ? course.features.split(',').map(f => f.trim()).filter(Boolean) : [];
                 const isNew = i === 0;
                 const isHot = course.is_popular;
+                
+                // Link Fallbacks (Supports old link and new details_link/enroll_link)
+                const dLink = course.details_link || course.link || '#';
+                const eLink = course.enroll_link || course.link || '#';
 
                 return `
-                <div class="course-card" onclick="window.open('${course.link || '#'}', '_blank')">
+                <div class="course-card">
                     <div class="top-bar" style="background:${cs.top}"></div>
-                    <div class="p-5">
+                    
+                    ${course.image_url ? `
+                        <div class="relative">
+                            <img src="${course.image_url}" class="course-img" alt="Course Thumbnail">
+                            ${course.category ? `<span class="absolute top-3 left-3 text-[9px] font-black bg-white/90 backdrop-blur text-blue-800 px-2.5 py-1 rounded-lg shadow-sm uppercase">${course.category}</span>` : ''}
+                        </div>
+                    ` : ''}
+
+                    <div class="p-5 flex flex-col flex-1">
                         <div class="flex items-start gap-4 mb-4">
+                            
+                            ${!course.image_url ? `
                             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br ${cs.icon} flex items-center justify-center text-2xl flex-shrink-0 shadow-lg">
                                 ${icon}
                             </div>
+                            ` : ''}
+
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 flex-wrap mb-1">
                                     <h3 class="logo-font font-black text-gray-900 text-[17px] leading-snug">${course.name || 'Course'}</h3>
@@ -161,13 +231,14 @@
                             <span class="font-black text-blue-900 text-base logo-font">${course.price}</span>
                         </div>` : ''}
 
-                        <button class="enroll-btn" onclick="event.stopPropagation(); window.open('${course.link || '#'}', '_blank')">
-                            কোর্সে যোগ দাও →
-                        </button>
+                        <div class="flex items-center gap-2 mt-auto pt-2">
+                            <button class="details-btn" onclick="event.stopPropagation(); window.open('${dLink}', '_blank')">বিস্তারিত</button>
+                            <button class="enroll-btn" onclick="event.stopPropagation(); window.open('${eLink}', '_blank')">ভর্তি হই →</button>
+                        </div>
                     </div>
                 </div>`;
             }).join('');
-        };
+        }
     </script>
 </body>
 </html>
