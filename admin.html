@@ -58,6 +58,9 @@
             <div onclick="showTab('button_tab')" class="grid-card">
                 <div class="text-4xl mb-3">➕</div><p class="text-xs font-black uppercase text-gray-600">New Button</p>
             </div>
+            <div onclick="showTab('instructor_tab')" class="grid-card">
+                <div class="text-4xl mb-3">👨‍🏫</div><p class="text-xs font-black uppercase text-gray-600">Instructor</p>
+            </div>
         </div>
 
         <div class="p-6 max-w-4xl mx-auto">
@@ -111,10 +114,20 @@
 
             <div id="button_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
                 <h3 class="font-black text-blue-800 uppercase italic mb-4">Add Home Page Button</h3>
-                <input id="btnName" placeholder="Button Label" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
-                <input id="btnLink" placeholder="URL / Link" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
-                <input id="btnIcon" placeholder="Icon Emoji" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
-                <button onclick="saveNewBtn()" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase">Add to Home</button>
+                <input id="btnName" placeholder="Button Label (নাম)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="btnSubtitle" placeholder="Subtitle (নিচের ছোট টেক্সট)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="btnLink" placeholder="URL / Link (লিংক)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="btnIcon" placeholder="Icon Emoji (ইমোজি)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <button onclick="saveNewBtn()" id="btnSaveAction" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase">Add to Home</button>
+            </div>
+
+            <div id="instructor_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm space-y-4">
+                <h3 class="font-black text-blue-800 uppercase italic mb-4">Instructor Profile Setup</h3>
+                <input id="insName" placeholder="Instructor Name (আপনার নাম)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <input id="insTitle" placeholder="Title (যেমন: Founder, ATLAS)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <textarea id="insDesc" placeholder="Short Description (আপনার পরিচিতি)" class="w-full p-4 bg-gray-50 rounded-2xl border-none h-24 font-bold"></textarea>
+                <input id="insImg" placeholder="Image URL (ছবির ডিরেক্ট লিংক)" class="w-full p-4 bg-gray-50 rounded-2xl border-none font-bold">
+                <button onclick="saveInstructor()" id="insSaveAction" class="w-full bg-blue-800 text-white py-5 rounded-3xl font-black uppercase">Update Profile</button>
             </div>
 
             <div id="student_tab" class="tab-content bg-white p-8 rounded-[3rem] shadow-sm">
@@ -205,11 +218,34 @@
             }
         }
 
+        // --- UPDATED SAVE NEW BUTTON (Added Subtitle feature) ---
         async function saveNewBtn() {
+            const btn = document.getElementById('btnSaveAction');
+            const nVal = document.getElementById('btnName').value;
+            const lVal = document.getElementById('btnLink').value;
+            const iVal = document.getElementById('btnIcon').value;
+            const sVal = document.getElementById('btnSubtitle').value;
+
+            if(!nVal || !lVal) return alert("Name এবং Link অবশ্যই দিতে হবে!");
+
+            btn.innerText = "SAVING...";
+            btn.disabled = true;
+
             const { error } = await atlas.from('home_buttons').insert([{
-                name: btnName.value, link: btnLink.value, icon: btnIcon.value
+                name: nVal, link: lVal, icon: iVal, subtitle: sVal
             }]);
-            if(!error) alert("Button Added!");
+            
+            if(!error) {
+                alert("Button Added Successfully!");
+                document.getElementById('btnName').value = '';
+                document.getElementById('btnLink').value = '';
+                document.getElementById('btnIcon').value = '';
+                document.getElementById('btnSubtitle').value = '';
+            } else {
+                alert("Error: " + error.message);
+            }
+            btn.innerText = "Add to Home";
+            btn.disabled = false;
         }
 
         async function loadStudents() {
@@ -283,7 +319,7 @@
             }
         }
 
-        // --- UPDATED LOAD COURSE LOGIC (WITH NEW UI) ---
+        // --- UPDATED LOAD COURSE LOGIC (ADDED EDIT BUTTON) ---
         async function loadCourses() {
             try {
                 const { data, error } = await atlas.from('courses').select('*');
@@ -310,7 +346,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <button onclick="deleteCourse('${c.id}')" class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-[10px] font-bold">Delete</button>
+                            <div class="flex gap-1">
+                                <button onclick="editCourse('${c.id}')" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-blue-200">Edit</button>
+                                <button onclick="deleteCourse('${c.id}')" class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-[10px] font-bold hover:bg-red-200">Delete</button>
+                            </div>
                         </div>
                     `).join('');
                 } else {
@@ -327,6 +366,60 @@
                 loadCourses(); 
             }
         }
+
+        // --- NEW FEATURE: EDIT COURSE LOGIC ---
+        async function editCourse(id) {
+            const { data: course, error } = await atlas.from('courses').select('*').eq('id', id).single();
+            if(course) {
+                const newName = prompt("কোর্সের নতুন নাম দিন:", course.name);
+                if (newName === null) return; // if user clicks cancel
+                
+                const newDetails = prompt("নতুন বিস্তারিত লিংক দিন:", course.details_link || course.link || "");
+                const newEnroll = prompt("নতুন ভর্তি লিংক দিন:", course.enroll_link || "");
+
+                if(newName) {
+                    await atlas.from('courses').update({ 
+                        name: newName, 
+                        details_link: newDetails,
+                        enroll_link: newEnroll
+                    }).eq('id', id);
+                    
+                    alert("✅ Course Updated Successfully!");
+                    loadCourses(); // reload the list
+                }
+            }
+        }
+
+        // --- NEW FEATURE: INSTRUCTOR PROFILE SAVER ---
+        async function saveInstructor() {
+            const btn = document.getElementById('insSaveAction');
+            const nameVal = document.getElementById('insName').value;
+            const titleVal = document.getElementById('insTitle').value;
+            const descVal = document.getElementById('insDesc').value;
+            const imgVal = document.getElementById('insImg').value;
+
+            if(!nameVal) return alert("Instructor Name is required!");
+
+            btn.innerText = "UPDATING...";
+            btn.disabled = true;
+
+            const { error } = await atlas.from('instructor_profile').upsert({
+                id: 1, // Fixed ID to always overwrite the single profile
+                name: nameVal,
+                title: titleVal,
+                description: descVal,
+                image_url: imgVal
+            });
+
+            if(!error) {
+                alert("✅ Profile Updated Successfully!");
+            } else {
+                alert("Error: " + error.message);
+            }
+            btn.innerText = "Update Profile";
+            btn.disabled = false;
+        }
+
     </script>
 </body>
 </html>
